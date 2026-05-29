@@ -6,6 +6,13 @@ export async function runHostileReview(
   store: TruthLayerStore,
   runId: string
 ): Promise<VerificationFinding[]> {
+  return store.createVerificationFindings(runId, await buildHostileReviewFindings(store, runId));
+}
+
+export async function buildHostileReviewFindings(
+  store: TruthLayerStore,
+  runId: string
+): Promise<Omit<VerificationFinding, "id" | "runId">[]> {
   const sources = await store.listSources(runId);
   const inspections = await store.listFileInspections(runId);
   const conflicts = await store.listSourceConflicts(runId);
@@ -14,6 +21,8 @@ export async function runHostileReview(
   const assumptions = await store.listAssumptions(runId);
 
   const findings: Omit<VerificationFinding, "id" | "runId">[] = [];
+  const sourceById = new Map(sources.map((source) => [source.id, source]));
+  const sourceByInspectionId = new Map(inspections.map((inspection) => [inspection.sourceId, inspection]));
 
   if (sources.length === 0) {
     findings.push(mustFix("source-packet", "No source inventory exists.", "The workflow has no source records.", "Create a source packet before artifact work."));
@@ -46,6 +55,10 @@ export async function runHostileReview(
         humanReviewRequired: true
       });
     }
+    const source = inspection.sourceId ? sourceById.get(inspection.sourceId) : undefined;
+    if (getNumberCandidateCount(inspection) > 0 && inspection.sourceDateCandidates.length === 0 && !source?.sourceDate) {
+      findings.push(mustFix(`source:${inspection.name}`, "Number-bearing source has no source date.", `${getNumberCandidateCount(inspection)} number-like values were found without a valid source date candidate.`, "Add a source date to the filename, source metadata, or review packet before using these numbers."));
+    }
     findings.push(...workbookInspectionFindings(inspection));
   }
 
@@ -59,6 +72,24 @@ export async function runHostileReview(
     }
     if (claim.reviewStatus === "unsupported") {
       findings.push(mustFix(claim.artifactLocation, "Claim is marked unsupported.", claim.claim, "Remove, source, or route the claim to review."));
+    }
+    for (const sourceId of claim.sourceIds) {
+      const source = sourceById.get(sourceId);
+      if (!source) continue;
+      const inspection = sourceByInspectionId.get(sourceId);
+      if ((source.status === "superseded" || source.status === "background") && claim.reviewStatus !== "verified") {
+        findings.push({
+          location: claim.artifactLocation,
+          issue: "Claim relies on a stale or background-only source.",
+          severity: "should_fix",
+          evidence: `${source.name} is labeled ${source.status}.`,
+          recommendedRepair: "Confirm the source is appropriate or replace it with a current decision source.",
+          humanReviewRequired: true
+        });
+      }
+      if (getNumberCandidateCount(inspection) > 0 && !source.sourceDate && inspection?.sourceDateCandidates.length === 0) {
+        findings.push(mustFix(claim.artifactLocation, "Claim uses numbers without a source date.", claim.claim, "Attach a source date or mark the number as an assumption."));
+      }
     }
   }
 
@@ -82,9 +113,29 @@ export async function runHostileReview(
     if (assumption.status === "unsupported" || assumption.status === "placeholder") {
       findings.push(mustFix(`assumption:${assumption.name}`, "Assumption is not decision-ready.", assumption.value, "Source, replace, or explicitly route this assumption to review."));
     }
+    if (assumption.status === "estimate") {
+      findings.push({
+        location: `assumption:${assumption.name}`,
+        issue: "Assumption is an estimate.",
+        severity: "should_fix",
+        evidence: assumption.value,
+        recommendedRepair: "Confirm owner, date, unit, and acceptable use before relying on this estimate.",
+        humanReviewRequired: true
+      });
+    }
+    if (!assumption.owner && (assumption.status === "estimate" || assumption.status === "unsupported" || assumption.status === "placeholder")) {
+      findings.push({
+        location: `assumption:${assumption.name}`,
+        issue: "High-risk assumption lacks an owner.",
+        severity: "must_fix",
+        evidence: assumption.value,
+        recommendedRepair: "Assign an owner or remove the assumption from decision-ready output.",
+        humanReviewRequired: true
+      });
+    }
   }
 
-  return store.createVerificationFindings(runId, findings);
+  return findings;
 }
 
 function mustFix(location: string, issue: string, evidence: string, recommendedRepair: string): Omit<VerificationFinding, "id" | "runId"> {
@@ -96,4 +147,13 @@ function mustFix(location: string, issue: string, evidence: string, recommendedR
     recommendedRepair,
     humanReviewRequired: true
   };
+}
+
+function getNumberCandidateCount(inspection: { structuredSummary: Record<string, unknown> } | undefined) {
+  if (!inspection) return 0;
+  const summary = inspection.structuredSummary as {
+    numberCandidateCount?: number;
+    workbook?: { numericCellCount?: number; hardcodedNumberCellCount?: number };
+  };
+  return summary.numberCandidateCount ?? summary.workbook?.numericCellCount ?? summary.workbook?.hardcodedNumberCellCount ?? 0;
 }

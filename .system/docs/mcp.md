@@ -5,7 +5,7 @@ Truth Layer OS can run as a local stdio MCP server. This lets Codex, Claude, or 
 ## Run
 
 ```bash
-npm run mcp
+npm --prefix .system run mcp
 ```
 
 ## Client Config

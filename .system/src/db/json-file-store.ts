@@ -38,9 +38,10 @@ export class JsonFileTruthLayerStore implements TruthLayerStore {
   async createRun(input: StartRunInput): Promise<TruthLayerRun> {
     const data = await this.load();
     const now = new Date().toISOString();
+    const id = createId("run");
     const run: TruthLayerRun = {
-      id: createId("run"),
-      slug: slugify(input.name),
+      id,
+      slug: createRunSlug(input.name, id),
       name: input.name,
       artifactKind: input.artifactKind,
       status: "running",
@@ -137,6 +138,14 @@ export class JsonFileTruthLayerStore implements TruthLayerStore {
     return this.append("findings", findings.map((finding) => ({ ...finding, id: createId("finding"), runId })));
   }
 
+  async replaceVerificationFindings(runId: string, findings: Omit<VerificationFinding, "id" | "runId">[]) {
+    const data = await this.load();
+    const created = findings.map((finding) => ({ ...finding, id: createId("finding"), runId }));
+    data.findings = [...data.findings.filter((finding) => finding.runId !== runId), ...created];
+    await this.save(data);
+    return created;
+  }
+
   async listVerificationFindings(runId: string) {
     const data = await this.load();
     return data.findings.filter((finding) => finding.runId === runId);
@@ -197,6 +206,11 @@ function slugify(value: string) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function createRunSlug(name: string, id: string) {
+  const base = slugify(name) || "truth-layer-run";
+  return `${base}-${id.replace(/^run_/, "").slice(0, 8)}`;
 }
 
 function createId(prefix: string) {

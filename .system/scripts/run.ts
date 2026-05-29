@@ -1,6 +1,7 @@
 import { exit } from "node:process";
+import { join } from "node:path";
 import { getDefaultBaseDir } from "../src/artifacts/paths.ts";
-import { MemoryTruthLayerStore } from "../src/db/memory-store.ts";
+import { JsonFileTruthLayerStore } from "../src/db/json-file-store.ts";
 import { runTruthLayerWorkflow } from "../src/chains/truth-layer/workflow.ts";
 import type { ArtifactKind } from "../src/types.ts";
 
@@ -14,8 +15,9 @@ if (!input) {
   exit(1);
 }
 
-const result = await runTruthLayerWorkflow(new MemoryTruthLayerStore(), {
-  baseDir: getDefaultBaseDir(),
+const baseDir = getDefaultBaseDir();
+const result = await runTruthLayerWorkflow(new JsonFileTruthLayerStore(join(baseDir, "deliverables", "truth-layer-store.json")), {
+  baseDir,
   name,
   artifactKind: kind,
   inputPaths: [input]

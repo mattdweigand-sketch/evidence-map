@@ -163,6 +163,15 @@ async function getNextAction(store: TruthLayerStore, runId: string) {
   if (!run) throw new Error(`Unknown run: ${runId}`);
 
   const trustReport = await store.getLatestTrustReport(runId);
+  if (run.status === "failed") {
+    return {
+      runId,
+      status: run.status,
+      gate: "RETRY_WORKFLOW",
+      nextAction: "The workflow failed before a trust report was created. Fix the input or configuration and start a new run."
+    };
+  }
+
   if (!trustReport) {
     return {
       runId,

@@ -13,12 +13,9 @@ export async function evaluateTrust(store: TruthLayerStore, runId: string): Prom
     ...findings.filter((finding) => finding.severity === "must_fix").map((finding) => `${finding.location}: ${finding.issue}`),
     ...conflicts.filter((conflict) => conflict.status === "open" && conflict.severity === "blocking").map((conflict) => conflict.description)
   ];
-  const warnings = [
-    ...sources.filter((source) => source.status === "unclear").map((source) => `${source.name}: source status unclear.`),
-    ...findings.filter((finding) => finding.severity === "should_fix").map((finding) => `${finding.location}: ${finding.issue}`)
-  ];
+  const warnings = findings.filter((finding) => finding.severity === "should_fix").map((finding) => `${finding.location}: ${finding.issue}`);
 
-  const needsReviewCount = findings.filter((finding) => finding.humanReviewRequired).length + warnings.length;
+  const needsReviewCount = findings.filter((finding) => finding.humanReviewRequired).length;
   const readiness: Readiness = blockingIssues.length > 0 ? "blocked" : needsReviewCount > 0 ? "needs_review" : "ready";
 
   return store.createTrustReport({

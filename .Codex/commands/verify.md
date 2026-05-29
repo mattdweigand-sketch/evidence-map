@@ -1,6 +1,6 @@
 # /verify
 
-Inspect the latest verification report for a truth-layer run folder.
+Recompute verification for a truth-layer run folder and rewrite the latest report.
 
 Use:
 

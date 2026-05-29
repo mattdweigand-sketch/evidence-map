@@ -1,6 +1,6 @@
 export type ArtifactKind = "deck" | "workbook" | "document" | "report" | "mixed";
 
-export type RunStatus = "running" | "waiting_for_review" | "blocked" | "export_ready" | "completed";
+export type RunStatus = "running" | "waiting_for_review" | "blocked" | "export_ready" | "completed" | "failed";
 
 export type SourceStatus =
   | "current"

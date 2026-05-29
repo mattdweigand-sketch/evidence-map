@@ -58,6 +58,7 @@ export async function inspectXlsxWorkbook(
       workbook: {
         sheetCount: sheetSummaries.length,
         hiddenSheetCount: sheetSummaries.filter((sheet) => sheet.state !== "visible").length,
+        numericCellCount: sheetSummaries.reduce((sum, sheet) => sum + sheet.numericCellCount, 0),
         formulaCellCount: sheetSummaries.reduce((sum, sheet) => sum + sheet.formulaCellCount, 0),
         hardcodedNumberCellCount: sheetSummaries.reduce((sum, sheet) => sum + sheet.hardcodedNumberCellCount, 0),
         checksSheetDetected: sheetSummaries.some((sheet) => sheet.hasChecksPurpose),
@@ -72,6 +73,7 @@ export async function inspectXlsxWorkbook(
         nonEmptyRowCount: sheet.nonEmptyRowCount,
         blankRowCount: sheet.blankRowCount,
         mergedCellCount: sheet.mergedCellCount,
+        numericCellCount: sheet.numericCellCount,
         formulaCellCount: sheet.formulaCellCount,
         hardcodedNumberCellCount: sheet.hardcodedNumberCellCount,
         headerWarnings: sheet.headerWarnings,
@@ -92,6 +94,7 @@ function inspectWorksheet(worksheet: ExcelJS.Worksheet) {
   const columnsWithValues = new Set<number>();
   const rowFormulaCounts = new Map<number, number>();
   const rowNumericCounts = new Map<number, number>();
+  let numericCellCount = 0;
   const headers = getHeaderCandidates(worksheet);
   const apparentPurpose = inferWorksheetPurpose(worksheet.name, headers);
   const hasCalculationPurpose = ["calculations", "outputs", "checks", "assumptions"].includes(apparentPurpose);
@@ -107,6 +110,7 @@ function inspectWorksheet(worksheet: ExcelJS.Worksheet) {
         rowFormulaCounts.set(rowNumber, (rowFormulaCounts.get(rowNumber) ?? 0) + 1);
       }
       if (typeof number === "number") {
+        numericCellCount += 1;
         rowNumericCounts.set(rowNumber, (rowNumericCounts.get(rowNumber) ?? 0) + 1);
         if (hasCalculationPurpose || (rowFormulaCounts.get(rowNumber) ?? 0) > 0) {
           hardcodedNumbers.push({
@@ -153,6 +157,7 @@ function inspectWorksheet(worksheet: ExcelJS.Worksheet) {
     mergedCellCount: getMergedCellCount(worksheet),
     headers,
     headerWarnings: getHeaderWarnings(headers),
+    numericCellCount,
     formulaCellCount: formulas.length,
     hardcodedNumberCellCount: dedupeHardcodes(hardcodedNumbers).length,
     formulas,

@@ -11,6 +11,8 @@ It is not tied to DDQs or RFPs. It supports board decks, QBRs, budgets, operatin
 ```bash
 npm --prefix .system install
 npm --prefix .system test
+mkdir -p input/board-qbr
+printf "metric,value\nrevenue,100\n" > input/board-qbr/2026-05-01-raw-export.csv
 npm --prefix .system run run -- --name "board-qbr" --kind deck --input input/board-qbr
 ```
 

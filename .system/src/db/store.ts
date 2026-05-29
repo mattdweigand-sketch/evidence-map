@@ -42,6 +42,10 @@ export interface TruthLayerStore {
     runId: string,
     findings: Omit<VerificationFinding, "id" | "runId">[]
   ): Promise<VerificationFinding[]>;
+  replaceVerificationFindings(
+    runId: string,
+    findings: Omit<VerificationFinding, "id" | "runId">[]
+  ): Promise<VerificationFinding[]>;
   listVerificationFindings(runId: string): Promise<VerificationFinding[]>;
 
   createTrustReport(report: Omit<TrustReport, "id">): Promise<TrustReport>;

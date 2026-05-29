@@ -47,21 +47,21 @@ Assumption records:
 
 ## Readiness Rules
 
-An artifact is blocked when:
+Current implemented blocking rules:
 
 - A required source is missing.
 - A claim has no source.
-- A number has no source date.
-- A chart lacks traceable data.
+- A number-bearing inspected source has no valid source date candidate.
 - A calculation has unresolved formula risk.
 - A source conflict remains open.
 - A high-risk assumption lacks an owner or status.
+- A source inspection fails.
 
-An artifact needs review when:
+Current implemented review rules:
 
 - A claim is sourced but the source is stale or background-only.
 - An assumption is an estimate.
-- A calculation depends on manual judgment.
 - A reviewer must choose between conflicting sources.
+- A source is unclear, unsupported, or metadata-only.
 
-An artifact is ready only when blocking issues are zero and required review is complete.
+Chart traceability, slide-level source checks, and document-level claim extraction are enforced only after those records exist. PowerPoint, Word, and PDF are metadata-only in the current version. An artifact is ready only when blocking issues are zero and required review findings are cleared or explicitly accepted outside the harness.

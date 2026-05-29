@@ -18,6 +18,8 @@ Truth Layer OS builds the control layer around that artifact: source inventory, 
 ```bash
 npm --prefix .system install
 npm --prefix .system test
+mkdir -p input/board-qbr
+printf "metric,value\nrevenue,100\n" > input/board-qbr/2026-05-01-raw-export.csv
 npm --prefix .system run run -- --name "board-qbr" --kind deck --input input/board-qbr
 ```
 
@@ -27,7 +29,7 @@ For interactive agent workflows, run the MCP server:
 npm --prefix .system run mcp
 ```
 
-The MCP surface is documented in `.system/docs/mcp.md`. MCP state persists at `deliverables/truth-layer-store.json`. The CLI remains useful for smoke tests, fixtures, and CI.
+The MCP surface is documented in `.system/docs/mcp.md`. MCP and CLI run state persists at `deliverables/truth-layer-store.json`. The CLI remains useful for smoke tests, fixtures, and CI.
 
 ## Why It Exists
 
@@ -45,7 +47,7 @@ The root is the operator workspace:
 - `deliverables/`: source packets, verification reports, review artifacts, and export gates.
 - `.system/`: implementation, docs, tests, scripts, package manifest, and MCP server.
 
-Runs live under `deliverables/<run-slug>/`:
+Runs live under `deliverables/<run-slug>/`. Slugs include a short run ID suffix so repeated names do not overwrite prior artifacts:
 
 - `01_source-packet/`: source inventory and conflict log.
 - `01_source-packet/file-inspections.json`: parser status, metadata, warnings, and structured summaries for inspected files.
@@ -55,7 +57,7 @@ Runs live under `deliverables/<run-slug>/`:
 
 ## Current State
 
-This is the general-purpose foundation. It now records file-inspection outputs for source prep. CSV/text/Markdown are inspected directly. `.xlsx` files get a first Workbook Doctor pass for sheet inventory, hidden sheets, headers, formulas, hardcodes, missing checks sheets, and repeated static formulas. Workbook risks are promoted into verification findings. PowerPoint, Word, and PDF files are still metadata-only until their deep parsers land.
+This is the general-purpose foundation. It now records file-inspection outputs for source prep. CSV/TSV/text/Markdown are inspected directly. Source folders are expanded recursively. `.xlsx` files get a first Workbook Doctor pass for sheet inventory, hidden sheets, headers, formulas, hardcodes, missing checks sheets, and repeated static formulas. Workbook risks are promoted into verification findings. PowerPoint, Word, and PDF files are still metadata-only until their deep parsers land.
 
 ## License
 

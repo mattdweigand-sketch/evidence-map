@@ -1,8 +1,11 @@
 import { stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
+import { firstDateCandidate } from "../date-candidates.ts";
 import type { SourceConflict, SourceRecord, SourceStatus } from "../types.ts";
 import { buildFileInspections } from "../inspect/index.ts";
 import { expandInputPaths } from "./expand-input-paths.ts";
+
+type SourceConflictDraft = Omit<SourceConflict, "id" | "runId"> & { sourcePaths: string[] };
 
 export async function buildSourcePacket(inputPaths: string[]) {
   const filePaths = await expandInputPaths(inputPaths);
@@ -19,26 +22,21 @@ async function toSourceRecord(path: string): Promise<Omit<SourceRecord, "id" | "
     path,
     fileType: extname(path).replace(".", "").toLowerCase() || "unknown",
     status: inferStatus(name),
-    sourceDate: inferDate(name),
+    sourceDate: firstDateCandidate(name),
     intendedUse: inferIntendedUse(name),
     notes: `Imported ${info.size} bytes from source folder.`
   };
 }
 
 function inferStatus(name: string): SourceStatus {
-  const lower = name.toLowerCase();
-  if (lower.includes("superseded") || lower.includes("old") || lower.includes("archive")) return "superseded";
-  if (lower.includes("transcript") || lower.includes("call")) return "transcript";
-  if (lower.includes("estimate") || lower.includes("forecast") || lower.includes("plan")) return "estimate";
-  if (lower.includes("raw") || lower.includes("export")) return "raw_data";
-  if (lower.includes("background") || lower.includes("reference")) return "background";
+  const tokens = name.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  const hasToken = (...values: string[]) => values.some((value) => tokens.includes(value));
+  if (hasToken("superseded", "old", "archive", "archived")) return "superseded";
+  if (hasToken("transcript", "call")) return "transcript";
+  if (hasToken("estimate", "forecast", "plan")) return "estimate";
+  if (hasToken("raw", "export")) return "raw_data";
+  if (hasToken("background", "reference")) return "background";
   return "unclear";
-}
-
-function inferDate(name: string) {
-  const match = name.match(/(20\d{2})[-_]?([01]\d)[-_]?([0-3]\d)/);
-  if (!match) return undefined;
-  return `${match[1]}-${match[2]}-${match[3]}`;
 }
 
 function inferIntendedUse(name: string) {
@@ -49,11 +47,16 @@ function inferIntendedUse(name: string) {
   return "Source material requiring human classification.";
 }
 
-function inferSourceConflicts(sources: Omit<SourceRecord, "id" | "runId">[]): Omit<SourceConflict, "id" | "runId">[] {
-  const conflicts: Omit<SourceConflict, "id" | "runId">[] = [];
+function inferSourceConflicts(sources: Omit<SourceRecord, "id" | "runId">[]): SourceConflictDraft[] {
+  const conflicts: SourceConflictDraft[] = [];
   const byStem = new Map<string, Omit<SourceRecord, "id" | "runId">[]>();
   for (const source of sources) {
-    const stem = source.name.toLowerCase().replace(/\.(xlsx|csv|pptx|docx|pdf|md|txt)$/i, "").replace(/(old|final|v\d+|draft|copy)/g, "").trim();
+    const stem = source.name
+      .toLowerCase()
+      .replace(/\.(xlsx|xlsm|csv|tsv|pptx|docx|pdf|md|txt)$/i, "")
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token && !["old", "final", "draft", "copy"].includes(token) && !/^v\d+$/.test(token))
+      .join("-");
     byStem.set(stem, [...(byStem.get(stem) ?? []), source]);
   }
 
@@ -62,6 +65,7 @@ function inferSourceConflicts(sources: Omit<SourceRecord, "id" | "runId">[]): Om
     if (group.length > 1 && statuses.size > 1) {
       conflicts.push({
         sourceIds: [],
+        sourcePaths: group.map((source) => source.path),
         description: `Potential version/status conflict across: ${group.map((source) => source.name).join(", ")}`,
         severity: "warning",
         status: "open"

@@ -27,9 +27,10 @@ export class MemoryTruthLayerStore implements TruthLayerStore {
 
   async createRun(input: StartRunInput): Promise<TruthLayerRun> {
     const now = new Date().toISOString();
+    const id = createId("run");
     const run: TruthLayerRun = {
-      id: createId("run"),
-      slug: slugify(input.name),
+      id,
+      slug: createRunSlug(input.name, id),
       name: input.name,
       artifactKind: input.artifactKind,
       status: "running",
@@ -118,6 +119,12 @@ export class MemoryTruthLayerStore implements TruthLayerStore {
     return this.append(this.findings, runId, findings.map((finding) => ({ ...finding, id: createId("finding"), runId })));
   }
 
+  async replaceVerificationFindings(runId: string, findings: Omit<VerificationFinding, "id" | "runId">[]) {
+    const created = findings.map((finding) => ({ ...finding, id: createId("finding"), runId }));
+    this.findings.set(runId, created);
+    return created;
+  }
+
   async listVerificationFindings(runId: string) {
     return this.findings.get(runId) ?? [];
   }
@@ -152,6 +159,11 @@ export function slugify(value: string) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function createRunSlug(name: string, id: string) {
+  const base = slugify(name) || "truth-layer-run";
+  return `${base}-${id.replace(/^run_/, "").slice(0, 8)}`;
 }
 
 function createId(prefix: string) {

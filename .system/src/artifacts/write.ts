@@ -27,6 +27,7 @@ export async function writeRunArtifacts(input: {
   const exportDir = join(runDir, "04_export");
   await Promise.all([sourceDir, specDir, verifyDir, exportDir].map((dir) => mkdir(dir, { recursive: true })));
 
+  await writeJson(join(runDir, "run.json"), input.run);
   await writeJson(join(sourceDir, "source-inventory.json"), input.sources);
   await writeJson(join(sourceDir, "file-inspections.json"), input.inspections);
   await writeJson(join(sourceDir, "source-conflicts.json"), input.conflicts);
@@ -54,8 +55,8 @@ function renderSourcePacket(sources: SourceRecord[], inspections: FileInspection
     ? inspections.map((inspection) => `| ${inspection.sourceId ?? ""} | ${inspection.parser} | ${inspection.status} | ${inspection.sourceDateCandidates.join(", ")} | ${inspection.warnings.join(" ")} |`).join("\n")
     : "| none |  |  |  |  |";
   const conflictRows = conflicts.length
-    ? conflicts.map((conflict) => `| ${conflict.severity} | ${conflict.status} | ${conflict.description} |`).join("\n")
-    : "| none | resolved | No inferred conflicts. |";
+    ? conflicts.map((conflict) => `| ${conflict.severity} | ${conflict.status} | ${conflict.sourceIds.join(", ")} | ${conflict.description} |`).join("\n")
+    : "| none | resolved |  | No inferred conflicts. |";
   return `# Source Packet
 
 ## Source Inventory
@@ -72,8 +73,8 @@ ${inspectionRows}
 
 ## Conflict Log
 
-| Severity | Status | Description |
-|---|---|---|
+| Severity | Status | Source IDs | Description |
+|---|---|---|---|
 ${conflictRows}
 `;
 }
@@ -126,9 +127,14 @@ function renderExportGate(report: TrustReport) {
     return "# Export Gate\n\nReady for artifact approval or export.\n";
   }
 
+  const gateText =
+    report.readiness === "blocked"
+      ? "Artifact approval is blocked until verification issues are resolved."
+      : "Artifact approval requires human review before export.";
+
   return `# Export Gate
 
-Artifact approval is blocked until verification issues are resolved.
+${gateText}
 
 Readiness: ${report.readiness}
 

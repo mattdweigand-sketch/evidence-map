@@ -1,5 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
+import { inferDateCandidates } from "../date-candidates.ts";
 import type { FileInspectionRecord } from "../types.ts";
 import { expandInputPaths } from "../ingest/expand-input-paths.ts";
 import { inspectXlsxWorkbook } from "./xlsx.ts";
@@ -60,14 +61,15 @@ async function inspectDelimitedText(
 ): Promise<FileInspectionDraft> {
   const content = await readSmallText(base.path);
   const delimiter = fileType === "tsv" ? "\t" : ",";
-  const rows = content.split(/\r?\n/);
-  const nonEmptyRows = rows.filter((row) => row.trim().length > 0);
-  const header = nonEmptyRows[0] ?? "";
-  const headers = header.split(delimiter).map((value) => value.trim()).filter(Boolean);
-  const columnCounts = nonEmptyRows.map((row) => row.split(delimiter).length);
+  const rows = parseDelimitedRows(content, delimiter);
+  const nonEmptyRows = rows.filter((row) => row.some((value) => value.trim().length > 0));
+  const header = nonEmptyRows[0] ?? [];
+  const headers = header.map((value) => value.trim()).filter(Boolean);
+  const columnCounts = nonEmptyRows.map((row) => row.length);
   const expectedColumnCount = columnCounts[0] ?? 0;
   const inconsistentRows = columnCounts.filter((count) => count !== expectedColumnCount).length;
   const duplicateHeaders = headers.filter((headerValue, index) => headers.indexOf(headerValue) !== index);
+  const numberCandidateCount = nonEmptyRows.slice(1).flat().filter(isNumberLike).length;
   const warnings = [
     ...(headers.length === 0 ? ["No header row detected."] : []),
     ...(duplicateHeaders.length > 0 ? [`Duplicate headers detected: ${[...new Set(duplicateHeaders)].join(", ")}.`] : []),
@@ -87,7 +89,8 @@ async function inspectDelimitedText(
       headerCount: headers.length,
       headers,
       blankRowCount: rows.length - nonEmptyRows.length,
-      inconsistentRowCount: inconsistentRows
+      inconsistentRowCount: inconsistentRows,
+      numberCandidateCount
     },
     textPreview: previewText(content),
     warnings
@@ -179,21 +182,57 @@ function previewText(value: string) {
   return value.replace(/\s+/g, " ").trim().slice(0, 500);
 }
 
-function inferDateCandidates(value: string) {
-  const candidates = new Set<string>();
-  for (const match of value.matchAll(/\b(20\d{2})[-_/]?([01]\d)[-_/]?([0-3]\d)\b/g)) {
-    candidates.add(`${match[1]}-${match[2]}-${match[3]}`);
-  }
-  for (const match of value.matchAll(/\b([01]\d)[-_/]([0-3]\d)[-_/](20\d{2})\b/g)) {
-    candidates.add(`${match[3]}-${match[1]}-${match[2]}`);
-  }
-  return [...candidates].sort();
-}
-
 function inferOwnerCandidates(value: string) {
   const candidates = new Set<string>();
   for (const match of value.matchAll(/\b(?:owner|prepared by|author)\s*:\s*([^\n\r]+)/gi)) {
     candidates.add(match[1].trim().slice(0, 120));
   }
   return [...candidates];
+}
+
+function parseDelimitedRows(content: string, delimiter: string) {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < content.length; index += 1) {
+    const char = content[index];
+    const next = content[index + 1];
+
+    if (char === "\"") {
+      if (inQuotes && next === "\"") {
+        field += "\"";
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === delimiter && !inQuotes) {
+      row.push(field);
+      field = "";
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+      continue;
+    }
+
+    field += char;
+  }
+
+  row.push(field);
+  rows.push(row);
+  return rows;
+}
+
+function isNumberLike(value: string) {
+  return /^-?\d{1,3}(?:,\d{3})*(?:\.\d+)?%?$|^-?\d+(?:\.\d+)?%?$/.test(value.trim());
 }
