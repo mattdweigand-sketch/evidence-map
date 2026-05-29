@@ -114,7 +114,7 @@ export interface ArtifactSpec {
   narrativeSpine: string;
   structure: string[];
   requiredChecks: string[];
-  creationRules: string[];
+  reviewRules: string[];
 }
 
 export interface VerificationFinding {

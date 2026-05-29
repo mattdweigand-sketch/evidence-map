@@ -1,6 +1,6 @@
 # /verify
 
-Inspect the latest verification report for a generated run folder.
+Inspect the latest verification report for a truth-layer run folder.
 
 Use:
 

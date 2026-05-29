@@ -95,9 +95,9 @@ ${spec.structure.map((item) => `- ${item}`).join("\n")}
 
 ${spec.requiredChecks.map((item) => `- ${item}`).join("\n")}
 
-## Creation Rules
+## Review Rules
 
-${spec.creationRules.map((item) => `- ${item}`).join("\n")}
+${spec.reviewRules.map((item) => `- ${item}`).join("\n")}
 `;
 }
 
@@ -123,12 +123,12 @@ ${findingRows}
 
 function renderExportGate(report: TrustReport) {
   if (report.readiness === "ready") {
-    return "# Export Gate\n\nReady for final artifact generation.\n";
+    return "# Export Gate\n\nReady for artifact approval or export.\n";
   }
 
   return `# Export Gate
 
-Final artifact generation is blocked until verification issues are resolved.
+Artifact approval is blocked until verification issues are resolved.
 
 Readiness: ${report.readiness}
 

@@ -1,16 +1,19 @@
 # Truth Layer OS
 
-Truth Layer OS helps turn messy source folders into Office artifacts that can be defended after they leave the room.
+Truth Layer OS makes Office artifacts inspectable before they get shipped.
 
-It does not start by making a deck or workbook. It starts with the truth layer: source inventory, conflict log, assumptions, artifact specification, evidence map, and hostile verification.
+It is not a deck, workbook, or report generator. The artifact can come from PowerPoint, Excel, ChatGPT, Claude, an RFP tool, or a human draft.
+
+Truth Layer OS builds the control layer around that artifact: source inventory, conflict log, assumptions, artifact specification, evidence map, hostile verification, and export readiness.
 
 ## Core Workflow
 
 1. Put source files in `input/<project-slug>/`.
-2. Run the workflow.
+2. Build the truth layer.
 3. Review the source packet and artifact specification.
-4. Generate or attach the deck, workbook, report, or mixed artifact.
-5. Run verification before export.
+4. Add the draft artifact or artifact outline.
+5. Map claims, numbers, assumptions, and calculations back to evidence.
+6. Run verification before export.
 
 ```bash
 npm --prefix .system install
@@ -30,7 +33,7 @@ The MCP surface is documented in `.system/docs/mcp.md`. MCP state persists at `d
 
 AI can make files that look finished before they are true. A chart can mix actuals and plan data. A workbook can contain hardcoded projections instead of live formulas. A deck can carry claims with no source trail.
 
-Truth Layer OS exposes the claim layer before the final artifact gets created. Every claim, number, assumption, and calculation becomes inspectable first.
+Truth Layer OS exposes the claim layer before the artifact is approved. Every claim, number, assumption, and calculation becomes inspectable first.
 
 That avoids the dangerous failure mode where something looks polished before anyone has checked whether the underlying content is true, current, approved, and safe to reuse.
 
@@ -39,16 +42,16 @@ That avoids the dangerous failure mode where something looks polished before any
 The root is the operator workspace:
 
 - `input/`: source folders. Use one lowercase project-named subfolder per job.
-- `deliverables/`: generated source packets, verification reports, review artifacts, and export gates.
+- `deliverables/`: source packets, verification reports, review artifacts, and export gates.
 - `.system/`: implementation, docs, tests, scripts, package manifest, and MCP server.
 
-Generated runs live under `deliverables/<run-slug>/`:
+Runs live under `deliverables/<run-slug>/`:
 
 - `01_source-packet/`: source inventory and conflict log.
 - `01_source-packet/file-inspections.json`: parser status, metadata, warnings, and structured summaries for inspected files.
 - `02_artifact-spec/`: deck, workbook, document, or mixed artifact specification.
 - `03_verification/`: hostile-review findings and readiness report.
-- `04_export/`: gated placeholder for final artifacts.
+- `04_export/`: readiness gate for approved artifacts.
 
 ## Current State
 

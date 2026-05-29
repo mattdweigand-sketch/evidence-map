@@ -1,6 +1,6 @@
 # Trust Layer
 
-The trust layer makes generated work inspectable.
+The trust layer makes polished work inspectable, no matter where the draft artifact was created.
 
 ## Required Records
 

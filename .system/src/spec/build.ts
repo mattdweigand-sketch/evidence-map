@@ -10,7 +10,7 @@ export function buildArtifactSpec(input: {
     artifactKind: input.artifactKind,
     audience: "Named human reviewer or decision maker.",
     decisionContext: "Artifact will be shared beyond the immediate working context.",
-    narrativeSpine: `Create a defensible ${input.artifactKind} for ${input.name} from an approved source packet.`,
+    narrativeSpine: `Review a defensible ${input.artifactKind} for ${input.name} against the approved source packet.`,
     structure: structureFor(input.artifactKind),
     requiredChecks: [
       "Every material claim has a source ID.",
@@ -19,8 +19,8 @@ export function buildArtifactSpec(input: {
       "Every calculation identifies inputs and expected behavior.",
       "Every unresolved conflict is visible before export."
     ],
-    creationRules: [
-      "Do not create the final artifact until the source packet and specification are reviewed.",
+    reviewRules: [
+      "Do not approve the artifact until the source packet and specification are reviewed.",
       "Preserve source IDs in notes, evidence maps, or check tabs.",
       "Label assumptions as assumptions.",
       "Do not hardcode calculated outputs where formulas are expected.",

@@ -40,6 +40,6 @@ The MCP server uses `JsonFileTruthLayerStore` by default and writes durable stat
 deliverables/truth-layer-store.json
 ```
 
-It can run the existing control-plane workflow and write local artifacts under `deliverables/`. Postgres can replace the JSON store when recurring update history and multi-run source/version tracking matter.
+It can run the existing truth-layer workflow and write local review artifacts under `deliverables/`. Postgres can replace the JSON store when recurring update history and multi-run source/version tracking matter.
 
 The server does not send files externally, write production databases, or bypass verification gates.

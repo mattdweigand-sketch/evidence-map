@@ -1,10 +1,10 @@
 # Product Direction
 
-Truth Layer OS is a workflow harness for AI-assisted Office work that needs to survive being forwarded.
+Truth Layer OS is a truth and review layer for Office work that needs to survive being forwarded.
 
 ## Problem
 
-AI can create polished decks, spreadsheets, documents, and reports from messy source folders. The file can look done before it is true.
+AI and humans can create polished decks, spreadsheets, documents, and reports that look done before they are true.
 
 Common failures:
 
@@ -17,16 +17,17 @@ Common failures:
 
 ## Principle
 
-The generated file is not the first artifact. The truth layer is.
+The polished file is not the first artifact. The truth layer is.
 
 The workflow is:
 
 1. Source prep.
 2. Structure.
-3. File creation.
-4. Verification.
+3. Artifact intake.
+4. Evidence mapping.
+5. Verification.
 
-The first two stages are mandatory.
+Source prep, structure, and evidence mapping are mandatory.
 
 ## Target Artifacts
 
@@ -42,7 +43,7 @@ The first two stages are mandatory.
 
 ## First Version
 
-The first version creates the control plane:
+The first version creates the control layer:
 
 - Source inventory.
 - Conflict log.
@@ -53,4 +54,4 @@ The first version creates the control plane:
 - Readiness report.
 - Gated export folder.
 
-It does not yet render final Office files.
+It does not render final Office files. Draft artifacts can be created elsewhere and routed through the truth layer for review.

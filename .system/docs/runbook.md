@@ -17,17 +17,28 @@ Do not create slides, formulas, or final copy yet.
 
 ## 2. Structure
 
-For a deck, create a narrative spine and slide map with claim headlines, source IDs, visuals, assumptions, open questions, notes, and review status.
+For a deck, define the narrative spine and slide map with claim headlines, source IDs, visuals, assumptions, open questions, notes, and review status.
 
-For a workbook, create a tab architecture with raw data, assumptions, calculations, outputs, checks, and documentation.
+For a workbook, define the tab architecture with raw data, assumptions, calculations, outputs, checks, and documentation.
 
-For a document or report, create a section map with claims, sources, open issues, and review needs.
+For a document or report, define the section map with claims, sources, open issues, and review needs.
 
-## 3. Creation
+## 3. Artifact Intake
 
-Create the file from the approved source packet and specification.
+Add the draft artifact or artifact outline to the run.
 
-Preserve source IDs. Label assumptions. Keep formulas inspectable. Put evidence in speaker notes or a companion evidence map.
+The draft can come from PowerPoint, Excel, ChatGPT, Claude, an RFP tool, or a human author. Truth Layer OS does not need to generate it.
+
+Map the artifact back to the truth layer:
+
+- Claims.
+- Numbers.
+- Charts.
+- Tables.
+- Formulas.
+- Assumptions.
+
+Preserve source IDs. Label assumptions. Keep formulas inspectable. Put evidence in speaker notes, a checks tab, or a companion evidence map.
 
 ## 4. Verification
 

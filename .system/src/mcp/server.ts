@@ -38,7 +38,7 @@ export function createTruthLayerMcpServer(store: TruthLayerStore = createDefault
     "truthlayer_run_workflow",
     {
       title: "Run Truth Layer Workflow",
-      description: "Run source prep, artifact spec, hostile verification, trust evaluation, and local artifact writing.",
+      description: "Run source prep, artifact spec, hostile verification, trust evaluation, and local review artifact writing.",
       inputSchema: {
         name: z.string(),
         artifactKind: artifactKindSchema,
@@ -199,7 +199,7 @@ async function getNextAction(store: TruthLayerStore, runId: string) {
     status: run.status,
     readiness: trustReport.readiness,
     gate: "EXPORT_READY",
-    nextAction: "The run is ready for final artifact generation or export preview."
+    nextAction: "The run is ready for artifact approval or export preview."
   };
 }
 
