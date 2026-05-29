@@ -1,0 +1,46 @@
+{
+  "name": "truth-layer-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP-first truth-layer harness for defensible AI-generated Office artifacts.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mattdweigand-sketch/truth-layer-os.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mattdweigand-sketch/truth-layer-os/issues"
+  },
+  "homepage": "https://github.com/mattdweigand-sketch/truth-layer-os#readme",
+  "keywords": [
+    "ai",
+    "office",
+    "mcp",
+    "powerpoint",
+    "excel",
+    "verification",
+    "workflow",
+    "truth-layer"
+  ],
+  "type": "module",
+  "scripts": {
+    "run": "node --experimental-strip-types scripts/run.ts",
+    "inspect": "node --experimental-strip-types scripts/inspect.ts",
+    "mcp": "node --experimental-strip-types src/mcp/server.ts",
+    "verify": "node --experimental-strip-types scripts/verify.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test \"tests/**/*.test.ts\""
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "exceljs": "^4.4.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "typescript": "^6.0.3"
+  }
+}

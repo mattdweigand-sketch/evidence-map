@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: .system/package-lock.json
+
+      - name: Install
+        run: npm ci --prefix .system
+
+      - name: Typecheck
+        run: npm --prefix .system run typecheck
+
+      - name: Test
+        run: npm --prefix .system test

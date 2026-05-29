@@ -1,0 +1,139 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import type {
+  ArtifactSpec,
+  FileInspectionRecord,
+  SourceConflict,
+  SourceRecord,
+  TruthLayerRun,
+  TrustReport,
+  VerificationFinding
+} from "../types.ts";
+
+export async function writeRunArtifacts(input: {
+  baseDir: string;
+  run: TruthLayerRun;
+  sources: SourceRecord[];
+  inspections: FileInspectionRecord[];
+  conflicts: SourceConflict[];
+  spec: ArtifactSpec;
+  findings: VerificationFinding[];
+  trustReport: TrustReport;
+}) {
+  const runDir = join(input.baseDir, "deliverables", input.run.slug);
+  const sourceDir = join(runDir, "01_source-packet");
+  const specDir = join(runDir, "02_artifact-spec");
+  const verifyDir = join(runDir, "03_verification");
+  const exportDir = join(runDir, "04_export");
+  await Promise.all([sourceDir, specDir, verifyDir, exportDir].map((dir) => mkdir(dir, { recursive: true })));
+
+  await writeJson(join(sourceDir, "source-inventory.json"), input.sources);
+  await writeJson(join(sourceDir, "file-inspections.json"), input.inspections);
+  await writeJson(join(sourceDir, "source-conflicts.json"), input.conflicts);
+  await writeFile(join(sourceDir, "source-packet.md"), renderSourcePacket(input.sources, input.inspections, input.conflicts));
+
+  await writeJson(join(specDir, "artifact-spec.json"), input.spec);
+  await writeFile(join(specDir, "artifact-spec.md"), renderSpec(input.spec));
+
+  await writeJson(join(verifyDir, "verification-findings.json"), input.findings);
+  await writeJson(join(verifyDir, "trust-report.json"), input.trustReport);
+  await writeFile(join(verifyDir, "verification-report.md"), renderVerification(input.findings, input.trustReport));
+
+  await writeFile(join(exportDir, "README.md"), renderExportGate(input.trustReport));
+
+  return { runDir, sourceDir, specDir, verifyDir, exportDir };
+}
+
+function writeJson(path: string, value: unknown) {
+  return writeFile(path, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function renderSourcePacket(sources: SourceRecord[], inspections: FileInspectionRecord[], conflicts: SourceConflict[]) {
+  const sourceRows = sources.map((source) => `| ${source.id} | ${source.name} | ${source.fileType} | ${source.status} | ${source.sourceDate ?? ""} | ${source.intendedUse} |`).join("\n");
+  const inspectionRows = inspections.length
+    ? inspections.map((inspection) => `| ${inspection.sourceId ?? ""} | ${inspection.parser} | ${inspection.status} | ${inspection.sourceDateCandidates.join(", ")} | ${inspection.warnings.join(" ")} |`).join("\n")
+    : "| none |  |  |  |  |";
+  const conflictRows = conflicts.length
+    ? conflicts.map((conflict) => `| ${conflict.severity} | ${conflict.status} | ${conflict.description} |`).join("\n")
+    : "| none | resolved | No inferred conflicts. |";
+  return `# Source Packet
+
+## Source Inventory
+
+| ID | Name | Type | Status | Date | Intended use |
+|---|---|---|---|---|---|
+${sourceRows || "| none |  |  |  |  |  |"}
+
+## File Inspections
+
+| Source ID | Parser | Status | Date candidates | Warnings |
+|---|---|---|---|---|
+${inspectionRows}
+
+## Conflict Log
+
+| Severity | Status | Description |
+|---|---|---|
+${conflictRows}
+`;
+}
+
+function renderSpec(spec: ArtifactSpec) {
+  return `# Artifact Specification
+
+Audience: ${spec.audience}
+
+Decision context: ${spec.decisionContext}
+
+Narrative spine: ${spec.narrativeSpine}
+
+## Structure
+
+${spec.structure.map((item) => `- ${item}`).join("\n")}
+
+## Required Checks
+
+${spec.requiredChecks.map((item) => `- ${item}`).join("\n")}
+
+## Creation Rules
+
+${spec.creationRules.map((item) => `- ${item}`).join("\n")}
+`;
+}
+
+function renderVerification(findings: VerificationFinding[], report: TrustReport) {
+  const findingRows = findings.length
+    ? findings.map((finding) => `| ${finding.severity} | ${finding.location} | ${finding.issue} | ${finding.recommendedRepair} |`).join("\n")
+    : "| none | all | No findings. | No repair needed. |";
+  return `# Verification Report
+
+Readiness: ${report.readiness}
+
+Blocking issues: ${report.summary.blockingCount}
+
+Needs review: ${report.summary.needsReviewCount}
+
+## Findings
+
+| Severity | Location | Issue | Repair |
+|---|---|---|---|
+${findingRows}
+`;
+}
+
+function renderExportGate(report: TrustReport) {
+  if (report.readiness === "ready") {
+    return "# Export Gate\n\nReady for final artifact generation.\n";
+  }
+
+  return `# Export Gate
+
+Final artifact generation is blocked until verification issues are resolved.
+
+Readiness: ${report.readiness}
+
+Blocking issues:
+
+${report.blockingIssues.map((issue) => `- ${issue}`).join("\n") || "- None"}
+`;
+}

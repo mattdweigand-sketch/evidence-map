@@ -1,0 +1,9 @@
+node_modules/
+.env
+.system/.env
+.DS_Store
+.Codex/settings.local.json
+deliverables/*
+!deliverables/.gitkeep
+input/*
+!input/.gitkeep
