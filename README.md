@@ -1,6 +1,6 @@
 # Truth Layer OS
 
-Truth Layer OS makes Office artifacts inspectable before they get shipped.
+Truth Layer OS makes work deliverables inspectable before they get shipped.
 
 It is not a deck, workbook, or report generator. The artifact can come from PowerPoint, Excel, ChatGPT, Claude, an RFP tool, or a human draft.
 
