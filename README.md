@@ -30,7 +30,9 @@ The MCP surface is documented in `.system/docs/mcp.md`. MCP state persists at `d
 
 AI can make files that look finished before they are true. A chart can mix actuals and plan data. A workbook can contain hardcoded projections instead of live formulas. A deck can carry claims with no source trail.
 
-Truth Layer OS is the harness around that work. Every claim should know where it came from. Every calculation should know what it depends on. Every assumption should be labeled as one.
+Truth Layer OS exposes the claim layer before the final artifact gets created. Every claim, number, assumption, and calculation becomes inspectable first.
+
+That avoids the dangerous failure mode where something looks polished before anyone has checked whether the underlying content is true, current, approved, and safe to reuse.
 
 ## Output
 
