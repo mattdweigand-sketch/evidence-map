@@ -11,7 +11,7 @@ const kind = (args.kind ?? "mixed") as ArtifactKind;
 const input = args.input;
 
 if (!input) {
-  console.error("Usage: npm --prefix .system run run -- --name sample-project --kind document --input input/sample-project");
+  console.error("Usage: npm --prefix .system run run -- --name capstone-report --kind document --input input/examples/capstone-report");
   exit(1);
 }
 

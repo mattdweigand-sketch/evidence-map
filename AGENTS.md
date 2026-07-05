@@ -17,8 +17,8 @@ npm --prefix .system run run -- --name "capstone-report" --kind document --input
 Useful commands:
 
 ```bash
-npm --prefix .system run inspect -- --input input/sample-project
-npm --prefix .system run verify -- --run deliverables/sample-project
+npm --prefix .system run inspect -- --input input/examples/capstone-report
+npm --prefix .system run verify -- --run "$(find deliverables -maxdepth 1 -type d -name 'capstone-report-*' | sort | tail -n 1)"
 npm --prefix .system run mcp
 ```
 
