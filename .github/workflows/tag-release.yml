@@ -7,6 +7,9 @@ on:
         description: Tag name
         required: true
         default: v0.1.0
+      target:
+        description: Commit SHA to tag
+        required: true
 
 permissions:
   contents: write
@@ -16,9 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Create and push annotated tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "${{ inputs.tag }}" -m "Evidence Map public template ${{ inputs.tag }}"
+          git tag -a "${{ inputs.tag }}" "${{ inputs.target }}" -m "Evidence Map public template ${{ inputs.tag }}"
           git push origin "refs/tags/${{ inputs.tag }}"
