@@ -1,5 +1,5 @@
 import { quoteHash } from "./passages.ts";
-import type { LegalFindingCategory, LegalFindingDraft, LegalPassageRecord, LegalPropositionRecord, LegalSourceRecord } from "./types.ts";
+import type { LegalEvidenceMap, LegalFindingCategory, LegalFindingDraft, LegalPassageRecord, LegalPropositionRecord, LegalSourceRecord } from "./types.ts";
 
 const pinpointRequiredTypes = new Set<LegalPropositionRecord["propositionType"]>(["rule", "holding", "quote", "record_fact", "citation"]);
 const recordSourceKinds = new Set<LegalSourceRecord["sourceKind"]>(["case", "brief", "motion", "order", "contract", "exhibit", "transcript"]);
@@ -184,6 +184,29 @@ export function buildLegalTrustFindings(input: {
   return findings;
 }
 
+export function buildLegalDraftDisciplineFindings(input: {
+  legalEvidenceMap: LegalEvidenceMap;
+  draftPropositions: LegalPropositionRecord[];
+}): LegalFindingDraft[] {
+  const mappedTexts = new Set(input.legalEvidenceMap.propositions.map((proposition) => normalizePropositionText(proposition.text)));
+  const findings: LegalFindingDraft[] = [];
+
+  for (const proposition of input.draftPropositions) {
+    if (mappedTexts.has(normalizePropositionText(proposition.text))) continue;
+    findings.push(
+      mustFix(
+        proposition.artifactLocation,
+        "Draft legal proposition is not represented in the legal evidence map.",
+        draftDisciplineCategory(proposition),
+        `${proposition.propositionType}: ${proposition.text}`,
+        "Add this proposition to the legal evidence map with source and passage support, or remove it from the draft."
+      )
+    );
+  }
+
+  return findings;
+}
+
 function mustFix(
   location: string,
   issue: string,
@@ -218,4 +241,21 @@ function shouldFix(
     recommendedRepair,
     humanReviewRequired: true
   };
+}
+
+function normalizePropositionText(value: string) {
+  return value.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function draftDisciplineCategory(proposition: LegalPropositionRecord): LegalFindingCategory {
+  if (proposition.propositionType === "conclusion" || proposition.propositionType === "application" || proposition.propositionType === "counterargument") {
+    return "conclusion_outpaces_support";
+  }
+  if (proposition.propositionType === "record_fact" || proposition.propositionType === "procedural_fact" || proposition.propositionType === "quote") {
+    return "missing_pinpoint";
+  }
+  if (proposition.propositionType === "citation" || proposition.propositionType === "rule" || proposition.propositionType === "holding") {
+    return "model_knowledge_leak";
+  }
+  return "missing_authority";
 }

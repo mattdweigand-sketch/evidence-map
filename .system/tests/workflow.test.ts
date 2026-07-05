@@ -115,6 +115,10 @@ test("legal profile workflow writes legal source packet artifacts", async () => 
   assert.equal(legalPassages.length, legalPacket.passages.length);
   const legalPacketMarkdown = await readFile(join(result.artifacts.sourceDir, "legal-source-packet.md"), "utf8");
   assert.match(legalPacketMarkdown, /Legal Source Packet/);
+  const legalOutputSpec = JSON.parse(await readFile(join(result.artifacts.specDir, "legal-output-spec.json"), "utf8"));
+  assert.equal(legalOutputSpec.allowedSourceScope, "provided_packet_only");
+  const legalOutputSpecMarkdown = await readFile(join(result.artifacts.specDir, "legal-output-spec.md"), "utf8");
+  assert.match(legalOutputSpecMarkdown, /Legal Output Spec/);
   const legalEvidenceMap = JSON.parse(await readFile(join(result.artifacts.verifyDir, "legal-evidence-map.json"), "utf8"));
   assert.equal(legalEvidenceMap.profile, "legal");
   assert.equal(legalEvidenceMap.summary.propositionCount, 1);
@@ -125,6 +129,10 @@ test("legal profile workflow writes legal source packet artifacts", async () => 
   assert.equal(legalEvidenceMap.propositions[0]?.reviewStatus, "unsupported");
   const legalEvidenceMapMarkdown = await readFile(join(result.artifacts.verifyDir, "legal-evidence-map.md"), "utf8");
   assert.match(legalEvidenceMapMarkdown, /Legal Evidence Map/);
+  const legalDraftPropositions = JSON.parse(await readFile(join(result.artifacts.verifyDir, "legal-draft-propositions.json"), "utf8"));
+  assert.deepEqual(legalDraftPropositions, []);
+  const legalDraftPropositionsMarkdown = await readFile(join(result.artifacts.verifyDir, "legal-draft-propositions.md"), "utf8");
+  assert.match(legalDraftPropositionsMarkdown, /Legal Draft Propositions/);
 });
 
 test("failed durable workflow runs are not left running", async () => {

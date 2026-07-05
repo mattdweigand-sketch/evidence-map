@@ -28,8 +28,8 @@ export function buildLegalEvidenceMap(input: {
       passageSupportedPropositionCount: propositions.filter((proposition) => proposition.passageIds.length > 0 || proposition.pinCites.length > 0).length
     },
     notes: [
-      "Phase 3A legal evidence map is artifact-backed, not store-backed.",
-      "Draft discipline checks are not implemented in this slice."
+      "Phase 3 legal evidence map is artifact-backed, not store-backed.",
+      "Phase 3B draft discipline checks compare explicitly marked draft propositions against this map."
     ]
   };
 }

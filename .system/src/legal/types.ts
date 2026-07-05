@@ -66,18 +66,20 @@ export interface LegalPassageRecord {
   notes?: string;
 }
 
-export type LegalPropositionType =
-  | "rule"
-  | "holding"
-  | "reasoning"
-  | "standard_of_review"
-  | "procedural_fact"
-  | "record_fact"
-  | "application"
-  | "counterargument"
-  | "conclusion"
-  | "quote"
-  | "citation";
+export const legalPropositionTypes = [
+  "rule",
+  "holding",
+  "reasoning",
+  "standard_of_review",
+  "procedural_fact",
+  "record_fact",
+  "application",
+  "counterargument",
+  "conclusion",
+  "quote",
+  "citation"
+] as const;
+export type LegalPropositionType = (typeof legalPropositionTypes)[number];
 
 export interface LegalPropositionRecord {
   id: string;
@@ -95,18 +97,22 @@ export interface LegalPropositionRecord {
   notes?: string;
 }
 
+export const legalOutputKinds = [
+  "case_brief",
+  "legal_memo",
+  "rule_synthesis",
+  "issue_outline",
+  "argument_outline",
+  "citation_table",
+  "case_comparison",
+  "other"
+] as const;
+export type LegalOutputKind = (typeof legalOutputKinds)[number];
+
 export interface LegalOutputSpec {
   id: string;
   runId: string;
-  outputKind:
-    | "case_brief"
-    | "legal_memo"
-    | "rule_synthesis"
-    | "issue_outline"
-    | "argument_outline"
-    | "citation_table"
-    | "case_comparison"
-    | "other";
+  outputKind: LegalOutputKind;
   audience: string;
   assignmentOrUseCase: string;
   jurisdiction?: string;

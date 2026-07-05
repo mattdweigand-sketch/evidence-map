@@ -2,8 +2,10 @@ import { resolve } from "node:path";
 import { writeRunArtifacts } from "../../artifacts/write.ts";
 import type { EvidenceMapStore } from "../../db/store.ts";
 import { buildSourcePacket } from "../../ingest/source-packet.ts";
+import { extractLegalPropositionIntake } from "../../legal/draft.ts";
 import { buildLegalEvidenceMap } from "../../legal/evidence-map.ts";
 import { buildLegalSourcePacket } from "../../legal/source-packet.ts";
+import { buildLegalOutputSpec } from "../../legal/spec.ts";
 import { buildArtifactSpec, seedCalculations, seedClaims } from "../../spec/build.ts";
 import { evaluateTrust } from "../../trust/evaluate.ts";
 import { runHostileReview } from "../../verify/hostile-review.ts";
@@ -50,12 +52,17 @@ export async function runEvidenceMapWorkflow(
     const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
     const updatedRun = await store.updateRunStatus(run.id, status);
     const legalSourcePacket = updatedRun.profile === "legal" ? await buildLegalSourcePacket({ runId: run.id, sources, inspections }) : undefined;
+    const legalOutputSpec = legalSourcePacket
+      ? buildLegalOutputSpec({ runId: run.id, name: input.name, artifactKind: input.artifactKind, sources, inspections })
+      : undefined;
+    const legalPropositionIntake = legalSourcePacket ? await extractLegalPropositionIntake({ runId: run.id, sources, inspections }) : undefined;
     const legalEvidenceMap = legalSourcePacket
       ? buildLegalEvidenceMap({
           runId: run.id,
           artifactKind: input.artifactKind,
           legalSources: legalSourcePacket.sources,
-          passages: legalSourcePacket.passages
+          passages: legalSourcePacket.passages,
+          propositions: legalPropositionIntake && legalPropositionIntake.evidenceMapPropositions.length > 0 ? legalPropositionIntake.evidenceMapPropositions : undefined
         })
       : undefined;
     const artifacts = await writeRunArtifacts({
@@ -68,7 +75,9 @@ export async function runEvidenceMapWorkflow(
       findings,
       trustReport,
       legalSourcePacket,
-      legalEvidenceMap
+      legalOutputSpec,
+      legalEvidenceMap,
+      legalDraftPropositions: legalPropositionIntake?.draftPropositions
     });
 
     return {

@@ -1,7 +1,8 @@
 import type { EvidenceMapStore } from "../db/store.ts";
+import { extractLegalPropositionIntake } from "../legal/draft.ts";
 import { buildLegalEvidenceMap } from "../legal/evidence-map.ts";
 import { buildLegalSourcePacket } from "../legal/source-packet.ts";
-import { buildLegalTrustFindings } from "../legal/trust.ts";
+import { buildLegalDraftDisciplineFindings, buildLegalTrustFindings } from "../legal/trust.ts";
 import type { VerificationFinding } from "../types.ts";
 import { workbookInspectionFindings } from "./workbook-findings.ts";
 
@@ -141,17 +142,23 @@ export async function buildHostileReviewFindings(
 
   if (run?.profile === "legal") {
     const legalPacket = await buildLegalSourcePacket({ runId, sources, inspections });
+    const legalPropositionIntake = await extractLegalPropositionIntake({ runId, sources, inspections });
     const legalEvidenceMap = buildLegalEvidenceMap({
       runId,
       artifactKind: run.artifactKind,
       legalSources: legalPacket.sources,
-      passages: legalPacket.passages
+      passages: legalPacket.passages,
+      propositions: legalPropositionIntake.evidenceMapPropositions.length > 0 ? legalPropositionIntake.evidenceMapPropositions : undefined
     });
     findings.push(
       ...buildLegalTrustFindings({
         legalSources: legalPacket.sources,
         passages: legalPacket.passages,
         propositions: legalEvidenceMap.propositions
+      }),
+      ...buildLegalDraftDisciplineFindings({
+        legalEvidenceMap,
+        draftPropositions: legalPropositionIntake.draftPropositions
       })
     );
   }

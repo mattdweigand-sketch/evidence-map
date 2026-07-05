@@ -4,9 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { deflateRawSync } from "node:zlib";
+import { extractLegalPropositionIntake } from "../src/legal/draft.ts";
 import { buildLegalEvidenceMap } from "../src/legal/evidence-map.ts";
 import { buildLegalSourcePacket } from "../src/legal/source-packet.ts";
-import { buildLegalTrustFindings } from "../src/legal/trust.ts";
+import { buildLegalOutputSpec } from "../src/legal/spec.ts";
+import { buildLegalDraftDisciplineFindings, buildLegalTrustFindings } from "../src/legal/trust.ts";
 import type { FileInspectionRecord, SourceRecord } from "../src/types.ts";
 import type { LegalPropositionRecord, LegalSourceRecord } from "../src/legal/types.ts";
 
@@ -84,6 +86,29 @@ test("legal evidence map records first-class legal proposition fields", () => {
   assert.equal(map.propositions[0]?.reviewStatus, "verified");
 });
 
+test("legal output spec detects supported legal output kinds", () => {
+  const cases: Array<{ name: string; expected: string }> = [
+    { name: "case brief assignment.md", expected: "case_brief" },
+    { name: "legal memo draft.md", expected: "legal_memo" },
+    { name: "rule synthesis prompt.md", expected: "rule_synthesis" },
+    { name: "issue outline.md", expected: "issue_outline" },
+    { name: "citation table.md", expected: "citation_table" }
+  ];
+
+  for (const item of cases) {
+    const spec = buildLegalOutputSpec({
+      runId: "run_1",
+      name: item.name,
+      artifactKind: "document",
+      sources: [makeGenericSource({ name: item.name })],
+      inspections: [makeInspection({ name: item.name, textPreview: item.name })]
+    });
+    assert.equal(spec.outputKind, item.expected);
+    assert.equal(spec.allowedSourceScope, "provided_packet_only");
+    assert.ok(spec.requiredSections.length > 0);
+  }
+});
+
 test("legal source packet extracts stable docx passages with quote hashes", async () => {
   const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-docx-"));
   const path = join(dir, "case-excerpt.docx");
@@ -132,6 +157,101 @@ test("legal source packet extracts stable docx passages with quote hashes", asyn
     first.passages.map((passage) => passage.passageId),
     second.passages.map((passage) => passage.passageId)
   );
+});
+
+test("legal draft proposition represented in evidence map passes draft discipline check", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-draft-mapped-"));
+  const casePath = join(dir, "case-excerpt.md");
+  const draftPath = join(dir, "legal-memo-draft.md");
+  await writeFile(casePath, "# Hawkins v. McGee\n\nA promise may create a warranty.\n");
+  await writeFile(
+    draftPath,
+    [
+      "# Legal Memo Draft",
+      "",
+      "LEGAL-MAP [rule] source=case-excerpt.md passage=passage_case-excerpt_p0002 pin=\"para. 2\" authority=binding: A promise may create a warranty.",
+      "LEGAL-DRAFT [rule]: A promise may create a warranty."
+    ].join("\n")
+  );
+  const sources = [
+    makeGenericSource({ id: "src_case", name: "case-excerpt.md", path: casePath }),
+    makeGenericSource({ id: "src_draft", name: "legal-memo-draft.md", path: draftPath })
+  ];
+  const inspections = [
+    makeInspection({ sourceId: "src_case", name: "case-excerpt.md", path: casePath }),
+    makeInspection({ sourceId: "src_draft", name: "legal-memo-draft.md", path: draftPath, textPreview: "legal memo draft" })
+  ];
+  const intake = await extractLegalPropositionIntake({ runId: "run_1", sources, inspections });
+
+  assert.equal(intake.evidenceMapPropositions.length, 1);
+  assert.equal(intake.draftPropositions.length, 1);
+  assert.deepEqual(intake.evidenceMapPropositions[0]?.sourceIds, ["src_case"]);
+  assert.deepEqual(intake.evidenceMapPropositions[0]?.passageIds, ["passage_case-excerpt_p0002"]);
+
+  const map = buildLegalEvidenceMap({
+    runId: "run_1",
+    artifactKind: "document",
+    legalSources: [
+      makeSource({
+        sourceId: "src_case",
+        authorityLevel: "binding",
+        treatmentStatus: "checked_current"
+      })
+    ],
+    passages: [],
+    propositions: intake.evidenceMapPropositions
+  });
+  const findings = buildLegalDraftDisciplineFindings({
+    legalEvidenceMap: map,
+    draftPropositions: intake.draftPropositions
+  });
+
+  assert.equal(findings.length, 0);
+});
+
+test("legal draft discipline flags unmapped rule fact and conclusion", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-draft-unmapped-"));
+  const draftPath = join(dir, "legal-memo-draft.md");
+  await writeFile(
+    draftPath,
+    [
+      "# Legal Memo Draft",
+      "",
+      "LEGAL-DRAFT [rule]: A new duty rule appears only in the draft.",
+      "LEGAL-DRAFT [record_fact]: The record shows a sudden stop.",
+      "LEGAL-DRAFT [conclusion]: The defendant is liable."
+    ].join("\n")
+  );
+  const sources = [makeGenericSource({ id: "src_draft", name: "legal-memo-draft.md", path: draftPath })];
+  const inspections = [makeInspection({ sourceId: "src_draft", name: "legal-memo-draft.md", path: draftPath })];
+  const intake = await extractLegalPropositionIntake({ runId: "run_1", sources, inspections });
+  const map = buildLegalEvidenceMap({
+    runId: "run_1",
+    artifactKind: "document",
+    legalSources: [],
+    passages: [],
+    propositions: [
+      makeProposition({
+        id: "legal_prop_other",
+        text: "A different mapped proposition."
+      })
+    ]
+  });
+  const findings = buildLegalDraftDisciplineFindings({
+    legalEvidenceMap: map,
+    draftPropositions: intake.draftPropositions
+  });
+
+  assert.equal(findings.length, 3);
+  assert.ok(
+    findings.some(
+      (finding) =>
+        finding.issue === "Draft legal proposition is not represented in the legal evidence map." &&
+        finding.category === "model_knowledge_leak"
+    )
+  );
+  assert.ok(findings.some((finding) => finding.category === "missing_pinpoint"));
+  assert.ok(findings.some((finding) => finding.category === "conclusion_outpaces_support"));
 });
 
 test("legal trust blocks propositions with no source support", () => {
