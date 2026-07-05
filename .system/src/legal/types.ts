@@ -159,3 +159,48 @@ export type LegalFindingCategory =
 export type LegalFindingDraft = Omit<VerificationFinding, "id" | "runId"> & {
   category: LegalFindingCategory;
 };
+
+export const legalReviewDecisionActions = ["attach_passage_support"] as const;
+export type LegalReviewDecisionAction = (typeof legalReviewDecisionActions)[number];
+
+export interface LegalReviewDecisionRecord {
+  id: string;
+  runId: string;
+  action: LegalReviewDecisionAction;
+  propositionId: string;
+  sourceId: string;
+  passageId: string;
+  pinCite?: string;
+  reviewer?: string;
+  createdAt: string;
+  approvalTokenAccepted: true;
+}
+
+export interface LegalReviewAuditEvent {
+  id: string;
+  runId: string;
+  decisionId: string;
+  action: LegalReviewDecisionAction;
+  actor?: string;
+  createdAt: string;
+  summary: string;
+  before: {
+    sourceIds: string[];
+    passageIds: string[];
+    pinCites: string[];
+    reviewStatus: ReviewStatus;
+  };
+  after: {
+    sourceIds: string[];
+    passageIds: string[];
+    pinCites: string[];
+    reviewStatus: ReviewStatus;
+  };
+}
+
+export interface LegalReviewDecisionSet {
+  runId: string;
+  profile: "legal";
+  decisions: LegalReviewDecisionRecord[];
+  auditEvents: LegalReviewAuditEvent[];
+}

@@ -4,10 +4,8 @@ import { exit } from "node:process";
 import { getDefaultBaseDir } from "../src/artifacts/paths.ts";
 import { writeRunArtifacts } from "../src/artifacts/write.ts";
 import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
-import { extractLegalPropositionIntake } from "../src/legal/draft.ts";
-import { buildLegalEvidenceMap } from "../src/legal/evidence-map.ts";
-import { buildLegalSourcePacket } from "../src/legal/source-packet.ts";
-import { buildLegalOutputSpec } from "../src/legal/spec.ts";
+import { buildLegalRunArtifacts } from "../src/legal/artifacts.ts";
+import { readLegalReviewDecisionSet } from "../src/legal/review-decisions.ts";
 import { evaluateTrust } from "../src/trust/evaluate.ts";
 import { buildHostileReviewFindings } from "../src/verify/hostile-review.ts";
 
@@ -28,7 +26,11 @@ try {
   const run = await store.getRun(runMetadata.id);
   if (!run) throw new Error(`No persisted run found for ${runMetadata.id}.`);
 
-  const findings = await store.replaceVerificationFindings(run.id, await buildHostileReviewFindings(store, run.id));
+  const legalReviewDecisionSet = run.profile === "legal" ? await readLegalReviewDecisionSet({ baseDir, run }) : undefined;
+  const findings = await store.replaceVerificationFindings(
+    run.id,
+    await buildHostileReviewFindings(store, run.id, { legalReviewDecisions: legalReviewDecisionSet?.decisions })
+  );
   const trustReport = await evaluateTrust(store, run.id);
   const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
   const updatedRun = await store.updateRunStatus(run.id, status);
@@ -39,20 +41,10 @@ try {
     store.getArtifactSpec(run.id)
   ]);
   if (!spec) throw new Error(`No artifact spec found for ${run.id}.`);
-  const legalSourcePacket = updatedRun.profile === "legal" ? await buildLegalSourcePacket({ runId: run.id, sources, inspections }) : undefined;
-  const legalOutputSpec = legalSourcePacket
-    ? buildLegalOutputSpec({ runId: run.id, name: updatedRun.name, artifactKind: updatedRun.artifactKind, sources, inspections })
-    : undefined;
-  const legalPropositionIntake = legalSourcePacket ? await extractLegalPropositionIntake({ runId: run.id, sources, inspections }) : undefined;
-  const legalEvidenceMap = legalSourcePacket
-    ? buildLegalEvidenceMap({
-        runId: run.id,
-        artifactKind: updatedRun.artifactKind,
-        legalSources: legalSourcePacket.sources,
-        passages: legalSourcePacket.passages,
-        propositions: legalPropositionIntake && legalPropositionIntake.evidenceMapPropositions.length > 0 ? legalPropositionIntake.evidenceMapPropositions : undefined
-      })
-    : undefined;
+  const legalArtifacts =
+    updatedRun.profile === "legal"
+      ? await buildLegalRunArtifacts({ store, run: updatedRun, reviewDecisions: legalReviewDecisionSet?.decisions })
+      : undefined;
 
   await writeRunArtifacts({
     baseDir,
@@ -63,10 +55,11 @@ try {
     spec,
     findings,
     trustReport,
-    legalSourcePacket,
-    legalOutputSpec,
-    legalEvidenceMap,
-    legalDraftPropositions: legalPropositionIntake?.draftPropositions
+    legalSourcePacket: legalArtifacts?.legalSourcePacket,
+    legalOutputSpec: legalArtifacts?.legalOutputSpec,
+    legalEvidenceMap: legalArtifacts?.legalEvidenceMap,
+    legalDraftPropositions: legalArtifacts?.legalDraftPropositions,
+    legalReviewDecisionSet
   });
   console.log(JSON.stringify(trustReport, null, 2));
 } catch (error) {

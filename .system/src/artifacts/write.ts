@@ -11,9 +11,10 @@ import type {
 } from "../types.ts";
 import { renderLegalDraftPropositions } from "../legal/draft.ts";
 import { renderLegalEvidenceMap } from "../legal/evidence-map.ts";
+import { renderLegalReviewDecisionSet } from "../legal/review-decisions.ts";
 import { renderLegalOutputSpec } from "../legal/spec.ts";
 import { renderLegalSourcePacket, type LegalSourcePacket } from "../legal/source-packet.ts";
-import type { LegalEvidenceMap, LegalOutputSpec, LegalPropositionRecord } from "../legal/types.ts";
+import type { LegalEvidenceMap, LegalOutputSpec, LegalPropositionRecord, LegalReviewDecisionSet } from "../legal/types.ts";
 
 export async function writeRunArtifacts(input: {
   baseDir: string;
@@ -28,6 +29,7 @@ export async function writeRunArtifacts(input: {
   legalOutputSpec?: LegalOutputSpec;
   legalEvidenceMap?: LegalEvidenceMap;
   legalDraftPropositions?: LegalPropositionRecord[];
+  legalReviewDecisionSet?: LegalReviewDecisionSet;
 }) {
   const runDir = join(input.baseDir, "deliverables", input.run.slug);
   const sourceDir = join(runDir, "01_source-packet");
@@ -62,6 +64,10 @@ export async function writeRunArtifacts(input: {
   if (input.legalDraftPropositions) {
     await writeJson(join(verifyDir, "legal-draft-propositions.json"), input.legalDraftPropositions);
     await writeFile(join(verifyDir, "legal-draft-propositions.md"), renderLegalDraftPropositions(input.legalDraftPropositions));
+  }
+  if (input.legalReviewDecisionSet) {
+    await writeJson(join(verifyDir, "legal-review-decisions.json"), input.legalReviewDecisionSet);
+    await writeFile(join(verifyDir, "legal-review-decisions.md"), renderLegalReviewDecisionSet(input.legalReviewDecisionSet));
   }
   await writeJson(join(verifyDir, "trust-report.json"), input.trustReport);
   await writeFile(join(verifyDir, "verification-report.md"), renderVerification(input.findings, input.trustReport));

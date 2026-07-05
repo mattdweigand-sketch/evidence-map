@@ -4,13 +4,22 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod/v4";
+import { writeRunArtifacts } from "../artifacts/write.ts";
 import { runEvidenceMapWorkflow } from "../chains/evidence-map/workflow.ts";
 import { JsonFileEvidenceMapStore } from "../db/json-file-store.ts";
 import type { EvidenceMapStore } from "../db/store.ts";
 import { buildSourcePacket } from "../ingest/source-packet.ts";
+import { buildLegalRunArtifacts } from "../legal/artifacts.ts";
+import {
+  appendAttachPassageSupportDecision,
+  LEGAL_REVIEW_APPROVAL_TOKEN,
+  readLegalReviewDecisionSet
+} from "../legal/review-decisions.ts";
 import { buildLegalSourcePacketFromDrafts } from "../legal/source-packet.ts";
 import { getDefaultBaseDir } from "../artifacts/paths.ts";
+import { evaluateTrust } from "../trust/evaluate.ts";
 import { artifactKinds, workflowProfiles, type WorkflowProfile } from "../types.ts";
+import { buildHostileReviewFindings } from "../verify/hostile-review.ts";
 
 const artifactKindSchema = z.enum(artifactKinds);
 const workflowProfileSchema = z.enum(workflowProfiles);
@@ -158,6 +167,41 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
     }
   );
 
+  server.registerTool(
+    "evidencemap_attach_legal_passage_support",
+    {
+      title: "Attach Legal Passage Support",
+      description: `Attach an existing legal passage to an existing legal proposition. Requires approvalToken ${LEGAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        propositionId: z.string(),
+        passageId: z.string(),
+        pinCite: z.string().optional(),
+        reviewer: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, propositionId, passageId, pinCite, reviewer, approvalToken, baseDir }) => {
+      try {
+        return jsonToolResult(
+          await attachLegalPassageSupport({
+            store,
+            baseDir,
+            runId,
+            propositionId,
+            passageId,
+            pinCite,
+            reviewer,
+            approvalToken
+          })
+        );
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "Legal passage support decision failed.");
+      }
+    }
+  );
+
   return { server, store };
 }
 
@@ -256,6 +300,92 @@ async function getNextAction(store: EvidenceMapStore, runId: string) {
     readiness: trustReport.readiness,
     gate: "EXPORT_READY",
     nextAction: "The run is ready for artifact approval or export preview."
+  };
+}
+
+async function attachLegalPassageSupport(input: {
+  store: EvidenceMapStore;
+  baseDir: string;
+  runId: string;
+  propositionId: string;
+  passageId: string;
+  pinCite?: string;
+  reviewer?: string;
+  approvalToken: string;
+}) {
+  const run = await input.store.getRun(input.runId);
+  if (!run) throw new Error(`Unknown run: ${input.runId}`);
+  if (run.profile !== "legal") throw new Error("Legal passage support decisions require a legal-profile run.");
+  if (input.approvalToken !== LEGAL_REVIEW_APPROVAL_TOKEN) {
+    throw new Error(`Legal review changes require approvalToken ${LEGAL_REVIEW_APPROVAL_TOKEN}.`);
+  }
+
+  const decisionSet = await readLegalReviewDecisionSet({ baseDir: input.baseDir, run });
+  const currentLegalArtifacts = await buildLegalRunArtifacts({
+    store: input.store,
+    run,
+    reviewDecisions: decisionSet.decisions
+  });
+  const decisionResult = appendAttachPassageSupportDecision({
+    decisionSet,
+    legalEvidenceMap: currentLegalArtifacts.legalEvidenceMap,
+    passages: currentLegalArtifacts.legalSourcePacket.passages,
+    propositionId: input.propositionId,
+    passageId: input.passageId,
+    pinCite: input.pinCite,
+    reviewer: input.reviewer,
+    approvalToken: input.approvalToken
+  });
+
+  const findings = await input.store.replaceVerificationFindings(
+    run.id,
+    await buildHostileReviewFindings(input.store, run.id, { legalReviewDecisions: decisionResult.decisionSet.decisions })
+  );
+  const trustReport = await evaluateTrust(input.store, run.id);
+  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
+  const updatedRun = await input.store.updateRunStatus(run.id, status);
+  const [sources, inspections, conflicts, spec] = await Promise.all([
+    input.store.listSources(run.id),
+    input.store.listFileInspections(run.id),
+    input.store.listSourceConflicts(run.id),
+    input.store.getArtifactSpec(run.id)
+  ]);
+  if (!spec) throw new Error(`No artifact spec found for ${run.id}.`);
+  const legalArtifacts = await buildLegalRunArtifacts({
+    store: input.store,
+    run: updatedRun,
+    reviewDecisions: decisionResult.decisionSet.decisions
+  });
+  const artifacts = await writeRunArtifacts({
+    baseDir: input.baseDir,
+    run: updatedRun,
+    sources,
+    inspections,
+    conflicts,
+    spec,
+    findings,
+    trustReport,
+    legalSourcePacket: legalArtifacts.legalSourcePacket,
+    legalOutputSpec: legalArtifacts.legalOutputSpec,
+    legalEvidenceMap: legalArtifacts.legalEvidenceMap,
+    legalDraftPropositions: legalArtifacts.legalDraftPropositions,
+    legalReviewDecisionSet: decisionResult.decisionSet
+  });
+
+  return {
+    runId: updatedRun.id,
+    profile: updatedRun.profile,
+    status: updatedRun.status,
+    readiness: trustReport.readiness,
+    changed: decisionResult.changed,
+    decision: decisionResult.decision ?? null,
+    auditEvent: decisionResult.auditEvent ?? null,
+    decisionCount: decisionResult.decisionSet.decisions.length,
+    auditEventCount: decisionResult.decisionSet.auditEvents.length,
+    findingCount: findings.length,
+    blockingCount: trustReport.summary.blockingCount,
+    needsReviewCount: trustReport.summary.needsReviewCount,
+    artifacts
   };
 }
 

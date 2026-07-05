@@ -1,8 +1,7 @@
 import type { EvidenceMapStore } from "../db/store.ts";
-import { extractLegalPropositionIntake } from "../legal/draft.ts";
-import { buildLegalEvidenceMap } from "../legal/evidence-map.ts";
-import { buildLegalSourcePacket } from "../legal/source-packet.ts";
+import { buildLegalRunArtifacts } from "../legal/artifacts.ts";
 import { buildLegalDraftDisciplineFindings, buildLegalTrustFindings } from "../legal/trust.ts";
+import type { LegalReviewDecisionRecord } from "../legal/types.ts";
 import type { VerificationFinding } from "../types.ts";
 import { workbookInspectionFindings } from "./workbook-findings.ts";
 
@@ -15,7 +14,8 @@ export async function runHostileReview(
 
 export async function buildHostileReviewFindings(
   store: EvidenceMapStore,
-  runId: string
+  runId: string,
+  options: { legalReviewDecisions?: LegalReviewDecisionRecord[] } = {}
 ): Promise<Omit<VerificationFinding, "id" | "runId">[]> {
   const run = await store.getRun(runId);
   const sources = await store.listSources(runId);
@@ -141,24 +141,20 @@ export async function buildHostileReviewFindings(
   }
 
   if (run?.profile === "legal") {
-    const legalPacket = await buildLegalSourcePacket({ runId, sources, inspections });
-    const legalPropositionIntake = await extractLegalPropositionIntake({ runId, sources, inspections });
-    const legalEvidenceMap = buildLegalEvidenceMap({
-      runId,
-      artifactKind: run.artifactKind,
-      legalSources: legalPacket.sources,
-      passages: legalPacket.passages,
-      propositions: legalPropositionIntake.evidenceMapPropositions.length > 0 ? legalPropositionIntake.evidenceMapPropositions : undefined
+    const legalArtifacts = await buildLegalRunArtifacts({
+      store,
+      run,
+      reviewDecisions: options.legalReviewDecisions
     });
     findings.push(
       ...buildLegalTrustFindings({
-        legalSources: legalPacket.sources,
-        passages: legalPacket.passages,
-        propositions: legalEvidenceMap.propositions
+        legalSources: legalArtifacts.legalSourcePacket.sources,
+        passages: legalArtifacts.legalSourcePacket.passages,
+        propositions: legalArtifacts.legalEvidenceMap.propositions
       }),
       ...buildLegalDraftDisciplineFindings({
-        legalEvidenceMap,
-        draftPropositions: legalPropositionIntake.draftPropositions
+        legalEvidenceMap: legalArtifacts.legalEvidenceMap,
+        draftPropositions: legalArtifacts.legalDraftPropositions
       })
     );
   }
