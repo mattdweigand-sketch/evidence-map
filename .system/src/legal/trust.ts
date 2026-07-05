@@ -37,6 +37,28 @@ export function buildLegalTrustFindings(input: {
   const passageIds = new Set(passageById.keys());
 
   for (const source of input.legalSources) {
+    if (source.extractionStatus === "failed") {
+      findings.push(
+        mustFix(
+          `legal-source:${source.title}`,
+          "Legal source text extraction failed.",
+          "missing_pinpoint",
+          `${source.title} has extractionStatus failed.`,
+          "Repair the source file, replace it, or add manual passage support before final reliance."
+        )
+      );
+    }
+    if (source.extractionStatus === "metadata_only") {
+      findings.push(
+        shouldFix(
+          `legal-source:${source.title}`,
+          "Legal source has no extracted legal text.",
+          "missing_pinpoint",
+          `${source.title} is metadata-only and has no citeable passage anchors.`,
+          "Run a supported text extractor or add manual passage support before final reliance."
+        )
+      );
+    }
     if (source.authorityLevel === "unknown") {
       findings.push(
         shouldFix(

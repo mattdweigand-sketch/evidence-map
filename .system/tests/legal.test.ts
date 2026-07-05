@@ -3,6 +3,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { deflateRawSync } from "node:zlib";
 import { buildLegalSourcePacket } from "../src/legal/source-packet.ts";
 import { buildLegalTrustFindings } from "../src/legal/trust.ts";
 import type { FileInspectionRecord, SourceRecord } from "../src/types.ts";
@@ -28,6 +29,56 @@ test("legal source packet extracts stable md passages with quote hashes", async 
   assert.equal(first.passages[1]?.passageId, "passage_case-excerpt_p0002");
   assert.equal(first.passages[1]?.pinpoint, "para. 2");
   assert.ok(first.passages[1]?.quoteHash);
+  assert.deepEqual(
+    first.passages.map((passage) => passage.passageId),
+    second.passages.map((passage) => passage.passageId)
+  );
+});
+
+test("legal source packet extracts stable docx passages with quote hashes", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-docx-"));
+  const path = join(dir, "case-excerpt.docx");
+  await writeFile(
+    path,
+    makeDocxBuffer(["Hawkins v. McGee", "A promise may create a warranty.", "Damages may use expectation value."])
+  );
+
+  const first = await buildLegalSourcePacket({
+    runId: "run_1",
+    sources: [makeGenericSource({ id: "src_first", name: "case-excerpt.docx", path, fileType: "docx" })],
+    inspections: [
+      makeInspection({
+        runId: "run_1",
+        sourceId: "src_first",
+        name: "case-excerpt.docx",
+        path,
+        fileType: "docx",
+        parser: "office-package-metadata-v1",
+        status: "metadata_only"
+      })
+    ]
+  });
+  const second = await buildLegalSourcePacket({
+    runId: "run_2",
+    sources: [makeGenericSource({ id: "src_second", runId: "run_2", name: "case-excerpt.docx", path, fileType: "docx" })],
+    inspections: [
+      makeInspection({
+        runId: "run_2",
+        sourceId: "src_second",
+        name: "case-excerpt.docx",
+        path,
+        fileType: "docx",
+        parser: "office-package-metadata-v1",
+        status: "metadata_only"
+      })
+    ]
+  });
+
+  assert.equal(first.passages.length, 3);
+  assert.equal(first.passages[1]?.passageId, "passage_case-excerpt_p0002");
+  assert.equal(first.passages[1]?.pinpoint, "para. 2");
+  assert.ok(first.passages[1]?.quoteHash);
+  assert.equal(first.sources[0]?.extractionStatus, "extracted");
   assert.deepEqual(
     first.passages.map((passage) => passage.passageId),
     second.passages.map((passage) => passage.passageId)
@@ -81,6 +132,84 @@ test("legal trust blocks metadata-only source support", () => {
       (finding) =>
         finding.issue === "Metadata-only legal source cannot support final-ready legal work." &&
         finding.severity === "must_fix"
+    )
+  );
+});
+
+test("legal trust flags failed docx extraction", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-bad-docx-"));
+  const path = join(dir, "bad-case.docx");
+  await writeFile(path, "not a zip package");
+  const packet = await buildLegalSourcePacket({
+    runId: "run_1",
+    sources: [makeGenericSource({ id: "src_1", name: "bad-case.docx", path, fileType: "docx" })],
+    inspections: [
+      makeInspection({
+        sourceId: "src_1",
+        name: "bad-case.docx",
+        path,
+        fileType: "docx",
+        parser: "office-package-metadata-v1",
+        status: "metadata_only"
+      })
+    ]
+  });
+
+  assert.equal(packet.sources[0]?.extractionStatus, "failed");
+  assert.equal(packet.passages[0]?.extractionStatus, "failed");
+
+  const findings = buildLegalTrustFindings({
+    legalSources: packet.sources,
+    passages: packet.passages,
+    propositions: []
+  });
+
+  assert.ok(
+    findings.some(
+      (finding) =>
+        finding.issue === "Legal source text extraction failed." &&
+        finding.severity === "must_fix" &&
+        finding.category === "missing_pinpoint"
+    )
+  );
+});
+
+test("legal trust flags metadata-only pdf extraction as review item", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-pdf-"));
+  const path = join(dir, "case-opinion.pdf");
+  await writeFile(path, "%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n");
+  const packet = await buildLegalSourcePacket({
+    runId: "run_1",
+    sources: [makeGenericSource({ id: "src_1", name: "case-opinion.pdf", path, fileType: "pdf" })],
+    inspections: [
+      makeInspection({
+        sourceId: "src_1",
+        name: "case-opinion.pdf",
+        path,
+        fileType: "pdf",
+        parser: "pdf-metadata-v1",
+        status: "metadata_only",
+        structuredSummary: { pdfSignature: true },
+        warnings: ["Deep PDF text and table inspection is not implemented yet."]
+      })
+    ]
+  });
+
+  assert.equal(packet.sources[0]?.extractionStatus, "metadata_only");
+  assert.equal(packet.passages.length, 0);
+
+  const findings = buildLegalTrustFindings({
+    legalSources: packet.sources,
+    passages: packet.passages,
+    propositions: []
+  });
+
+  assert.ok(
+    findings.some(
+      (finding) =>
+        finding.issue === "Legal source has no extracted legal text." &&
+        finding.severity === "should_fix" &&
+        finding.category === "missing_pinpoint"
     )
   );
 });
@@ -234,4 +363,78 @@ function makeProposition(overrides: Partial<LegalPropositionRecord> = {}): Legal
     reviewStatus: "unreviewed",
     ...overrides
   };
+}
+
+function makeDocxBuffer(paragraphs: string[]) {
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    ${paragraphs.map((paragraph) => `<w:p><w:r><w:t>${escapeXml(paragraph)}</w:t></w:r></w:p>`).join("\n")}
+  </w:body>
+</w:document>`;
+  return makeZipBuffer([{ name: "word/document.xml", content: Buffer.from(documentXml, "utf8") }]);
+}
+
+function makeZipBuffer(entries: Array<{ name: string; content: Buffer }>) {
+  const localParts: Buffer[] = [];
+  const centralParts: Buffer[] = [];
+  let offset = 0;
+
+  for (const entry of entries) {
+    const name = Buffer.from(entry.name, "utf8");
+    const compressed = deflateRawSync(entry.content);
+    const localHeader = Buffer.alloc(30);
+    localHeader.writeUInt32LE(0x04034b50, 0);
+    localHeader.writeUInt16LE(20, 4);
+    localHeader.writeUInt16LE(0, 6);
+    localHeader.writeUInt16LE(8, 8);
+    localHeader.writeUInt32LE(0, 14);
+    localHeader.writeUInt32LE(compressed.length, 18);
+    localHeader.writeUInt32LE(entry.content.length, 22);
+    localHeader.writeUInt16LE(name.length, 26);
+    localHeader.writeUInt16LE(0, 28);
+    localParts.push(localHeader, name, compressed);
+
+    const centralHeader = Buffer.alloc(46);
+    centralHeader.writeUInt32LE(0x02014b50, 0);
+    centralHeader.writeUInt16LE(20, 4);
+    centralHeader.writeUInt16LE(20, 6);
+    centralHeader.writeUInt16LE(0, 8);
+    centralHeader.writeUInt16LE(8, 10);
+    centralHeader.writeUInt32LE(0, 16);
+    centralHeader.writeUInt32LE(compressed.length, 20);
+    centralHeader.writeUInt32LE(entry.content.length, 24);
+    centralHeader.writeUInt16LE(name.length, 28);
+    centralHeader.writeUInt16LE(0, 30);
+    centralHeader.writeUInt16LE(0, 32);
+    centralHeader.writeUInt32LE(offset, 42);
+    centralParts.push(centralHeader, name);
+
+    offset += localHeader.length + name.length + compressed.length;
+  }
+
+  const centralDirectoryOffset = offset;
+  const centralDirectorySize = centralParts.reduce((total, part) => total + part.length, 0);
+  const endOfCentralDirectory = Buffer.alloc(22);
+  endOfCentralDirectory.writeUInt32LE(0x06054b50, 0);
+  endOfCentralDirectory.writeUInt16LE(entries.length, 8);
+  endOfCentralDirectory.writeUInt16LE(entries.length, 10);
+  endOfCentralDirectory.writeUInt32LE(centralDirectorySize, 12);
+  endOfCentralDirectory.writeUInt32LE(centralDirectoryOffset, 16);
+  endOfCentralDirectory.writeUInt16LE(0, 20);
+
+  return Buffer.concat([...localParts, ...centralParts, endOfCentralDirectory]);
+}
+
+function escapeXml(value: string) {
+  return value.replace(/[&<>"']/g, (char) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&apos;"
+    };
+    return entities[char] ?? char;
+  });
 }

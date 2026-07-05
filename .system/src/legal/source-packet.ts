@@ -19,17 +19,21 @@ export async function buildLegalSourcePacket(input: {
   inspections: FileInspectionRecord[];
 }): Promise<LegalSourcePacket> {
   const inspectionBySourceId = new Map(input.inspections.filter((inspection) => inspection.sourceId).map((inspection) => [inspection.sourceId, inspection]));
+  const passages = await extractLegalPassages(input);
   return {
     runId: input.runId,
     profile: "legal",
     sources: input.sources.map((source) =>
-      toLegalSourceRecord({
-        runId: input.runId,
-        source,
-        inspection: inspectionBySourceId.get(source.id)
-      })
+      applyPassageExtractionStatus(
+        toLegalSourceRecord({
+          runId: input.runId,
+          source,
+          inspection: inspectionBySourceId.get(source.id)
+        }),
+        passages.filter((passage) => passage.sourceId === source.id)
+      )
     ),
-    passages: await extractLegalPassages(input)
+    passages
   };
 }
 
@@ -79,12 +83,39 @@ function sourceDate(source: LegalSourceRecord) {
   return source.decisionDate ?? source.effectiveDate ?? "";
 }
 
+function applyPassageExtractionStatus(source: LegalSourceRecord, passages: LegalPassageRecord[]) {
+  if (passages.some((passage) => passage.extractionStatus === "extracted")) {
+    return {
+      ...source,
+      extractionStatus: "extracted" as const,
+      notes: appendNote(source.notes, "Legal text extraction produced citeable passages.")
+    };
+  }
+
+  const failedPassage = passages.find((passage) => passage.extractionStatus === "failed");
+  if (failedPassage) {
+    return {
+      ...source,
+      extractionStatus: "failed" as const,
+      reviewStatus: "unsupported" as const,
+      notes: appendNote(source.notes, failedPassage.notes ?? "Legal text extraction failed.")
+    };
+  }
+
+  return source;
+}
+
+function appendNote(current: string | undefined, note: string) {
+  return [current, note].filter((value): value is string => Boolean(value)).join(" ");
+}
+
 function openQuestions(source: LegalSourceRecord) {
   const questions = [
     source.sourceKind === "unknown" ? "classify source kind" : undefined,
     source.authorityLevel === "unknown" ? "confirm authority level" : undefined,
     source.treatmentStatus === "not_checked" ? "check treatment/currentness" : undefined,
-    source.extractionStatus === "metadata_only" ? "extract text before final reliance" : undefined
+    source.extractionStatus === "metadata_only" ? "extract text before final reliance" : undefined,
+    source.extractionStatus === "failed" ? "repair failed text extraction before final reliance" : undefined
   ].filter((question): question is string => Boolean(question));
   return questions.join("; ");
 }
