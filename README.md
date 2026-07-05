@@ -18,7 +18,7 @@ If a claim or number in your file can become someone else's decision, this harne
 
 ## 60-Second Quickstart
 
-The repo ships a worked example: a coursework-style capstone report folder with a clean survey export, a workbook with deliberate problems, qualitative interview notes, and two conflicting enrollment exports.
+The repo ships a general worked example: a coursework-style capstone report folder with a clean survey export, a workbook with deliberate problems, qualitative interview notes, and two conflicting enrollment exports.
 
 ```bash
 npm --prefix .system install
@@ -26,6 +26,27 @@ npm --prefix .system run run -- --name "capstone-report" --kind document --input
 ```
 
 Open `deliverables/capstone-report-*/03_verification/` to see the findings.
+
+## Legal Profile Quickstart
+
+The legal profile is a local reliability layer for supplied legal packets. It inventories legal sources, extracts citeable passages from Markdown, text, DOCX, and text-based PDF sources, builds a legal evidence map, applies legal trust checks, and writes a gated local export receipt. It is not legal advice and it does not research, file, send, or submit anything externally.
+
+```bash
+npm --prefix .system run run -- --name "legal-duty" --kind document --profile legal --input input/examples/legal-duty
+```
+
+Open the latest `deliverables/legal-duty-*/` folder:
+
+- `01_source-packet/legal-source-packet.json`: legal source classification and treatment state.
+- `01_source-packet/legal-passages.json`: paragraph/page passage anchors with quote hashes.
+- `01_source-packet/legal-source-history.json`: local source/version fingerprints.
+- `02_artifact-spec/legal-output-spec.json`: inferred legal output spec and source-scope rules.
+- `02_artifact-spec/legal-boundary.json`: matter/course boundary for reuse checks.
+- `03_verification/legal-evidence-map.json`: marked legal propositions and source/pinpoint support.
+- `03_verification/legal-reuse-library.json`: reviewed propositions that may be inspected for reuse.
+- `04_export/README.md`: final legal export receipt or refusal.
+
+Legal proposition intake is deterministic. Use `LEGAL-MAP` lines for mapped propositions and `LEGAL-DRAFT` lines for material draft propositions that must appear in the map. See `input/examples/legal-duty/legal-memo-draft.md` for the minimal marker shape.
 
 ## What A Run Finds
 
@@ -67,9 +88,9 @@ Claude Code (`.mcp.json` in your project, or `claude mcp add`):
 }
 ```
 
-The same shape works in any MCP client that supports local stdio servers. Tools exposed: `evidencemap_inspect_source_packet`, `evidencemap_run_workflow`, `evidencemap_status`, `evidencemap_next_action`, `evidencemap_get_verification_report`. Run state persists at `deliverables/evidence-map-store.json`. The full surface is documented in `.system/docs/mcp.md`. The CLI remains useful for smoke tests, fixtures, and CI.
+The same shape works in any MCP client that supports local stdio servers. Core tools exposed: `evidencemap_inspect_source_packet`, `evidencemap_run_workflow`, `evidencemap_status`, `evidencemap_next_action`, and `evidencemap_get_verification_report`. Legal-profile review tools can attach passage support, update authority/treatment status, accept legal risks, and resolve source conflicts with an explicit approval token. Run state persists at `deliverables/evidence-map-store.json`. The full surface is documented in `.system/docs/mcp.md`. The CLI remains useful for smoke tests, fixtures, and CI.
 
-Current v1 runs always land blocked or needing review until the roadmap review-loop MCP tools can resolve seeded claims and findings.
+General-profile v1 runs still land blocked or needing review by design until general review-loop tools can resolve seeded claims and findings. Legal-profile runs have a narrower review-decision path and final Markdown gate, but final export still refuses unresolved blockers.
 
 ## What This Is Not
 
@@ -90,10 +111,12 @@ Runs live under `deliverables/<run-slug>/`. Slugs include a short run ID suffix 
 - `03_verification/`: hostile-review findings and readiness report.
 - `04_export/`: readiness gate for approved artifacts.
 
-CSV/TSV/text/Markdown sources are inspected directly. `.xlsx` files get a Workbook Doctor pass: sheet inventory, hidden sheets, headers, formulas, hardcodes, missing checks sheets, and repeated static formulas. PowerPoint, Word, and PDF files are metadata-only until their deep parsers land — see the roadmap.
+CSV/TSV/text/Markdown sources are inspected directly. `.xlsx` files get a Workbook Doctor pass: sheet inventory, hidden sheets, headers, formulas, hardcodes, missing checks sheets, and repeated static formulas. PowerPoint files remain metadata-only. The legal profile adds DOCX and text-based PDF passage extraction for supplied legal sources; broader general-profile document parsers are still roadmap work.
 
 ## Roadmap, Contributing, License
 
+- Legal profile: [`.system/docs/legal-profile.md`](.system/docs/legal-profile.md)
+- Release checklist: [`.system/docs/release-checklist.md`](.system/docs/release-checklist.md)
 - Roadmap: [`ROADMAP.md`](ROADMAP.md)
 - Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - License: MIT. See [`LICENSE`](LICENSE).

@@ -14,7 +14,7 @@ Assumption records: named assumptions, values, source links, ownership, status, 
 
 ## Current Limitation
 
-V1 runs always land blocked or needing review by design because the workflow seeds at least one guaranteed-review record and no tool can resolve findings yet. The ready path activates when the review-loop MCP tools in `ROADMAP.md` can resolve seeded claims and findings.
+General-profile v1 runs land blocked or needing review by design because the workflow seeds at least one guaranteed-review record and the general review-loop tools are still roadmap work. Legal-profile runs have a narrower review-decision path and local final export gate, but the gate still refuses unresolved legal blockers or required human review.
 
 ## Readiness Rules
 
@@ -35,4 +35,4 @@ Current implemented review rules:
 - A reviewer must choose between conflicting sources.
 - A source is unclear, unsupported, or metadata-only.
 
-Chart traceability, slide-level source checks, and document-level claim extraction are enforced only after those records exist. PowerPoint, Word, and PDF are metadata-only in the current version. An artifact is ready only when blocking issues are zero and required review findings are cleared or explicitly accepted outside the harness.
+Chart traceability, slide-level source checks, and document-level claim extraction are enforced only after those records exist. PowerPoint remains metadata-only in the current version. The legal profile adds DOCX and text-based PDF passage extraction for supplied legal sources. An artifact is ready only when blocking issues are zero and required review findings are cleared or explicitly accepted through the relevant review path.
