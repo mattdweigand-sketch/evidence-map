@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { deflateRawSync } from "node:zlib";
+import { buildLegalEvidenceMap } from "../src/legal/evidence-map.ts";
 import { buildLegalSourcePacket } from "../src/legal/source-packet.ts";
 import { buildLegalTrustFindings } from "../src/legal/trust.ts";
 import type { FileInspectionRecord, SourceRecord } from "../src/types.ts";
@@ -33,6 +34,54 @@ test("legal source packet extracts stable md passages with quote hashes", async 
     first.passages.map((passage) => passage.passageId),
     second.passages.map((passage) => passage.passageId)
   );
+});
+
+test("legal evidence map records first-class legal proposition fields", () => {
+  const source = makeSource({
+    sourceId: "src_case",
+    sourceKind: "case",
+    authorityLevel: "binding",
+    treatmentStatus: "checked_current"
+  });
+  const proposition = makeProposition({
+    id: "legal_prop_rule_1",
+    sourceIds: [source.sourceId],
+    passageIds: ["passage_case_p0001"],
+    pinCites: ["p. 1"],
+    reviewStatus: "verified"
+  });
+
+  const map = buildLegalEvidenceMap({
+    runId: "run_1",
+    artifactKind: "document",
+    legalSources: [source],
+    passages: [
+      {
+        id: "legal_passage_case_p0001",
+        runId: "run_1",
+        sourceId: source.sourceId,
+        passageId: "passage_case_p0001",
+        locationKind: "paragraph",
+        paragraphNumber: 1,
+        pinpoint: "para. 1",
+        quote: "A duty rule applies.",
+        quoteHash: "hash",
+        extractionStatus: "extracted"
+      }
+    ],
+    propositions: [proposition]
+  });
+
+  assert.equal(map.profile, "legal");
+  assert.equal(map.summary.propositionCount, 1);
+  assert.equal(map.summary.mappedPropositionCount, 1);
+  assert.equal(map.summary.passageSupportedPropositionCount, 1);
+  assert.equal(map.summary.unsupportedPropositionCount, 0);
+  assert.equal(map.propositions[0]?.propositionType, "rule");
+  assert.deepEqual(map.propositions[0]?.sourceIds, ["src_case"]);
+  assert.deepEqual(map.propositions[0]?.passageIds, ["passage_case_p0001"]);
+  assert.equal(map.propositions[0]?.authorityLevelRequired, "binding");
+  assert.equal(map.propositions[0]?.reviewStatus, "verified");
 });
 
 test("legal source packet extracts stable docx passages with quote hashes", async () => {

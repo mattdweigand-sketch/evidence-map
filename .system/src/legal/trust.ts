@@ -1,30 +1,8 @@
-import type { ArtifactKind } from "../types.ts";
 import { quoteHash } from "./passages.ts";
 import type { LegalFindingCategory, LegalFindingDraft, LegalPassageRecord, LegalPropositionRecord, LegalSourceRecord } from "./types.ts";
 
 const pinpointRequiredTypes = new Set<LegalPropositionRecord["propositionType"]>(["rule", "holding", "quote", "record_fact", "citation"]);
 const recordSourceKinds = new Set<LegalSourceRecord["sourceKind"]>(["case", "brief", "motion", "order", "contract", "exhibit", "transcript"]);
-
-export function seedLegalPropositions(input: {
-  runId: string;
-  artifactKind: ArtifactKind;
-}): LegalPropositionRecord[] {
-  return [
-    {
-      id: `legal_prop_seed_${input.runId}`,
-      runId: input.runId,
-      artifactLocation: input.artifactKind === "deck" ? "legal-slide-map" : "legal-section-map",
-      propositionType: "rule",
-      text: "Legal propositions must be supplied by the operator and mapped to legal authorities before final-ready legal work.",
-      sourceIds: [],
-      passageIds: [],
-      pinCites: [],
-      assumptions: [],
-      authorityLevelRequired: "binding",
-      reviewStatus: "unsupported"
-    }
-  ];
-}
 
 export function buildLegalTrustFindings(input: {
   legalSources: LegalSourceRecord[];

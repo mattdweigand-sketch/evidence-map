@@ -115,6 +115,16 @@ test("legal profile workflow writes legal source packet artifacts", async () => 
   assert.equal(legalPassages.length, legalPacket.passages.length);
   const legalPacketMarkdown = await readFile(join(result.artifacts.sourceDir, "legal-source-packet.md"), "utf8");
   assert.match(legalPacketMarkdown, /Legal Source Packet/);
+  const legalEvidenceMap = JSON.parse(await readFile(join(result.artifacts.verifyDir, "legal-evidence-map.json"), "utf8"));
+  assert.equal(legalEvidenceMap.profile, "legal");
+  assert.equal(legalEvidenceMap.summary.propositionCount, 1);
+  assert.equal(legalEvidenceMap.propositions[0]?.propositionType, "rule");
+  assert.ok(Array.isArray(legalEvidenceMap.propositions[0]?.sourceIds));
+  assert.ok(Array.isArray(legalEvidenceMap.propositions[0]?.passageIds));
+  assert.equal(legalEvidenceMap.propositions[0]?.authorityLevelRequired, "binding");
+  assert.equal(legalEvidenceMap.propositions[0]?.reviewStatus, "unsupported");
+  const legalEvidenceMapMarkdown = await readFile(join(result.artifacts.verifyDir, "legal-evidence-map.md"), "utf8");
+  assert.match(legalEvidenceMapMarkdown, /Legal Evidence Map/);
 });
 
 test("failed durable workflow runs are not left running", async () => {

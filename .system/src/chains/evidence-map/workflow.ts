@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { writeRunArtifacts } from "../../artifacts/write.ts";
 import type { EvidenceMapStore } from "../../db/store.ts";
 import { buildSourcePacket } from "../../ingest/source-packet.ts";
+import { buildLegalEvidenceMap } from "../../legal/evidence-map.ts";
 import { buildLegalSourcePacket } from "../../legal/source-packet.ts";
 import { buildArtifactSpec, seedCalculations, seedClaims } from "../../spec/build.ts";
 import { evaluateTrust } from "../../trust/evaluate.ts";
@@ -49,6 +50,14 @@ export async function runEvidenceMapWorkflow(
     const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
     const updatedRun = await store.updateRunStatus(run.id, status);
     const legalSourcePacket = updatedRun.profile === "legal" ? await buildLegalSourcePacket({ runId: run.id, sources, inspections }) : undefined;
+    const legalEvidenceMap = legalSourcePacket
+      ? buildLegalEvidenceMap({
+          runId: run.id,
+          artifactKind: input.artifactKind,
+          legalSources: legalSourcePacket.sources,
+          passages: legalSourcePacket.passages
+        })
+      : undefined;
     const artifacts = await writeRunArtifacts({
       baseDir: input.baseDir,
       run: updatedRun,
@@ -58,7 +67,8 @@ export async function runEvidenceMapWorkflow(
       spec,
       findings,
       trustReport,
-      legalSourcePacket
+      legalSourcePacket,
+      legalEvidenceMap
     });
 
     return {

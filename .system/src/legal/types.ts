@@ -1,4 +1,4 @@
-import type { ReviewStatus, VerificationFinding } from "../types.ts";
+import type { ArtifactKind, ReviewStatus, VerificationFinding } from "../types.ts";
 
 export const legalSourceKinds = [
   "case",
@@ -117,6 +117,21 @@ export interface LegalOutputSpec {
   allowedSourceScope: "provided_packet_only" | "provided_plus_user_approved_research";
   reviewOwner?: string;
   reviewRules: string[];
+}
+
+export interface LegalEvidenceMap {
+  id: string;
+  runId: string;
+  profile: "legal";
+  artifactKind: ArtifactKind;
+  propositions: LegalPropositionRecord[];
+  summary: {
+    propositionCount: number;
+    mappedPropositionCount: number;
+    unsupportedPropositionCount: number;
+    passageSupportedPropositionCount: number;
+  };
+  notes: string[];
 }
 
 export type LegalFindingCategory =

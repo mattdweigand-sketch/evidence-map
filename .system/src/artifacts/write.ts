@@ -9,7 +9,9 @@ import type {
   TrustReport,
   VerificationFinding
 } from "../types.ts";
+import { renderLegalEvidenceMap } from "../legal/evidence-map.ts";
 import { renderLegalSourcePacket, type LegalSourcePacket } from "../legal/source-packet.ts";
+import type { LegalEvidenceMap } from "../legal/types.ts";
 
 export async function writeRunArtifacts(input: {
   baseDir: string;
@@ -21,6 +23,7 @@ export async function writeRunArtifacts(input: {
   findings: VerificationFinding[];
   trustReport: TrustReport;
   legalSourcePacket?: LegalSourcePacket;
+  legalEvidenceMap?: LegalEvidenceMap;
 }) {
   const runDir = join(input.baseDir, "deliverables", input.run.slug);
   const sourceDir = join(runDir, "01_source-packet");
@@ -44,6 +47,10 @@ export async function writeRunArtifacts(input: {
   await writeFile(join(specDir, "artifact-spec.md"), renderSpec(input.spec));
 
   await writeJson(join(verifyDir, "verification-findings.json"), input.findings);
+  if (input.legalEvidenceMap) {
+    await writeJson(join(verifyDir, "legal-evidence-map.json"), input.legalEvidenceMap);
+    await writeFile(join(verifyDir, "legal-evidence-map.md"), renderLegalEvidenceMap(input.legalEvidenceMap));
+  }
   await writeJson(join(verifyDir, "trust-report.json"), input.trustReport);
   await writeFile(join(verifyDir, "verification-report.md"), renderVerification(input.findings, input.trustReport));
 
