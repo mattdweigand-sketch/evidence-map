@@ -1,4 +1,4 @@
-# truth-layer-os
+# evidence-map
 
 Read `../AGENTS.md` first.
 

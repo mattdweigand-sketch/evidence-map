@@ -3,23 +3,23 @@ import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod/v4";
-import { runTruthLayerWorkflow } from "../chains/truth-layer/workflow.ts";
-import { JsonFileTruthLayerStore } from "../db/json-file-store.ts";
-import type { TruthLayerStore } from "../db/store.ts";
+import { runEvidenceMapWorkflow } from "../chains/evidence-map/workflow.ts";
+import { JsonFileEvidenceMapStore } from "../db/json-file-store.ts";
+import type { EvidenceMapStore } from "../db/store.ts";
 import { buildSourcePacket } from "../ingest/source-packet.ts";
 import { getDefaultBaseDir } from "../artifacts/paths.ts";
 
 const artifactKindSchema = z.enum(["deck", "workbook", "document", "report", "mixed"]);
 
-export function createTruthLayerMcpServer(store: TruthLayerStore = createDefaultMcpStore()) {
+export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefaultMcpStore()) {
   const defaultBaseDir = getDefaultBaseDir();
   const server = new McpServer({
-    name: "truth-layer-os",
+    name: "evidence-map",
     version: "0.1.0"
   });
 
   server.registerTool(
-    "truthlayer_inspect_source_packet",
+    "evidencemap_inspect_source_packet",
     {
       title: "Inspect Source Packet",
       description: "Build a source inventory and inferred conflict log for one or more local source paths.",
@@ -35,9 +35,9 @@ export function createTruthLayerMcpServer(store: TruthLayerStore = createDefault
   );
 
   server.registerTool(
-    "truthlayer_run_workflow",
+    "evidencemap_run_workflow",
     {
-      title: "Run Truth Layer Workflow",
+      title: "Run Evidence Map Workflow",
       description: "Run source prep, artifact spec, hostile verification, trust evaluation, and local review artifact writing.",
       inputSchema: {
         name: z.string(),
@@ -47,7 +47,7 @@ export function createTruthLayerMcpServer(store: TruthLayerStore = createDefault
       }
     },
     async ({ name, artifactKind, inputPaths, baseDir }) => {
-      const result = await runTruthLayerWorkflow(store, {
+      const result = await runEvidenceMapWorkflow(store, {
         baseDir,
         name,
         artifactKind,
@@ -71,10 +71,10 @@ export function createTruthLayerMcpServer(store: TruthLayerStore = createDefault
   );
 
   server.registerTool(
-    "truthlayer_status",
+    "evidencemap_status",
     {
       title: "Get Run Status",
-      description: "Return run status, record counts, trust summary, and latest readiness for a truth-layer run.",
+      description: "Return run status, record counts, trust summary, and latest readiness for a evidence-map run.",
       inputSchema: {
         runId: z.string()
       }
@@ -112,10 +112,10 @@ export function createTruthLayerMcpServer(store: TruthLayerStore = createDefault
   );
 
   server.registerTool(
-    "truthlayer_next_action",
+    "evidencemap_next_action",
     {
       title: "Get Next Action",
-      description: "Return the next safe action for a truth-layer run.",
+      description: "Return the next safe action for a evidence-map run.",
       inputSchema: {
         runId: z.string()
       }
@@ -124,10 +124,10 @@ export function createTruthLayerMcpServer(store: TruthLayerStore = createDefault
   );
 
   server.registerTool(
-    "truthlayer_get_verification_report",
+    "evidencemap_get_verification_report",
     {
       title: "Get Verification Report",
-      description: "Return hostile-review findings and the latest trust report for a truth-layer run.",
+      description: "Return hostile-review findings and the latest trust report for a evidence-map run.",
       inputSchema: {
         runId: z.string()
       }
@@ -149,16 +149,16 @@ export function createTruthLayerMcpServer(store: TruthLayerStore = createDefault
 }
 
 function createDefaultMcpStore() {
-  return new JsonFileTruthLayerStore(join(getDefaultBaseDir(), "deliverables", "truth-layer-store.json"));
+  return new JsonFileEvidenceMapStore(join(getDefaultBaseDir(), "deliverables", "evidence-map-store.json"));
 }
 
 export async function runStdioMcpServer() {
-  const { server } = createTruthLayerMcpServer();
+  const { server } = createEvidenceMapMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
 
-async function getNextAction(store: TruthLayerStore, runId: string) {
+async function getNextAction(store: EvidenceMapStore, runId: string) {
   const run = await store.getRun(runId);
   if (!run) throw new Error(`Unknown run: ${runId}`);
 
@@ -177,7 +177,7 @@ async function getNextAction(store: TruthLayerStore, runId: string) {
       runId,
       status: run.status,
       gate: "RUN_WORKFLOW",
-      nextAction: "Run truthlayer_run_workflow before review or export."
+      nextAction: "Run evidencemap_run_workflow before review or export."
     };
   }
 

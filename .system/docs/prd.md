@@ -1,6 +1,6 @@
 # Product Direction
 
-Truth Layer OS is a truth and review layer for Office work that needs to survive being forwarded.
+Evidence Map is a review and evidence layer for work that needs to survive being forwarded.
 
 ## Problem
 
@@ -17,7 +17,7 @@ Common failures:
 
 ## Principle
 
-The polished file is not the first artifact. The truth layer is.
+The polished file is not the first artifact. The evidence layer is.
 
 The workflow is:
 
@@ -31,15 +31,7 @@ Source prep, structure, and evidence mapping are mandatory.
 
 ## Target Artifacts
 
-- Board decks.
-- QBRs.
-- Budgets.
-- Operating models.
-- Investor updates.
-- Client presentations.
-- Campaign reports.
-- Regulatory responses.
-- Any workbook where a number can become a decision.
+Recurring reports and reviews (quarterly business reviews, program status reports), financial and operating models, external-facing presentations (client, board, grant, thesis defense), compliance and regulatory responses, research summaries and coursework deliverables, and any file where a claim or number can become a decision.
 
 ## First Version
 
@@ -54,4 +46,4 @@ The first version creates the control layer:
 - Readiness report.
 - Gated export folder.
 
-It does not render final Office files. Draft artifacts can be created elsewhere and routed through the truth layer for review.
+It does not render final Office files. Draft artifacts can be created elsewhere and routed through the evidence layer for review.

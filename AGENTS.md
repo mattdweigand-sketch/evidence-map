@@ -1,38 +1,36 @@
-# truth-layer-os
+# evidence-map
 
 ## What This Is
 
-Truth Layer OS is a general-purpose AI workflow harness for creating defensible Office artifacts from messy source folders.
+Evidence Map is a general-purpose AI workflow harness for reviewing deliverables against the sources behind them.
 
-It is not tied to DDQs or RFPs. It supports board decks, QBRs, budgets, operating models, investor updates, client presentations, regulatory responses, and other files where a claim or number can become a decision.
+It supports recurring reports and reviews (quarterly business reviews, program status reports), financial and operating models, external-facing presentations (client, board, grant, thesis defense), compliance and regulatory responses, research summaries and coursework deliverables, and any file where a claim or number can become a decision.
 
 ## How To Run It
 
 ```bash
 npm --prefix .system install
 npm --prefix .system test
-mkdir -p input/board-qbr
-printf "metric,value\nrevenue,100\n" > input/board-qbr/2026-05-01-raw-export.csv
-npm --prefix .system run run -- --name "board-qbr" --kind deck --input input/board-qbr
+npm --prefix .system run run -- --name "capstone-report" --kind document --input input/examples/capstone-report
 ```
 
 Useful commands:
 
 ```bash
-npm --prefix .system run inspect -- --input input/board-qbr
-npm --prefix .system run verify -- --run deliverables/board-qbr
+npm --prefix .system run inspect -- --input input/sample-project
+npm --prefix .system run verify -- --run deliverables/sample-project
 npm --prefix .system run mcp
 ```
 
 ## Project Shape
 
-- `input/` contains source folders. Use one lowercase project-named subfolder per job.
+- `input/` contains source folders. Use one lowercase project-named subfolder per job. `input/examples/` ships with the repo.
 - `deliverables/` contains generated local run artifacts.
 - `.system/` contains implementation, docs, tests, scripts, package manifest, and MCP server.
 
 ## Conventions
 
-- The truth layer is created before any final file.
+- The evidence layer is created before any final file.
 - Source prep and structure are required stages, not optional cleanup.
 - Every claim should carry source IDs, source dates, assumptions, and review status.
 - Every calculation should identify dependencies, formula risk, and verification status.
@@ -41,7 +39,7 @@ npm --prefix .system run mcp
 
 ## Workflow Boundary
 
-- `.system/src/chains/truth-layer/` owns intake, step ordering, and gate flow.
+- `.system/src/chains/evidence-map/` owns intake, step ordering, and gate flow.
 - `.system/src/ingest/` owns source inventory and source packet creation.
 - `.system/src/spec/` owns artifact specifications for decks, workbooks, documents, and mixed outputs.
 - `.system/src/trust/` owns readiness evaluation and blocking issue detection.

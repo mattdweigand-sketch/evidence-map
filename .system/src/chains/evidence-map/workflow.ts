@@ -1,14 +1,14 @@
 import { resolve } from "node:path";
 import { writeRunArtifacts } from "../../artifacts/write.ts";
-import type { TruthLayerStore } from "../../db/store.ts";
+import type { EvidenceMapStore } from "../../db/store.ts";
 import { buildSourcePacket } from "../../ingest/source-packet.ts";
 import { buildArtifactSpec, seedCalculations, seedClaims } from "../../spec/build.ts";
 import { evaluateTrust } from "../../trust/evaluate.ts";
 import { runHostileReview } from "../../verify/hostile-review.ts";
 import type { ArtifactKind } from "../../types.ts";
 
-export async function runTruthLayerWorkflow(
-  store: TruthLayerStore,
+export async function runEvidenceMapWorkflow(
+  store: EvidenceMapStore,
   input: {
     baseDir: string;
     name: string;

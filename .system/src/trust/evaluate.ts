@@ -1,7 +1,7 @@
-import type { TruthLayerStore } from "../db/store.ts";
+import type { EvidenceMapStore } from "../db/store.ts";
 import type { Readiness, TrustReport } from "../types.ts";
 
-export async function evaluateTrust(store: TruthLayerStore, runId: string): Promise<TrustReport> {
+export async function evaluateTrust(store: EvidenceMapStore, runId: string): Promise<TrustReport> {
   const sources = await store.listSources(runId);
   const claims = await store.listClaims(runId);
   const calculations = await store.listCalculations(runId);

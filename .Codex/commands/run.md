@@ -1,6 +1,6 @@
 # /run
 
-Start a truth-layer workflow for a source folder.
+Start a evidence-map workflow for a source folder.
 
 Expected shape:
 

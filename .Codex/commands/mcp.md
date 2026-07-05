@@ -1,6 +1,6 @@
 # /mcp
 
-Start the Truth Layer OS MCP server.
+Start the Evidence Map MCP server.
 
 Use:
 

@@ -4,12 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import ExcelJS from "exceljs";
-import { runTruthLayerWorkflow } from "../src/chains/truth-layer/workflow.ts";
-import { MemoryTruthLayerStore } from "../src/db/memory-store.ts";
+import { runEvidenceMapWorkflow } from "../src/chains/evidence-map/workflow.ts";
+import { MemoryEvidenceMapStore } from "../src/db/memory-store.ts";
 import { inspectFile } from "../src/inspect/index.ts";
 
 test("xlsx inspection flags hidden sheets, hardcodes, missing checks, and repeated static formulas", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "truth-layer-workbook-"));
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-workbook-"));
   try {
     const workbookPath = join(dir, "2026-05-01-board-model.xlsx");
     await writeRiskyWorkbook(workbookPath);
@@ -40,13 +40,13 @@ test("xlsx inspection flags hidden sheets, hardcodes, missing checks, and repeat
 });
 
 test("workflow promotes workbook doctor risks into verification findings", async () => {
-  const baseDir = await mkdtemp(join(tmpdir(), "truth-layer-workflow-workbook-"));
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-workflow-workbook-"));
   try {
     const inputDir = join(baseDir, "input", "model-review");
     await mkdir(inputDir, { recursive: true });
     await writeRiskyWorkbook(join(inputDir, "2026-05-01-board-model.xlsx"));
 
-    const result = await runTruthLayerWorkflow(new MemoryTruthLayerStore(), {
+    const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
       baseDir,
       name: "model-review",
       artifactKind: "workbook",

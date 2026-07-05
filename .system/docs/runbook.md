@@ -27,9 +27,9 @@ For a document or report, define the section map with claims, sources, open issu
 
 Add the draft artifact or artifact outline to the run.
 
-The draft can come from PowerPoint, Excel, ChatGPT, Claude, an RFP tool, or a human author. Truth Layer OS does not need to generate it.
+The draft can come from PowerPoint, Excel, ChatGPT, Claude, an RFP tool, or a human author. Evidence Map does not need to generate it.
 
-Map the artifact back to the truth layer:
+Map the artifact back to the evidence layer:
 
 - Claims.
 - Numbers.

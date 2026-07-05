@@ -5,14 +5,14 @@ import type {
   FileInspectionRecord,
   SourceConflict,
   SourceRecord,
-  TruthLayerRun,
+  EvidenceMapRun,
   TrustReport,
   VerificationFinding
 } from "../types.ts";
 
 export async function writeRunArtifacts(input: {
   baseDir: string;
-  run: TruthLayerRun;
+  run: EvidenceMapRun;
   sources: SourceRecord[];
   inspections: FileInspectionRecord[];
   conflicts: SourceConflict[];

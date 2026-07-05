@@ -7,11 +7,11 @@ import { buildSourcePacket } from "../src/ingest/source-packet.ts";
 import { inspectFile } from "../src/inspect/index.ts";
 
 test("source packet labels obvious source roles", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "truth-layer-source-"));
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-"));
   const input = join(dir, "input");
   await mkdir(input);
   await writeFile(join(input, "2026-05-01-raw-export.csv"), "a,b\n1,2\n");
-  await writeFile(join(input, "qbr-plan-estimate.xlsx"), "placeholder");
+  await writeFile(join(input, "plan-estimate.xlsx"), "placeholder");
 
   const packet = await buildSourcePacket([input]);
   assert.equal(packet.sources.length, 2);
@@ -24,7 +24,7 @@ test("source packet labels obvious source roles", async () => {
 });
 
 test("source packet uses recursive input paths", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "truth-layer-source-recursive-"));
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-recursive-"));
   const input = join(dir, "input");
   const nested = join(input, "nested");
   await mkdir(nested, { recursive: true });
@@ -36,7 +36,7 @@ test("source packet uses recursive input paths", async () => {
 });
 
 test("source packet avoids substring status and invalid date inference", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "truth-layer-source-inference-"));
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-inference-"));
   const input = join(dir, "input");
   await mkdir(input);
   await writeFile(join(input, "goldman-2026-19-39-raw-export.csv"), "metric,value\nrevenue,100\n");
@@ -47,7 +47,7 @@ test("source packet avoids substring status and invalid date inference", async (
 });
 
 test("csv inspection handles quoted delimiters", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "truth-layer-source-csv-"));
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-csv-"));
   const path = join(dir, "2026-05-01-quoted.csv");
   await writeFile(path, "name,notes\nAcme,\"hello, world\"\n");
 

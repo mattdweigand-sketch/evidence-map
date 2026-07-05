@@ -1,22 +1,22 @@
 import { exit } from "node:process";
 import { join } from "node:path";
 import { getDefaultBaseDir } from "../src/artifacts/paths.ts";
-import { JsonFileTruthLayerStore } from "../src/db/json-file-store.ts";
-import { runTruthLayerWorkflow } from "../src/chains/truth-layer/workflow.ts";
+import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
+import { runEvidenceMapWorkflow } from "../src/chains/evidence-map/workflow.ts";
 import type { ArtifactKind } from "../src/types.ts";
 
 const args = parseArgs(process.argv.slice(2));
-const name = args.name ?? "truth-layer-run";
+const name = args.name ?? "evidence-map-run";
 const kind = (args.kind ?? "mixed") as ArtifactKind;
 const input = args.input;
 
 if (!input) {
-  console.error("Usage: npm --prefix .system run run -- --name board-qbr --kind deck --input input/board-qbr");
+  console.error("Usage: npm --prefix .system run run -- --name sample-project --kind document --input input/sample-project");
   exit(1);
 }
 
 const baseDir = getDefaultBaseDir();
-const result = await runTruthLayerWorkflow(new JsonFileTruthLayerStore(join(baseDir, "deliverables", "truth-layer-store.json")), {
+const result = await runEvidenceMapWorkflow(new JsonFileEvidenceMapStore(join(baseDir, "deliverables", "evidence-map-store.json")), {
   baseDir,
   name,
   artifactKind: kind,
