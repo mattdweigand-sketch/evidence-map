@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import ExcelJS from "exceljs";
+import JSZip from "jszip";
 import { runEvidenceMapWorkflow } from "../src/chains/evidence-map/workflow.ts";
 import { MemoryEvidenceMapStore } from "../src/db/memory-store.ts";
 import { inspectFile } from "../src/inspect/index.ts";
@@ -46,12 +46,16 @@ test("xlsx inspection does not flag numeric constants on assumptions sheets", as
   const dir = await mkdtemp(join(tmpdir(), "evidence-map-workbook-assumptions-"));
   try {
     const workbookPath = join(dir, "2026-05-01-assumptions.xlsx");
-    const workbook = new ExcelJS.Workbook();
-    const assumptions = workbook.addWorksheet("Assumptions");
-    assumptions.addRow(["Input", "Value"]);
-    assumptions.addRow(["Discount rate", 0.08]);
-    assumptions.addRow(["Enrollment", 1200]);
-    await workbook.xlsx.writeFile(workbookPath);
+    await writeWorkbook(workbookPath, [
+      {
+        name: "Assumptions",
+        rows: [
+          ["Input", "Value"],
+          ["Discount rate", 0.08],
+          ["Enrollment", 1200]
+        ]
+      }
+    ]);
 
     const inspection = await inspectFile(workbookPath);
     const sheets = inspection.structuredSummary.sheets as Array<{ name: string; hardcodedNumberCellCount: number }>;
@@ -68,13 +72,16 @@ test("xlsx inspection excludes numeric year labels in detected calculation heade
   const dir = await mkdtemp(join(tmpdir(), "evidence-map-workbook-headers-"));
   try {
     const workbookPath = join(dir, "2026-05-01-calculations.xlsx");
-    const workbook = new ExcelJS.Workbook();
-    const calculations = workbook.addWorksheet("Calculations");
-    calculations.addRow(["Metric", 2024, 2025]);
-    calculations.addRow(["Revenue", 100, 110]);
-    calculations.getCell("B3").value = { formula: "B2*1.1", result: 110 };
-    calculations.getCell("C3").value = { formula: "C2*1.1", result: 121 };
-    await workbook.xlsx.writeFile(workbookPath);
+    await writeWorkbook(workbookPath, [
+      {
+        name: "Calculations",
+        rows: [
+          ["Metric", 2024, 2025],
+          ["Revenue", 100, 110],
+          [undefined, { formula: "B2*1.1", result: 110 }, { formula: "C2*1.1", result: 121 }]
+        ]
+      }
+    ]);
 
     const inspection = await inspectFile(workbookPath);
     const hardcodeIssues = inspection.structuredSummary.hardcodeIssues as Array<{ address: string }>;
@@ -89,13 +96,12 @@ test("xlsx hardcode warning reports uncapped total and notes capped details", as
   const dir = await mkdtemp(join(tmpdir(), "evidence-map-workbook-cap-"));
   try {
     const workbookPath = join(dir, "2026-05-01-many-hardcodes.xlsx");
-    const workbook = new ExcelJS.Workbook();
-    const calculations = workbook.addWorksheet("Calculations");
-    calculations.addRow(["Metric", "Value"]);
-    for (let index = 1; index <= 35; index += 1) {
-      calculations.addRow([`Metric ${index}`, index]);
-    }
-    await workbook.xlsx.writeFile(workbookPath);
+    await writeWorkbook(workbookPath, [
+      {
+        name: "Calculations",
+        rows: [["Metric", "Value"], ...Array.from({ length: 35 }, (_, index) => [`Metric ${index + 1}`, index + 1])]
+      }
+    ]);
 
     const inspection = await inspectFile(workbookPath);
     const workbookSummary = inspection.structuredSummary.workbook as { hardcodedNumberCellCount: number };
@@ -133,20 +139,116 @@ test("workflow promotes workbook doctor risks into verification findings", async
 });
 
 async function writeRiskyWorkbook(path: string) {
-  const workbook = new ExcelJS.Workbook();
-  const model = workbook.addWorksheet("Model");
-  model.addRow(["Metric", "2024", "2025", "2026", "2027"]);
-  model.addRow(["Revenue", 100, 110, 120, 130]);
-  model.addRow(["Growth", "", "", "", ""]);
-  model.getCell("C3").value = { formula: "C2/B2-1", result: 0.1 };
-  model.getCell("D3").value = { formula: "C2/B2-1", result: 0.1 };
-  model.getCell("E3").value = { formula: "C2/B2-1", result: 0.1 };
-  model.getCell("D4").value = 42;
+  await writeWorkbook(path, [
+    {
+      name: "Model",
+      rows: [
+        ["Metric", "2024", "2025", "2026", "2027"],
+        ["Revenue", 100, 110, 120, 130],
+        ["Growth", "", { formula: "C2/B2-1", result: 0.1 }, { formula: "C2/B2-1", result: 0.1 }, { formula: "C2/B2-1", result: 0.1 }],
+        [undefined, undefined, undefined, 42]
+      ]
+    },
+    {
+      name: "Old Hidden Export",
+      state: "hidden",
+      rows: [
+        ["legacy", "value"],
+        ["Revenue", 99]
+      ]
+    }
+  ]);
+}
 
-  const hidden = workbook.addWorksheet("Old Hidden Export");
-  hidden.state = "hidden";
-  hidden.addRow(["legacy", "value"]);
-  hidden.addRow(["Revenue", 99]);
+type TestCell = string | number | { formula: string; result?: number } | undefined;
 
-  await workbook.xlsx.writeFile(path);
+interface TestWorksheet {
+  name: string;
+  state?: string;
+  rows: TestCell[][];
+}
+
+async function writeWorkbook(path: string, sheets: TestWorksheet[]) {
+  const zip = new JSZip();
+  zip.file(
+    "[Content_Types].xml",
+    `<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  ${sheets.map((_, index) => `<Override PartName="/xl/worksheets/sheet${index + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("\n  ")}
+</Types>`
+  );
+  zip.file(
+    "_rels/.rels",
+    `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`
+  );
+  zip.file("xl/workbook.xml", workbookXml(sheets));
+  zip.file("xl/_rels/workbook.xml.rels", workbookRelationshipsXml(sheets));
+  sheets.forEach((sheet, index) => {
+    zip.file(`xl/worksheets/sheet${index + 1}.xml`, worksheetXml(sheet));
+  });
+
+  await writeFile(path, await zip.generateAsync({ type: "nodebuffer" }));
+}
+
+function workbookXml(sheets: TestWorksheet[]) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    ${sheets.map((sheet, index) => `<sheet name="${escapeXml(sheet.name)}" sheetId="${index + 1}"${sheet.state && sheet.state !== "visible" ? ` state="${escapeXml(sheet.state)}"` : ""} r:id="rId${index + 1}"/>`).join("\n    ")}
+  </sheets>
+</workbook>`;
+}
+
+function workbookRelationshipsXml(sheets: TestWorksheet[]) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  ${sheets.map((_, index) => `<Relationship Id="rId${index + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${index + 1}.xml"/>`).join("\n  ")}
+</Relationships>`;
+}
+
+function worksheetXml(sheet: TestWorksheet) {
+  const rows = sheet.rows
+    .map((row, rowIndex) => {
+      const rowNumber = rowIndex + 1;
+      const cells = row.map((cell, cellIndex) => cellXml(cell, `${columnName(cellIndex + 1)}${rowNumber}`)).join("");
+      return `<row r="${rowNumber}">${cells}</row>`;
+    })
+    .join("");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>${rows}</sheetData>
+</worksheet>`;
+}
+
+function cellXml(cell: TestCell, address: string) {
+  if (cell === undefined) return "";
+  if (typeof cell === "number") return `<c r="${address}"><v>${cell}</v></c>`;
+  if (typeof cell === "string") return `<c r="${address}" t="inlineStr"><is><t>${escapeXml(cell)}</t></is></c>`;
+  const result = cell.result === undefined ? "" : `<v>${cell.result}</v>`;
+  return `<c r="${address}"><f>${escapeXml(cell.formula)}</f>${result}</c>`;
+}
+
+function columnName(value: number) {
+  let name = "";
+  let remaining = value;
+  while (remaining > 0) {
+    const remainder = (remaining - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    remaining = Math.floor((remaining - 1) / 26);
+  }
+  return name || "A";
+}
+
+function escapeXml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }

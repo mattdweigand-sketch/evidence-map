@@ -64,7 +64,7 @@ This is the actual (abridged) `verification-report.md` from the quickstart above
 > | must_fix | section-map | Claim has no source attribution. |
 > | should_fix | source:interview-notes.md | Source status is unclear. |
 
-The clean file in the folder (`2026-04-12-survey-raw-export.csv`) produces no findings: it has a date, a recognizable role, and consistent structure. Everything else gets caught. The example workbook was generated with [exceljs](https://github.com/exceljs/exceljs) with its problems planted on purpose: two hardcoded numbers on a calculation sheet, a hidden sheet, no checks tab, and no date anywhere.
+The clean file in the folder (`2026-04-12-survey-raw-export.csv`) produces no findings: it has a date, a recognizable role, and consistent structure. Everything else gets caught. The example workbook has its problems planted on purpose: two hardcoded numbers on a calculation sheet, a hidden sheet, no checks tab, and no date anywhere.
 
 ## MCP Setup
 
