@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 import { exit } from "node:process";
 import { getDefaultBaseDir } from "../src/artifacts/paths.ts";
 import { writeRunArtifacts } from "../src/artifacts/write.ts";
-import { JsonFileTruthLayerStore } from "../src/db/json-file-store.ts";
+import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
 import { evaluateTrust } from "../src/trust/evaluate.ts";
 import { buildHostileReviewFindings } from "../src/verify/hostile-review.ts";
 
@@ -20,7 +20,7 @@ try {
   const runMetadata = JSON.parse(await readFile(join(runDir, "run.json"), "utf8")) as { id?: string };
   if (!runMetadata.id) throw new Error("Run metadata is missing an id.");
 
-  const store = new JsonFileTruthLayerStore(join(baseDir, "deliverables", "truth-layer-store.json"));
+  const store = new JsonFileEvidenceMapStore(join(baseDir, "deliverables", "evidence-map-store.json"));
   const run = await store.getRun(runMetadata.id);
   if (!run) throw new Error(`No persisted run found for ${runMetadata.id}.`);
 

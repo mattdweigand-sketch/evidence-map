@@ -7,3 +7,4 @@ deliverables/*
 !deliverables/.gitkeep
 input/*
 !input/.gitkeep
+!input/examples/

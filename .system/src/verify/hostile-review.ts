@@ -1,16 +1,16 @@
-import type { TruthLayerStore } from "../db/store.ts";
+import type { EvidenceMapStore } from "../db/store.ts";
 import type { VerificationFinding } from "../types.ts";
 import { workbookInspectionFindings } from "./workbook-findings.ts";
 
 export async function runHostileReview(
-  store: TruthLayerStore,
+  store: EvidenceMapStore,
   runId: string
 ): Promise<VerificationFinding[]> {
   return store.createVerificationFindings(runId, await buildHostileReviewFindings(store, runId));
 }
 
 export async function buildHostileReviewFindings(
-  store: TruthLayerStore,
+  store: EvidenceMapStore,
   runId: string
 ): Promise<Omit<VerificationFinding, "id" | "runId">[]> {
   const sources = await store.listSources(runId);

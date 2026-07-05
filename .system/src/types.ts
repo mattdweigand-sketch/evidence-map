@@ -18,7 +18,7 @@ export type FindingSeverity = "must_fix" | "should_fix" | "polish";
 export type Readiness = "ready" | "needs_review" | "blocked";
 export type InspectionStatus = "inspected" | "metadata_only" | "unsupported" | "failed";
 
-export interface TruthLayerRun {
+export interface EvidenceMapRun {
   id: string;
   slug: string;
   name: string;

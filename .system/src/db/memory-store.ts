@@ -7,14 +7,14 @@ import type {
   SourceConflict,
   SourceRecord,
   StartRunInput,
-  TruthLayerRun,
+  EvidenceMapRun,
   TrustReport,
   VerificationFinding
 } from "../types.ts";
-import type { TruthLayerStore } from "./store.ts";
+import type { EvidenceMapStore } from "./store.ts";
 
-export class MemoryTruthLayerStore implements TruthLayerStore {
-  private runs = new Map<string, TruthLayerRun>();
+export class MemoryEvidenceMapStore implements EvidenceMapStore {
+  private runs = new Map<string, EvidenceMapRun>();
   private sources = new Map<string, SourceRecord[]>();
   private conflicts = new Map<string, SourceConflict[]>();
   private inspections = new Map<string, FileInspectionRecord[]>();
@@ -25,10 +25,10 @@ export class MemoryTruthLayerStore implements TruthLayerStore {
   private findings = new Map<string, VerificationFinding[]>();
   private reports = new Map<string, TrustReport[]>();
 
-  async createRun(input: StartRunInput): Promise<TruthLayerRun> {
+  async createRun(input: StartRunInput): Promise<EvidenceMapRun> {
     const now = new Date().toISOString();
     const id = createId("run");
-    const run: TruthLayerRun = {
+    const run: EvidenceMapRun = {
       id,
       slug: createRunSlug(input.name, id),
       name: input.name,
@@ -46,7 +46,7 @@ export class MemoryTruthLayerStore implements TruthLayerStore {
     return this.runs.get(id);
   }
 
-  async updateRunStatus(runId: string, status: TruthLayerRun["status"]) {
+  async updateRunStatus(runId: string, status: EvidenceMapRun["status"]) {
     const run = this.requireRun(runId);
     const updated = { ...run, status, updatedAt: new Date().toISOString() };
     this.runs.set(runId, updated);
@@ -162,7 +162,7 @@ export function slugify(value: string) {
 }
 
 function createRunSlug(name: string, id: string) {
-  const base = slugify(name) || "truth-layer-run";
+  const base = slugify(name) || "evidence-map-run";
   return `${base}-${id.replace(/^run_/, "").slice(0, 8)}`;
 }
 

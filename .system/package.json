@@ -1,17 +1,17 @@
 {
-  "name": "truth-layer-os",
+  "name": "evidence-map",
   "version": "0.1.0",
   "private": true,
-  "description": "MCP-first truth-layer harness for defensible AI-generated Office artifacts.",
+  "description": "MCP-first review and evidence-mapping harness for AI-generated and human-drafted deliverables.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mattdweigand-sketch/truth-layer-os.git"
+    "url": "git+https://github.com/mattdweigand-sketch/evidence-map.git"
   },
   "bugs": {
-    "url": "https://github.com/mattdweigand-sketch/truth-layer-os/issues"
+    "url": "https://github.com/mattdweigand-sketch/evidence-map/issues"
   },
-  "homepage": "https://github.com/mattdweigand-sketch/truth-layer-os#readme",
+  "homepage": "https://github.com/mattdweigand-sketch/evidence-map#readme",
   "keywords": [
     "ai",
     "office",
@@ -20,7 +20,10 @@
     "excel",
     "verification",
     "workflow",
-    "truth-layer"
+    "evidence-mapping",
+    "claims",
+    "review",
+    "agents"
   ],
   "type": "module",
   "scripts": {

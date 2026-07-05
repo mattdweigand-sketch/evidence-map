@@ -9,14 +9,14 @@ import type {
   SourceConflict,
   SourceRecord,
   StartRunInput,
-  TruthLayerRun,
+  EvidenceMapRun,
   TrustReport,
   VerificationFinding
 } from "../types.ts";
-import type { TruthLayerStore } from "./store.ts";
+import type { EvidenceMapStore } from "./store.ts";
 
 interface StoreData {
-  runs: TruthLayerRun[];
+  runs: EvidenceMapRun[];
   sources: SourceRecord[];
   conflicts: SourceConflict[];
   inspections: FileInspectionRecord[];
@@ -28,18 +28,18 @@ interface StoreData {
   reports: TrustReport[];
 }
 
-export class JsonFileTruthLayerStore implements TruthLayerStore {
+export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   private readonly path: string;
 
   constructor(path: string) {
     this.path = path;
   }
 
-  async createRun(input: StartRunInput): Promise<TruthLayerRun> {
+  async createRun(input: StartRunInput): Promise<EvidenceMapRun> {
     const data = await this.load();
     const now = new Date().toISOString();
     const id = createId("run");
-    const run: TruthLayerRun = {
+    const run: EvidenceMapRun = {
       id,
       slug: createRunSlug(input.name, id),
       name: input.name,
@@ -59,7 +59,7 @@ export class JsonFileTruthLayerStore implements TruthLayerStore {
     return data.runs.find((run) => run.id === id);
   }
 
-  async updateRunStatus(runId: string, status: TruthLayerRun["status"]) {
+  async updateRunStatus(runId: string, status: EvidenceMapRun["status"]) {
     const data = await this.load();
     const run = data.runs.find((item) => item.id === runId);
     if (!run) throw new Error(`Unknown run: ${runId}`);
@@ -209,7 +209,7 @@ function slugify(value: string) {
 }
 
 function createRunSlug(name: string, id: string) {
-  const base = slugify(name) || "truth-layer-run";
+  const base = slugify(name) || "evidence-map-run";
   return `${base}-${id.replace(/^run_/, "").slice(0, 8)}`;
 }
 

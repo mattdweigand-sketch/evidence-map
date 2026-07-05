@@ -7,15 +7,15 @@ import type {
   SourceConflict,
   SourceRecord,
   StartRunInput,
-  TruthLayerRun,
+  EvidenceMapRun,
   TrustReport,
   VerificationFinding
 } from "../types.ts";
 
-export interface TruthLayerStore {
-  createRun(input: StartRunInput): Promise<TruthLayerRun>;
-  getRun(id: string): Promise<TruthLayerRun | undefined>;
-  updateRunStatus(runId: string, status: TruthLayerRun["status"]): Promise<TruthLayerRun>;
+export interface EvidenceMapStore {
+  createRun(input: StartRunInput): Promise<EvidenceMapRun>;
+  getRun(id: string): Promise<EvidenceMapRun | undefined>;
+  updateRunStatus(runId: string, status: EvidenceMapRun["status"]): Promise<EvidenceMapRun>;
 
   createSources(runId: string, sources: Omit<SourceRecord, "id" | "runId">[]): Promise<SourceRecord[]>;
   listSources(runId: string): Promise<SourceRecord[]>;

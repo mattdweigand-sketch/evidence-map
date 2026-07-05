@@ -6,24 +6,24 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { runTruthLayerWorkflow } from "../src/chains/truth-layer/workflow.ts";
-import { JsonFileTruthLayerStore } from "../src/db/json-file-store.ts";
-import { MemoryTruthLayerStore } from "../src/db/memory-store.ts";
+import { runEvidenceMapWorkflow } from "../src/chains/evidence-map/workflow.ts";
+import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
+import { MemoryEvidenceMapStore } from "../src/db/memory-store.ts";
 
 const execFileAsync = promisify(execFile);
 
 test("workflow creates source packet, spec, verification report, and export gate", async () => {
-  const baseDir = await mkdtemp(join(tmpdir(), "truth-layer-os-"));
-  const inputDir = join(baseDir, "input", "board-qbr");
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-"));
+  const inputDir = join(baseDir, "input", "sample-project");
   await mkdir(inputDir, { recursive: true });
   await writeFile(join(inputDir, "2026-05-01-finance-export.xlsx"), "placeholder");
   await writeFile(join(inputDir, "old-board-deck.pptx"), "placeholder");
 
-  const result = await runTruthLayerWorkflow(new MemoryTruthLayerStore(), {
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
     baseDir,
-    name: "board-qbr",
+    name: "sample-project",
     artifactKind: "deck",
-    inputPaths: ["input/board-qbr"]
+    inputPaths: ["input/sample-project"]
   });
 
   assert.equal(result.sources.length, 2);
@@ -31,26 +31,26 @@ test("workflow creates source packet, spec, verification report, and export gate
   assert.equal(result.spec.artifactKind, "deck");
   assert.equal(result.trustReport.readiness, "blocked");
   assert.ok(result.findings.some((finding) => finding.issue.includes("Claim has no source")));
-  assert.match(result.artifacts.runDir, /deliverables\/board-qbr-[a-f0-9]{8}$/);
+  assert.match(result.artifacts.runDir, /deliverables\/sample-project-[a-f0-9]{8}$/);
   const inspections = JSON.parse(await readFile(join(result.artifacts.sourceDir, "file-inspections.json"), "utf8"));
   assert.equal(inspections.length, 2);
 });
 
 test("workflow writes each same-name run to a unique artifact folder", async () => {
-  const baseDir = await mkdtemp(join(tmpdir(), "truth-layer-os-unique-"));
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-unique-"));
   await mkdir(join(baseDir, "input", "one"), { recursive: true });
   await mkdir(join(baseDir, "input", "two"), { recursive: true });
   await writeFile(join(baseDir, "input", "one", "2026-05-01-one.csv"), "metric,value\nrevenue,100\n");
   await writeFile(join(baseDir, "input", "two", "2026-05-01-two.csv"), "metric,value\nrevenue,200\n");
 
-  const store = new MemoryTruthLayerStore();
-  const first = await runTruthLayerWorkflow(store, {
+  const store = new MemoryEvidenceMapStore();
+  const first = await runEvidenceMapWorkflow(store, {
     baseDir,
     name: "same name",
     artifactKind: "workbook",
     inputPaths: ["input/one"]
   });
-  const second = await runTruthLayerWorkflow(store, {
+  const second = await runEvidenceMapWorkflow(store, {
     baseDir,
     name: "same name",
     artifactKind: "workbook",
@@ -65,13 +65,13 @@ test("workflow writes each same-name run to a unique artifact folder", async () 
 });
 
 test("workflow maps inferred conflicts to persisted source ids", async () => {
-  const baseDir = await mkdtemp(join(tmpdir(), "truth-layer-os-conflict-"));
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-conflict-"));
   const inputDir = join(baseDir, "input", "conflict");
   await mkdir(inputDir, { recursive: true });
   await writeFile(join(inputDir, "board-model.csv"), "label\ncurrent\n");
   await writeFile(join(inputDir, "old-board-model.csv"), "label\nold\n");
 
-  const result = await runTruthLayerWorkflow(new MemoryTruthLayerStore(), {
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
     baseDir,
     name: "conflict",
     artifactKind: "deck",
@@ -84,11 +84,11 @@ test("workflow maps inferred conflicts to persisted source ids", async () => {
 });
 
 test("failed durable workflow runs are not left running", async () => {
-  const baseDir = await mkdtemp(join(tmpdir(), "truth-layer-os-failed-"));
-  const storePath = join(baseDir, "deliverables", "truth-layer-store.json");
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-failed-"));
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
 
   await assert.rejects(
-    runTruthLayerWorkflow(new JsonFileTruthLayerStore(storePath), {
+    runEvidenceMapWorkflow(new JsonFileEvidenceMapStore(storePath), {
       baseDir,
       name: "missing input",
       artifactKind: "deck",
@@ -102,16 +102,16 @@ test("failed durable workflow runs are not left running", async () => {
 });
 
 test("verify command recomputes findings without duplicating old ones", async () => {
-  const baseDir = await mkdtemp(join(tmpdir(), "truth-layer-os-verify-"));
-  const inputDir = join(baseDir, "input", "board-qbr");
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-verify-"));
+  const inputDir = join(baseDir, "input", "sample-project");
   await mkdir(inputDir, { recursive: true });
   await writeFile(join(inputDir, "2026-05-01-raw-export.csv"), "metric,value\nrevenue,100\n");
-  const storePath = join(baseDir, "deliverables", "truth-layer-store.json");
-  const result = await runTruthLayerWorkflow(new JsonFileTruthLayerStore(storePath), {
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const result = await runEvidenceMapWorkflow(new JsonFileEvidenceMapStore(storePath), {
     baseDir,
-    name: "board-qbr",
+    name: "sample-project",
     artifactKind: "deck",
-    inputPaths: ["input/board-qbr"]
+    inputPaths: ["input/sample-project"]
   });
   const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
 
