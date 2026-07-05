@@ -9,20 +9,38 @@ import { runEvidenceMapWorkflow } from "../chains/evidence-map/workflow.ts";
 import { JsonFileEvidenceMapStore } from "../db/json-file-store.ts";
 import type { EvidenceMapStore } from "../db/store.ts";
 import { buildSourcePacket } from "../ingest/source-packet.ts";
-import { buildLegalRunArtifacts } from "../legal/artifacts.ts";
+import { buildLegalRunArtifacts, type LegalRunArtifacts } from "../legal/artifacts.ts";
 import {
+  appendLegalRiskAcceptanceDecision,
   appendAttachPassageSupportDecision,
+  appendSourceAuthorityDecision,
+  appendSourceConflictDecision,
+  appendSourceTreatmentDecision,
+  applyLegalConflictReviewDecisions,
   LEGAL_REVIEW_APPROVAL_TOKEN,
   readLegalReviewDecisionSet
 } from "../legal/review-decisions.ts";
 import { buildLegalSourcePacketFromDrafts } from "../legal/source-packet.ts";
 import { getDefaultBaseDir } from "../artifacts/paths.ts";
 import { evaluateTrust } from "../trust/evaluate.ts";
-import { artifactKinds, workflowProfiles, type WorkflowProfile } from "../types.ts";
+import { artifactKinds, workflowProfiles, type EvidenceMapRun, type SourceConflict, type WorkflowProfile } from "../types.ts";
+import {
+  legalAuthorityLevels,
+  legalFindingCategories,
+  legalSourceKinds,
+  type LegalReviewAuditEvent,
+  type LegalReviewDecisionRecord,
+  type LegalReviewDecisionSet
+} from "../legal/types.ts";
 import { buildHostileReviewFindings } from "../verify/hostile-review.ts";
 
 const artifactKindSchema = z.enum(artifactKinds);
 const workflowProfileSchema = z.enum(workflowProfiles);
+const legalAuthorityLevelSchema = z.enum(legalAuthorityLevels);
+const legalSourceKindSchema = z.enum(legalSourceKinds);
+const legalFindingCategorySchema = z.enum(legalFindingCategories);
+const legalTreatmentStatusSchema = z.enum(["not_checked", "checked_current", "questioned", "negative", "superseded"]);
+const legalSourceStatusSchema = z.enum(["current", "superseded", "background", "draft", "unknown"]);
 type ResolvedWorkspaceInputPaths = { paths: string[] } | { error: string };
 
 export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefaultMcpStore()) {
@@ -202,6 +220,155 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
     }
   );
 
+  server.registerTool(
+    "evidencemap_update_legal_source_authority",
+    {
+      title: "Update Legal Source Authority",
+      description: `Confirm or change legal source authority classification. Requires approvalToken ${LEGAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        sourceId: z.string(),
+        authorityLevel: legalAuthorityLevelSchema,
+        sourceKind: legalSourceKindSchema.optional(),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, sourceId, authorityLevel, sourceKind, reviewer, notes, approvalToken, baseDir }) => {
+      try {
+        const context = await loadLegalDecisionContext({ store, baseDir, runId, approvalToken });
+        const decisionResult = appendSourceAuthorityDecision({
+          decisionSet: context.decisionSet,
+          legalSourcePacket: context.legalArtifacts.legalSourcePacket,
+          sourceId,
+          authorityLevel,
+          sourceKind,
+          reviewer,
+          notes,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateLegalRunAfterDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "Legal source authority decision failed.");
+      }
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_update_legal_source_treatment",
+    {
+      title: "Update Legal Source Treatment",
+      description: `Update legal source treatment/currentness status. Requires approvalToken ${LEGAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        sourceId: z.string(),
+        treatmentStatus: legalTreatmentStatusSchema,
+        sourceStatus: legalSourceStatusSchema.optional(),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, sourceId, treatmentStatus, sourceStatus, reviewer, notes, approvalToken, baseDir }) => {
+      try {
+        const context = await loadLegalDecisionContext({ store, baseDir, runId, approvalToken });
+        const decisionResult = appendSourceTreatmentDecision({
+          decisionSet: context.decisionSet,
+          legalSourcePacket: context.legalArtifacts.legalSourcePacket,
+          sourceId,
+          treatmentStatus,
+          sourceStatus,
+          reviewer,
+          notes,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateLegalRunAfterDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "Legal source treatment decision failed.");
+      }
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_accept_legal_risk",
+    {
+      title: "Accept Legal Risk",
+      description: `Accept or carry a current legal verification risk. Requires approvalToken ${LEGAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        location: z.string(),
+        issue: z.string(),
+        category: legalFindingCategorySchema.optional(),
+        reason: z.string().min(1),
+        reviewer: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, location, issue, category, reason, reviewer, approvalToken, baseDir }) => {
+      try {
+        const context = await loadLegalDecisionContext({ store, baseDir, runId, approvalToken });
+        const currentFindings = await buildHostileReviewFindings(store, context.run.id, {
+          legalReviewDecisions: context.decisionSet.decisions
+        });
+        const decisionResult = appendLegalRiskAcceptanceDecision({
+          decisionSet: context.decisionSet,
+          findings: currentFindings,
+          location,
+          issue,
+          category,
+          reason,
+          reviewer,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateLegalRunAfterDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "Legal risk acceptance failed.");
+      }
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_resolve_legal_source_conflict",
+    {
+      title: "Resolve Legal Source Conflict",
+      description: `Resolve or carry a source conflict for a legal run. Requires approvalToken ${LEGAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        conflictId: z.string(),
+        resolution: z.string().min(1),
+        carryAsRisk: z.boolean().default(false),
+        reviewer: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, conflictId, resolution, carryAsRisk, reviewer, approvalToken, baseDir }) => {
+      try {
+        const context = await loadLegalDecisionContext({ store, baseDir, runId, approvalToken });
+        const effectiveConflicts = applyLegalConflictReviewDecisions({
+          conflicts: context.conflicts,
+          decisions: context.decisionSet.decisions
+        });
+        const decisionResult = appendSourceConflictDecision({
+          decisionSet: context.decisionSet,
+          conflicts: effectiveConflicts,
+          conflictId,
+          resolution,
+          carryAsRisk,
+          reviewer,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateLegalRunAfterDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "Legal source conflict decision failed.");
+      }
+    }
+  );
+
   return { server, store };
 }
 
@@ -313,55 +480,83 @@ async function attachLegalPassageSupport(input: {
   reviewer?: string;
   approvalToken: string;
 }) {
-  const run = await input.store.getRun(input.runId);
-  if (!run) throw new Error(`Unknown run: ${input.runId}`);
-  if (run.profile !== "legal") throw new Error("Legal passage support decisions require a legal-profile run.");
-  if (input.approvalToken !== LEGAL_REVIEW_APPROVAL_TOKEN) {
-    throw new Error(`Legal review changes require approvalToken ${LEGAL_REVIEW_APPROVAL_TOKEN}.`);
-  }
-
-  const decisionSet = await readLegalReviewDecisionSet({ baseDir: input.baseDir, run });
-  const currentLegalArtifacts = await buildLegalRunArtifacts({
-    store: input.store,
-    run,
-    reviewDecisions: decisionSet.decisions
-  });
+  const context = await loadLegalDecisionContext(input);
   const decisionResult = appendAttachPassageSupportDecision({
-    decisionSet,
-    legalEvidenceMap: currentLegalArtifacts.legalEvidenceMap,
-    passages: currentLegalArtifacts.legalSourcePacket.passages,
+    decisionSet: context.decisionSet,
+    legalEvidenceMap: context.legalArtifacts.legalEvidenceMap,
+    passages: context.legalArtifacts.legalSourcePacket.passages,
     propositionId: input.propositionId,
     passageId: input.passageId,
     pinCite: input.pinCite,
     reviewer: input.reviewer,
     approvalToken: input.approvalToken
   });
+  return regenerateLegalRunAfterDecision({ ...context, decisionResult });
+}
 
-  const findings = await input.store.replaceVerificationFindings(
-    run.id,
-    await buildHostileReviewFindings(input.store, run.id, { legalReviewDecisions: decisionResult.decisionSet.decisions })
-  );
-  const trustReport = await evaluateTrust(input.store, run.id);
-  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
-  const updatedRun = await input.store.updateRunStatus(run.id, status);
-  const [sources, inspections, conflicts, spec] = await Promise.all([
-    input.store.listSources(run.id),
-    input.store.listFileInspections(run.id),
-    input.store.listSourceConflicts(run.id),
-    input.store.getArtifactSpec(run.id)
+async function loadLegalDecisionContext(input: {
+  store: EvidenceMapStore;
+  baseDir: string;
+  runId: string;
+  approvalToken: string;
+}): Promise<LegalDecisionContext> {
+  const run = await input.store.getRun(input.runId);
+  if (!run) throw new Error(`Unknown run: ${input.runId}`);
+  if (run.profile !== "legal") throw new Error("Legal review decisions require a legal-profile run.");
+  if (input.approvalToken !== LEGAL_REVIEW_APPROVAL_TOKEN) {
+    throw new Error(`Legal review changes require approvalToken ${LEGAL_REVIEW_APPROVAL_TOKEN}.`);
+  }
+
+  const decisionSet = await readLegalReviewDecisionSet({ baseDir: input.baseDir, run });
+  const [legalArtifacts, conflicts] = await Promise.all([
+    buildLegalRunArtifacts({
+      store: input.store,
+      run,
+      reviewDecisions: decisionSet.decisions
+    }),
+    input.store.listSourceConflicts(run.id)
   ]);
-  if (!spec) throw new Error(`No artifact spec found for ${run.id}.`);
+
+  return {
+    store: input.store,
+    baseDir: input.baseDir,
+    run,
+    decisionSet,
+    legalArtifacts,
+    conflicts
+  };
+}
+
+async function regenerateLegalRunAfterDecision(input: LegalDecisionContext & { decisionResult: LegalDecisionResult }) {
+  const findings = await input.store.replaceVerificationFindings(
+    input.run.id,
+    await buildHostileReviewFindings(input.store, input.run.id, { legalReviewDecisions: input.decisionResult.decisionSet.decisions })
+  );
+  const trustReport = await evaluateTrust(input.store, input.run.id);
+  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
+  const updatedRun = await input.store.updateRunStatus(input.run.id, status);
+  const [sources, inspections, conflicts, spec] = await Promise.all([
+    input.store.listSources(input.run.id),
+    input.store.listFileInspections(input.run.id),
+    input.store.listSourceConflicts(input.run.id),
+    input.store.getArtifactSpec(input.run.id)
+  ]);
+  if (!spec) throw new Error(`No artifact spec found for ${input.run.id}.`);
+  const effectiveConflicts = applyLegalConflictReviewDecisions({
+    conflicts,
+    decisions: input.decisionResult.decisionSet.decisions
+  });
   const legalArtifacts = await buildLegalRunArtifacts({
     store: input.store,
     run: updatedRun,
-    reviewDecisions: decisionResult.decisionSet.decisions
+    reviewDecisions: input.decisionResult.decisionSet.decisions
   });
   const artifacts = await writeRunArtifacts({
     baseDir: input.baseDir,
     run: updatedRun,
     sources,
     inspections,
-    conflicts,
+    conflicts: effectiveConflicts,
     spec,
     findings,
     trustReport,
@@ -369,7 +564,7 @@ async function attachLegalPassageSupport(input: {
     legalOutputSpec: legalArtifacts.legalOutputSpec,
     legalEvidenceMap: legalArtifacts.legalEvidenceMap,
     legalDraftPropositions: legalArtifacts.legalDraftPropositions,
-    legalReviewDecisionSet: decisionResult.decisionSet
+    legalReviewDecisionSet: input.decisionResult.decisionSet
   });
 
   return {
@@ -377,16 +572,32 @@ async function attachLegalPassageSupport(input: {
     profile: updatedRun.profile,
     status: updatedRun.status,
     readiness: trustReport.readiness,
-    changed: decisionResult.changed,
-    decision: decisionResult.decision ?? null,
-    auditEvent: decisionResult.auditEvent ?? null,
-    decisionCount: decisionResult.decisionSet.decisions.length,
-    auditEventCount: decisionResult.decisionSet.auditEvents.length,
+    changed: input.decisionResult.changed,
+    decision: input.decisionResult.decision ?? null,
+    auditEvent: input.decisionResult.auditEvent ?? null,
+    decisionCount: input.decisionResult.decisionSet.decisions.length,
+    auditEventCount: input.decisionResult.decisionSet.auditEvents.length,
     findingCount: findings.length,
     blockingCount: trustReport.summary.blockingCount,
     needsReviewCount: trustReport.summary.needsReviewCount,
     artifacts
   };
+}
+
+interface LegalDecisionContext {
+  store: EvidenceMapStore;
+  baseDir: string;
+  run: EvidenceMapRun;
+  decisionSet: LegalReviewDecisionSet;
+  legalArtifacts: LegalRunArtifacts;
+  conflicts: SourceConflict[];
+}
+
+interface LegalDecisionResult {
+  decisionSet: LegalReviewDecisionSet;
+  decision?: LegalReviewDecisionRecord;
+  auditEvent?: LegalReviewAuditEvent;
+  changed: boolean;
 }
 
 function jsonToolResult(data: unknown): CallToolResult {

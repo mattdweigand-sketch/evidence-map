@@ -1,5 +1,6 @@
 import type { EvidenceMapStore } from "../db/store.ts";
 import { buildLegalRunArtifacts } from "../legal/artifacts.ts";
+import { applyLegalConflictReviewDecisions, applyLegalRiskAcceptanceDecisions } from "../legal/review-decisions.ts";
 import { buildLegalDraftDisciplineFindings, buildLegalTrustFindings } from "../legal/trust.ts";
 import type { LegalReviewDecisionRecord } from "../legal/types.ts";
 import type { VerificationFinding } from "../types.ts";
@@ -20,12 +21,17 @@ export async function buildHostileReviewFindings(
   const run = await store.getRun(runId);
   const sources = await store.listSources(runId);
   const inspections = await store.listFileInspections(runId);
-  const conflicts = await store.listSourceConflicts(runId);
+  const storedConflicts = await store.listSourceConflicts(runId);
   const claims = await store.listClaims(runId);
   const calculations = await store.listCalculations(runId);
   const assumptions = await store.listAssumptions(runId);
+  const legalReviewDecisions = run?.profile === "legal" ? options.legalReviewDecisions ?? [] : [];
+  const conflicts =
+    run?.profile === "legal"
+      ? applyLegalConflictReviewDecisions({ conflicts: storedConflicts, decisions: legalReviewDecisions })
+      : storedConflicts;
 
-  const findings: Omit<VerificationFinding, "id" | "runId">[] = [];
+  let findings: Omit<VerificationFinding, "id" | "runId">[] = [];
   const sourceById = new Map(sources.map((source) => [source.id, source]));
   const inspectionBySourceId = new Map(inspections.filter((inspection) => inspection.sourceId).map((inspection) => [inspection.sourceId, inspection]));
 
@@ -144,7 +150,7 @@ export async function buildHostileReviewFindings(
     const legalArtifacts = await buildLegalRunArtifacts({
       store,
       run,
-      reviewDecisions: options.legalReviewDecisions
+      reviewDecisions: legalReviewDecisions
     });
     findings.push(
       ...buildLegalTrustFindings({
@@ -157,6 +163,10 @@ export async function buildHostileReviewFindings(
         draftPropositions: legalArtifacts.legalDraftPropositions
       })
     );
+  }
+
+  if (run?.profile === "legal") {
+    findings = applyLegalRiskAcceptanceDecisions({ findings, decisions: legalReviewDecisions });
   }
 
   return findings;

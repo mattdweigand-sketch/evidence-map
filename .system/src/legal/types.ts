@@ -140,41 +140,92 @@ export interface LegalEvidenceMap {
   notes: string[];
 }
 
-export type LegalFindingCategory =
-  | "missing_authority"
-  | "missing_pinpoint"
-  | "quote_drift"
-  | "unsupported_record_fact"
-  | "jurisdiction_mismatch"
-  | "authority_level_mismatch"
-  | "secondary_only_rule"
-  | "unresolved_conflict"
-  | "negative_treatment_not_checked"
-  | "case_posture_unclear"
-  | "assignment_scope_violation"
-  | "model_knowledge_leak"
-  | "citation_format_issue"
-  | "conclusion_outpaces_support";
+export const legalFindingCategories = [
+  "missing_authority",
+  "missing_pinpoint",
+  "quote_drift",
+  "unsupported_record_fact",
+  "jurisdiction_mismatch",
+  "authority_level_mismatch",
+  "secondary_only_rule",
+  "unresolved_conflict",
+  "negative_treatment_not_checked",
+  "case_posture_unclear",
+  "assignment_scope_violation",
+  "model_knowledge_leak",
+  "citation_format_issue",
+  "conclusion_outpaces_support"
+] as const;
+export type LegalFindingCategory = (typeof legalFindingCategories)[number];
 
 export type LegalFindingDraft = Omit<VerificationFinding, "id" | "runId"> & {
   category: LegalFindingCategory;
 };
 
-export const legalReviewDecisionActions = ["attach_passage_support"] as const;
+export const legalReviewDecisionActions = [
+  "attach_passage_support",
+  "update_source_authority",
+  "update_source_treatment",
+  "accept_legal_risk",
+  "resolve_source_conflict"
+] as const;
 export type LegalReviewDecisionAction = (typeof legalReviewDecisionActions)[number];
 
-export interface LegalReviewDecisionRecord {
+interface LegalReviewDecisionBase {
   id: string;
   runId: string;
   action: LegalReviewDecisionAction;
+  reviewer?: string;
+  createdAt: string;
+  approvalTokenAccepted: true;
+  notes?: string;
+}
+
+export interface LegalAttachPassageSupportDecision extends LegalReviewDecisionBase {
+  action: "attach_passage_support";
   propositionId: string;
   sourceId: string;
   passageId: string;
   pinCite?: string;
-  reviewer?: string;
-  createdAt: string;
-  approvalTokenAccepted: true;
 }
+
+export interface LegalUpdateSourceAuthorityDecision extends LegalReviewDecisionBase {
+  action: "update_source_authority";
+  sourceId: string;
+  authorityLevel: LegalAuthorityLevel;
+  sourceKind?: LegalSourceKind;
+  reviewStatus?: ReviewStatus;
+}
+
+export interface LegalUpdateSourceTreatmentDecision extends LegalReviewDecisionBase {
+  action: "update_source_treatment";
+  sourceId: string;
+  treatmentStatus: LegalTreatmentStatus;
+  sourceStatus?: LegalSourceStatus;
+  reviewStatus?: ReviewStatus;
+}
+
+export interface LegalAcceptRiskDecision extends LegalReviewDecisionBase {
+  action: "accept_legal_risk";
+  location: string;
+  issue: string;
+  category?: LegalFindingCategory;
+  reason: string;
+}
+
+export interface LegalResolveSourceConflictDecision extends LegalReviewDecisionBase {
+  action: "resolve_source_conflict";
+  conflictId: string;
+  resolution: string;
+  carryAsRisk: boolean;
+}
+
+export type LegalReviewDecisionRecord =
+  | LegalAttachPassageSupportDecision
+  | LegalUpdateSourceAuthorityDecision
+  | LegalUpdateSourceTreatmentDecision
+  | LegalAcceptRiskDecision
+  | LegalResolveSourceConflictDecision;
 
 export interface LegalReviewAuditEvent {
   id: string;
@@ -184,18 +235,8 @@ export interface LegalReviewAuditEvent {
   actor?: string;
   createdAt: string;
   summary: string;
-  before: {
-    sourceIds: string[];
-    passageIds: string[];
-    pinCites: string[];
-    reviewStatus: ReviewStatus;
-  };
-  after: {
-    sourceIds: string[];
-    passageIds: string[];
-    pinCites: string[];
-    reviewStatus: ReviewStatus;
-  };
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
 }
 
 export interface LegalReviewDecisionSet {

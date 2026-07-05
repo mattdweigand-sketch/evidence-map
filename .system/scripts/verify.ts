@@ -5,7 +5,7 @@ import { getDefaultBaseDir } from "../src/artifacts/paths.ts";
 import { writeRunArtifacts } from "../src/artifacts/write.ts";
 import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
 import { buildLegalRunArtifacts } from "../src/legal/artifacts.ts";
-import { readLegalReviewDecisionSet } from "../src/legal/review-decisions.ts";
+import { applyLegalConflictReviewDecisions, readLegalReviewDecisionSet } from "../src/legal/review-decisions.ts";
 import { evaluateTrust } from "../src/trust/evaluate.ts";
 import { buildHostileReviewFindings } from "../src/verify/hostile-review.ts";
 
@@ -45,13 +45,17 @@ try {
     updatedRun.profile === "legal"
       ? await buildLegalRunArtifacts({ store, run: updatedRun, reviewDecisions: legalReviewDecisionSet?.decisions })
       : undefined;
+  const effectiveConflicts =
+    updatedRun.profile === "legal" && legalReviewDecisionSet
+      ? applyLegalConflictReviewDecisions({ conflicts, decisions: legalReviewDecisionSet.decisions })
+      : conflicts;
 
   await writeRunArtifacts({
     baseDir,
     run: updatedRun,
     sources,
     inspections,
-    conflicts,
+    conflicts: effectiveConflicts,
     spec,
     findings,
     trustReport,

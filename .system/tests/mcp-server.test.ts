@@ -87,6 +87,10 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_next_action"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_get_verification_report"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_attach_legal_passage_support"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_update_legal_source_authority"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_update_legal_source_treatment"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_accept_legal_risk"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_resolve_legal_source_conflict"));
 
   const sourcePacket = await client.callTool({
     name: "evidencemap_inspect_source_packet",
@@ -316,6 +320,252 @@ test("MCP legal passage support decision writes an audit trail and verifies idem
   assert.equal(rerunDecisionSet.auditEvents.length, 1);
   const storeData = JSON.parse(await readFile(storePath, "utf8")) as { findings: Array<{ runId: string }> };
   assert.equal(storeData.findings.filter((finding) => finding.runId === run.runId).length, decision.findingCount);
+
+  await client.close();
+  await server.close();
+});
+
+test("MCP legal source authority and treatment decisions update packet artifacts", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-legal-source-review-"));
+  fixtureDirs.push(baseDir);
+  const inputDir = join(baseDir, "input", "legal-source-review");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "mystery.md"), "# Mystery Source\n\nThis source needs legal classification review.\n");
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const { server } = createEvidenceMapMcpServer(new JsonFileEvidenceMapStore(storePath));
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const runResult = await client.callTool({
+    name: "evidencemap_run_workflow",
+    arguments: {
+      baseDir,
+      name: "legal-source-review",
+      artifactKind: "document",
+      profile: "legal",
+      inputPaths: ["input/legal-source-review"]
+    }
+  });
+  const run = runResult.structuredContent as { runId?: string; artifacts?: { sourceDir?: string; verifyDir?: string } };
+  assert.ok(run.runId);
+  assert.ok(run.artifacts?.sourceDir);
+  assert.ok(run.artifacts?.verifyDir);
+
+  const initialFindings = JSON.parse(await readFile(join(run.artifacts.verifyDir, "verification-findings.json"), "utf8")) as Array<{
+    issue?: string;
+  }>;
+  assert.ok(initialFindings.some((finding) => finding.issue === "Legal source authority level requires review."));
+  assert.ok(initialFindings.some((finding) => finding.issue === "Legal source treatment has not been checked."));
+  const legalPacket = JSON.parse(await readFile(join(run.artifacts.sourceDir, "legal-source-packet.json"), "utf8")) as {
+    sources: Array<{ sourceId: string; title: string; authorityLevel: string; treatmentStatus: string; reviewStatus: string }>;
+  };
+  const source = legalPacket.sources.find((item) => item.title === "mystery.md");
+  assert.ok(source);
+
+  await client.callTool({
+    name: "evidencemap_update_legal_source_authority",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      sourceId: source.sourceId,
+      authorityLevel: "persuasive",
+      sourceKind: "case",
+      reviewer: "fixture-reviewer",
+      approvalToken: LEGAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  const treatmentResult = await client.callTool({
+    name: "evidencemap_update_legal_source_treatment",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      sourceId: source.sourceId,
+      treatmentStatus: "checked_current",
+      sourceStatus: "current",
+      reviewer: "fixture-reviewer",
+      approvalToken: LEGAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal((treatmentResult.structuredContent as { decisionCount?: number; auditEventCount?: number }).decisionCount, 2);
+  assert.equal((treatmentResult.structuredContent as { decisionCount?: number; auditEventCount?: number }).auditEventCount, 2);
+
+  const reviewedPacket = JSON.parse(await readFile(join(run.artifacts.sourceDir, "legal-source-packet.json"), "utf8")) as {
+    sources: Array<{ sourceId: string; sourceKind: string; authorityLevel: string; treatmentStatus: string; sourceStatus: string; reviewStatus: string }>;
+  };
+  const reviewedSource = reviewedPacket.sources.find((item) => item.sourceId === source.sourceId);
+  assert.ok(reviewedSource);
+  assert.equal(reviewedSource.sourceKind, "case");
+  assert.equal(reviewedSource.authorityLevel, "persuasive");
+  assert.equal(reviewedSource.treatmentStatus, "checked_current");
+  assert.equal(reviewedSource.sourceStatus, "current");
+  assert.equal(reviewedSource.reviewStatus, "verified");
+  const reviewedFindings = JSON.parse(await readFile(join(run.artifacts.verifyDir, "verification-findings.json"), "utf8")) as Array<{
+    issue?: string;
+  }>;
+  assert.ok(!reviewedFindings.some((finding) => finding.issue === "Legal source authority level requires review."));
+  assert.ok(!reviewedFindings.some((finding) => finding.issue === "Legal source treatment has not been checked."));
+
+  await client.close();
+  await server.close();
+});
+
+test("MCP legal risk acceptance carries a finding without blocking", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-legal-risk-"));
+  fixtureDirs.push(baseDir);
+  const inputDir = join(baseDir, "input", "legal-risk");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "risk-case.md"), "# Hawkins v. McGee\n\nA promise may create a warranty.\n");
+  await writeFile(
+    join(inputDir, "legal-memo-draft.md"),
+    [
+      "# Legal Memo Draft",
+      "",
+      "LEGAL-MAP [rule] source=risk-case.md passage=passage_risk-case_p0002 pin=\"para. 2\" authority=binding: A promise may create a warranty.",
+      "LEGAL-DRAFT [rule]: A promise may create a warranty."
+    ].join("\n")
+  );
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const { server } = createEvidenceMapMcpServer(new JsonFileEvidenceMapStore(storePath));
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const runResult = await client.callTool({
+    name: "evidencemap_run_workflow",
+    arguments: {
+      baseDir,
+      name: "legal-risk",
+      artifactKind: "document",
+      profile: "legal",
+      inputPaths: ["input/legal-risk"]
+    }
+  });
+  const run = runResult.structuredContent as { runId?: string; artifacts?: { verifyDir?: string } };
+  assert.ok(run.runId);
+  assert.ok(run.artifacts?.verifyDir);
+  const initialFindings = JSON.parse(await readFile(join(run.artifacts.verifyDir, "verification-findings.json"), "utf8")) as Array<{
+    location: string;
+    issue: string;
+    category?: string;
+    severity: string;
+    humanReviewRequired: boolean;
+  }>;
+  const bindingFinding = initialFindings.find((finding) => finding.issue === "Binding-law proposition lacks binding authority support.");
+  assert.ok(bindingFinding);
+  assert.equal(bindingFinding.severity, "must_fix");
+
+  const accepted = await client.callTool({
+    name: "evidencemap_accept_legal_risk",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      location: bindingFinding.location,
+      issue: bindingFinding.issue,
+      category: bindingFinding.category,
+      reason: "Fixture reviewer accepts persuasive authority for coursework discussion.",
+      reviewer: "fixture-reviewer",
+      approvalToken: LEGAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal((accepted.structuredContent as { changed?: boolean }).changed, true);
+  const reviewedFindings = JSON.parse(await readFile(join(run.artifacts.verifyDir, "verification-findings.json"), "utf8")) as Array<{
+    issue: string;
+    severity: string;
+    humanReviewRequired: boolean;
+    recommendedRepair: string;
+  }>;
+  const acceptedFinding = reviewedFindings.find((finding) => finding.issue === bindingFinding.issue);
+  assert.ok(acceptedFinding);
+  assert.equal(acceptedFinding.severity, "polish");
+  assert.equal(acceptedFinding.humanReviewRequired, false);
+  assert.match(acceptedFinding.recommendedRepair, /Accepted or carried by legal review decision/);
+
+  await client.close();
+  await server.close();
+});
+
+test("MCP legal source conflict decisions regenerate verification idempotently", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-legal-conflict-"));
+  fixtureDirs.push(baseDir);
+  const inputDir = join(baseDir, "input", "legal-conflict");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "case.md"), "# Case\n\nCurrent case excerpt.\n");
+  await writeFile(join(inputDir, "old-case.md"), "# Old Case\n\nSuperseded case excerpt.\n");
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const { server } = createEvidenceMapMcpServer(new JsonFileEvidenceMapStore(storePath));
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const runResult = await client.callTool({
+    name: "evidencemap_run_workflow",
+    arguments: {
+      baseDir,
+      name: "legal-conflict",
+      artifactKind: "document",
+      profile: "legal",
+      inputPaths: ["input/legal-conflict"]
+    }
+  });
+  const run = runResult.structuredContent as { runId?: string; slug?: string; artifacts?: { sourceDir?: string; verifyDir?: string } };
+  assert.ok(run.runId);
+  assert.ok(run.slug);
+  assert.ok(run.artifacts?.sourceDir);
+  assert.ok(run.artifacts?.verifyDir);
+  const conflicts = JSON.parse(await readFile(join(run.artifacts.sourceDir, "source-conflicts.json"), "utf8")) as Array<{
+    id: string;
+    status: string;
+    resolution?: string;
+  }>;
+  const conflict = conflicts[0];
+  assert.ok(conflict);
+  assert.equal(conflict.status, "open");
+  const initialFindings = JSON.parse(await readFile(join(run.artifacts.verifyDir, "verification-findings.json"), "utf8")) as Array<{
+    location: string;
+  }>;
+  assert.ok(initialFindings.some((finding) => finding.location === "source-conflict"));
+
+  const resolved = await client.callTool({
+    name: "evidencemap_resolve_legal_source_conflict",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      conflictId: conflict.id,
+      resolution: "Use case.md and carry old-case.md only as background.",
+      carryAsRisk: true,
+      reviewer: "fixture-reviewer",
+      approvalToken: LEGAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal((resolved.structuredContent as { decisionCount?: number; auditEventCount?: number }).decisionCount, 1);
+  assert.equal((resolved.structuredContent as { decisionCount?: number; auditEventCount?: number }).auditEventCount, 1);
+  const reviewedConflicts = JSON.parse(await readFile(join(run.artifacts.sourceDir, "source-conflicts.json"), "utf8")) as Array<{
+    status: string;
+    resolution?: string;
+  }>;
+  assert.equal(reviewedConflicts[0]?.status, "resolved");
+  assert.match(reviewedConflicts[0]?.resolution ?? "", /Carried as accepted legal risk/);
+  const reviewedFindings = JSON.parse(await readFile(join(run.artifacts.verifyDir, "verification-findings.json"), "utf8")) as Array<{
+    location: string;
+  }>;
+  assert.ok(!reviewedFindings.some((finding) => finding.location === "source-conflict"));
+
+  const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
+  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${run.slug}`]);
+  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${run.slug}`]);
+  const decisionSet = JSON.parse(await readFile(join(run.artifacts.verifyDir, "legal-review-decisions.json"), "utf8")) as {
+    decisions: unknown[];
+    auditEvents: unknown[];
+  };
+  assert.equal(decisionSet.decisions.length, 1);
+  assert.equal(decisionSet.auditEvents.length, 1);
 
   await client.close();
   await server.close();

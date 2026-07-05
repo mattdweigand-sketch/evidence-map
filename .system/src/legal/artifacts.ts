@@ -2,7 +2,7 @@ import type { EvidenceMapStore } from "../db/store.ts";
 import type { EvidenceMapRun } from "../types.ts";
 import { extractLegalPropositionIntake } from "./draft.ts";
 import { buildLegalEvidenceMap } from "./evidence-map.ts";
-import { applyLegalReviewDecisions } from "./review-decisions.ts";
+import { applyLegalReviewDecisions, applyLegalSourceReviewDecisions } from "./review-decisions.ts";
 import { buildLegalSourcePacket, type LegalSourcePacket } from "./source-packet.ts";
 import { buildLegalOutputSpec } from "./spec.ts";
 import type { LegalEvidenceMap, LegalOutputSpec, LegalPropositionRecord, LegalReviewDecisionRecord } from "./types.ts";
@@ -23,7 +23,10 @@ export async function buildLegalRunArtifacts(input: {
     input.store.listSources(input.run.id),
     input.store.listFileInspections(input.run.id)
   ]);
-  const legalSourcePacket = await buildLegalSourcePacket({ runId: input.run.id, sources, inspections });
+  const legalSourcePacket = applyLegalSourceReviewDecisions({
+    legalSourcePacket: await buildLegalSourcePacket({ runId: input.run.id, sources, inspections }),
+    decisions: input.reviewDecisions ?? []
+  });
   const legalOutputSpec = buildLegalOutputSpec({
     runId: input.run.id,
     name: input.run.name,
