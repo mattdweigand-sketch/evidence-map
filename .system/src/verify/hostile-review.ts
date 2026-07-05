@@ -1,6 +1,7 @@
 import type { EvidenceMapStore } from "../db/store.ts";
 import { buildLegalRunArtifacts } from "../legal/artifacts.ts";
 import { applyLegalConflictReviewDecisions, applyLegalRiskAcceptanceDecisions } from "../legal/review-decisions.ts";
+import { buildLegalReuseFindings } from "../legal/reuse-library.ts";
 import { buildLegalDraftDisciplineFindings, buildLegalTrustFindings } from "../legal/trust.ts";
 import type { LegalReviewDecisionRecord } from "../legal/types.ts";
 import type { VerificationFinding } from "../types.ts";
@@ -161,6 +162,10 @@ export async function buildHostileReviewFindings(
       ...buildLegalDraftDisciplineFindings({
         legalEvidenceMap: legalArtifacts.legalEvidenceMap,
         draftPropositions: legalArtifacts.legalDraftPropositions
+      }),
+      ...buildLegalReuseFindings({
+        legalReuseLibrary: legalArtifacts.legalReuseLibrary,
+        legalEvidenceMap: legalArtifacts.legalEvidenceMap
       })
     );
   }

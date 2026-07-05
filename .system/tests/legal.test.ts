@@ -6,11 +6,12 @@ import test from "node:test";
 import { deflateRawSync } from "node:zlib";
 import { extractLegalPropositionIntake } from "../src/legal/draft.ts";
 import { buildLegalEvidenceMap } from "../src/legal/evidence-map.ts";
+import { buildLegalReuseFindings, buildLegalReuseLibrary } from "../src/legal/reuse-library.ts";
 import { buildLegalSourcePacket } from "../src/legal/source-packet.ts";
 import { buildLegalOutputSpec } from "../src/legal/spec.ts";
 import { buildLegalDraftDisciplineFindings, buildLegalTrustFindings } from "../src/legal/trust.ts";
-import type { FileInspectionRecord, SourceRecord } from "../src/types.ts";
-import type { LegalPropositionRecord, LegalSourceRecord } from "../src/legal/types.ts";
+import type { EvidenceMapRun, FileInspectionRecord, SourceRecord } from "../src/types.ts";
+import type { LegalOutputSpec, LegalPassageRecord, LegalPropositionRecord, LegalSourceRecord } from "../src/legal/types.ts";
 
 test("legal source packet extracts stable md passages with quote hashes", async () => {
   const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-passages-"));
@@ -84,6 +85,102 @@ test("legal evidence map records first-class legal proposition fields", () => {
   assert.deepEqual(map.propositions[0]?.passageIds, ["passage_case_p0001"]);
   assert.equal(map.propositions[0]?.authorityLevelRequired, "binding");
   assert.equal(map.propositions[0]?.reviewStatus, "verified");
+});
+
+test("legal reuse library records source versions and reviewed propositions", async () => {
+  const fixture = await makeReuseFixture({ runId: "run_reuse_ready", courseOrMatter: "Contracts I" });
+
+  assert.equal(fixture.library.boundary.courseOrMatter, "Contracts I");
+  assert.match(fixture.library.boundary.boundaryKey, /^legal_boundary_[a-f0-9]{16}$/);
+  assert.equal(fixture.library.sourceVersions.length, 1);
+  assert.ok(fixture.library.sourceVersions[0]?.sourceHash);
+  assert.equal(fixture.library.sourceVersions[0]?.passageQuoteHashes.length, 1);
+  assert.equal(fixture.library.propositions.length, 1);
+  assert.equal(fixture.library.propositions[0]?.text, "A promise may create a warranty.");
+  assert.equal(fixture.library.propositions[0]?.sourceVersionKeys.length, 1);
+});
+
+test("legal reuse library imports supplied reuse library artifacts", async () => {
+  const prior = await makeReuseFixture({ runId: "run_reuse_import_prior", courseOrMatter: "Contracts I" });
+  const current = await makeReuseFixture({ runId: "run_reuse_import_current", courseOrMatter: "Contracts I" });
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-reuse-import-"));
+  const libraryPath = join(dir, "prior-legal-reuse-library.json");
+  await writeFile(libraryPath, `${JSON.stringify(prior.library, null, 2)}\n`);
+  const importedLibrarySource = makeGenericSource({
+    id: "src_imported_library",
+    runId: current.run.id,
+    name: "prior-legal-reuse-library.json",
+    path: libraryPath,
+    fileType: "json"
+  });
+
+  const library = await buildLegalReuseLibrary({
+    run: current.run,
+    sources: [current.source, importedLibrarySource],
+    legalSourcePacket: {
+      runId: current.run.id,
+      profile: "legal",
+      sources: [current.legalSource],
+      passages: [current.passage]
+    },
+    legalOutputSpec: current.spec,
+    legalEvidenceMap: current.map
+  });
+
+  assert.equal(library.importedLibraries.length, 1);
+  assert.equal(library.importedLibraries[0]?.boundary.boundaryKey, prior.library.boundary.boundaryKey);
+  assert.equal(library.importedLibraries[0]?.propositions.length, 1);
+});
+
+test("legal reuse allows prior reviewed propositions inside the same boundary", async () => {
+  const prior = await makeReuseFixture({ runId: "run_reuse_prior", courseOrMatter: "Contracts I" });
+  const current = await makeReuseFixture({ runId: "run_reuse_current", courseOrMatter: "Contracts I" });
+  const findings = buildLegalReuseFindings({
+    legalReuseLibrary: withImportedLibrary(current.library, prior.library),
+    legalEvidenceMap: current.map
+  });
+
+  assert.equal(findings.length, 0);
+});
+
+test("legal reuse blocks cross-boundary proposition reuse without approval", async () => {
+  const prior = await makeReuseFixture({ runId: "run_reuse_contracts", courseOrMatter: "Contracts I" });
+  const current = await makeReuseFixture({ runId: "run_reuse_torts", courseOrMatter: "Torts I" });
+  const findings = buildLegalReuseFindings({
+    legalReuseLibrary: withImportedLibrary(current.library, prior.library),
+    legalEvidenceMap: current.map
+  });
+
+  assert.ok(
+    findings.some(
+      (finding) =>
+        finding.issue === "Reused legal proposition crosses matter/course boundary without approval." &&
+        finding.category === "assignment_scope_violation" &&
+        finding.severity === "must_fix"
+    )
+  );
+});
+
+test("legal reuse requires review for stale or unchecked reused authority", async () => {
+  const prior = await makeReuseFixture({
+    runId: "run_reuse_unchecked_prior",
+    courseOrMatter: "Contracts I",
+    treatmentStatus: "not_checked"
+  });
+  const current = await makeReuseFixture({ runId: "run_reuse_unchecked_current", courseOrMatter: "Contracts I" });
+  const findings = buildLegalReuseFindings({
+    legalReuseLibrary: withImportedLibrary(current.library, prior.library),
+    legalEvidenceMap: current.map
+  });
+
+  assert.ok(
+    findings.some(
+      (finding) =>
+        finding.issue === "Reused legal authority requires current treatment review." &&
+        finding.category === "negative_treatment_not_checked" &&
+        finding.severity === "should_fix"
+    )
+  );
 });
 
 test("legal output spec detects supported legal output kinds", () => {
@@ -497,6 +594,128 @@ test("legal trust blocks quote drift against referenced passage hash", async () 
     )
   );
 });
+
+async function makeReuseFixture(overrides: {
+  runId: string;
+  courseOrMatter: string;
+  treatmentStatus?: LegalSourceRecord["treatmentStatus"];
+  sourceStatus?: LegalSourceRecord["sourceStatus"];
+}) {
+  const dir = await mkdtemp(join(tmpdir(), `evidence-map-${overrides.runId}-`));
+  const runId = overrides.runId;
+  const path = join(dir, "hawkins-case.md");
+  await writeFile(path, "# Hawkins v. McGee\n\nA promise may create a warranty.\n");
+
+  const run: EvidenceMapRun = {
+    id: runId,
+    slug: `${runId}-slug`,
+    name: overrides.courseOrMatter.toLowerCase().replace(/\s+/g, "-"),
+    artifactKind: "document",
+    profile: "legal",
+    status: "export_ready",
+    inputPaths: [path],
+    createdAt: "2026-07-05T00:00:00.000Z",
+    updatedAt: "2026-07-05T00:00:00.000Z"
+  };
+  const source = makeGenericSource({
+    id: "src_hawkins",
+    runId,
+    name: "hawkins-case.md",
+    path,
+    status: "current",
+    sourceDate: "2026-07-05"
+  });
+  const legalSource = makeSource({
+    id: "legal_src_hawkins",
+    runId,
+    sourceId: source.id,
+    title: source.name,
+    citationText: "Hawkins v. McGee, 84 N.H. 114",
+    authorityLevel: "binding",
+    sourceStatus: overrides.sourceStatus ?? "current",
+    treatmentStatus: overrides.treatmentStatus ?? "checked_current",
+    reviewStatus: "verified"
+  });
+  const passage: LegalPassageRecord = {
+    id: "legal_passage_hawkins_p0002",
+    runId,
+    sourceId: source.id,
+    passageId: "passage_hawkins-case_p0002",
+    locationKind: "paragraph",
+    paragraphNumber: 2,
+    pinpoint: "para. 2",
+    quote: "A promise may create a warranty.",
+    quoteHash: "hawkins_quote_hash",
+    extractionStatus: "extracted"
+  };
+  const proposition = makeProposition({
+    id: `legal_prop_${runId}`,
+    runId,
+    propositionType: "rule",
+    text: "A promise may create a warranty.",
+    sourceIds: [source.id],
+    passageIds: [passage.passageId],
+    pinCites: [passage.pinpoint ?? "para. 2"],
+    authorityLevelRequired: "binding",
+    reviewStatus: "verified"
+  });
+  const map = buildLegalEvidenceMap({
+    runId,
+    artifactKind: "document",
+    legalSources: [legalSource],
+    passages: [passage],
+    propositions: [proposition]
+  });
+  const spec = makeLegalSpec({ runId, courseOrMatter: overrides.courseOrMatter });
+  const library = await buildLegalReuseLibrary({
+    run,
+    sources: [source],
+    legalSourcePacket: {
+      runId,
+      profile: "legal",
+      sources: [legalSource],
+      passages: [passage]
+    },
+    legalOutputSpec: spec,
+    legalEvidenceMap: map
+  });
+
+  return { run, source, legalSource, passage, proposition, map, spec, library };
+}
+
+function withImportedLibrary(current: Awaited<ReturnType<typeof makeReuseFixture>>["library"], prior: Awaited<ReturnType<typeof makeReuseFixture>>["library"]) {
+  return {
+    ...current,
+    importedLibraries: [
+      {
+        sourcePath: "/tmp/legal-reuse-library.json",
+        id: prior.id,
+        runId: prior.runId,
+        boundary: prior.boundary,
+        sourceVersions: prior.sourceVersions,
+        propositions: prior.propositions
+      }
+    ]
+  };
+}
+
+function makeLegalSpec(overrides: Partial<LegalOutputSpec> = {}): LegalOutputSpec {
+  return {
+    id: "legal_output_spec_1",
+    runId: "run_1",
+    outputKind: "legal_memo",
+    audience: "Human legal reviewer.",
+    assignmentOrUseCase: "Reviewable legal work product from the supplied packet.",
+    jurisdiction: "New Hampshire",
+    courseOrMatter: "Contracts I",
+    questionPresented: "Can a promise create a warranty?",
+    requiredSections: ["Question Presented", "Rules", "Analysis"],
+    citationStyle: "plain",
+    allowedSourceScope: "provided_packet_only",
+    reviewRules: ["Treat this as a legal reliability artifact, not legal advice."],
+    ...overrides
+  };
+}
 
 function makeGenericSource(overrides: Partial<SourceRecord> = {}): SourceRecord {
   return {

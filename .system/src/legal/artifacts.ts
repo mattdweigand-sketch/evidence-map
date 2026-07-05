@@ -3,15 +3,17 @@ import type { EvidenceMapRun } from "../types.ts";
 import { extractLegalPropositionIntake } from "./draft.ts";
 import { buildLegalEvidenceMap } from "./evidence-map.ts";
 import { applyLegalReviewDecisions, applyLegalSourceReviewDecisions } from "./review-decisions.ts";
+import { buildLegalReuseLibrary } from "./reuse-library.ts";
 import { buildLegalSourcePacket, type LegalSourcePacket } from "./source-packet.ts";
 import { buildLegalOutputSpec } from "./spec.ts";
-import type { LegalEvidenceMap, LegalOutputSpec, LegalPropositionRecord, LegalReviewDecisionRecord } from "./types.ts";
+import type { LegalEvidenceMap, LegalOutputSpec, LegalPropositionRecord, LegalReuseLibrary, LegalReviewDecisionRecord } from "./types.ts";
 
 export interface LegalRunArtifacts {
   legalSourcePacket: LegalSourcePacket;
   legalOutputSpec: LegalOutputSpec;
   legalEvidenceMap: LegalEvidenceMap;
   legalDraftPropositions: LegalPropositionRecord[];
+  legalReuseLibrary: LegalReuseLibrary;
 }
 
 export async function buildLegalRunArtifacts(input: {
@@ -45,11 +47,19 @@ export async function buildLegalRunArtifacts(input: {
     }),
     decisions: input.reviewDecisions ?? []
   });
+  const legalReuseLibrary = await buildLegalReuseLibrary({
+    run: input.run,
+    sources,
+    legalSourcePacket,
+    legalOutputSpec,
+    legalEvidenceMap
+  });
 
   return {
     legalSourcePacket,
     legalOutputSpec,
     legalEvidenceMap,
-    legalDraftPropositions: legalPropositionIntake.draftPropositions
+    legalDraftPropositions: legalPropositionIntake.draftPropositions,
+    legalReuseLibrary
   };
 }

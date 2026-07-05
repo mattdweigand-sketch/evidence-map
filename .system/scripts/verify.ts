@@ -63,7 +63,8 @@ try {
     legalOutputSpec: legalArtifacts?.legalOutputSpec,
     legalEvidenceMap: legalArtifacts?.legalEvidenceMap,
     legalDraftPropositions: legalArtifacts?.legalDraftPropositions,
-    legalReviewDecisionSet
+    legalReviewDecisionSet,
+    legalReuseLibrary: legalArtifacts?.legalReuseLibrary
   });
   console.log(JSON.stringify(trustReport, null, 2));
 } catch (error) {

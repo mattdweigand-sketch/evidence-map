@@ -13,9 +13,10 @@ import { renderLegalDraftPropositions } from "../legal/draft.ts";
 import { renderLegalEvidenceMap } from "../legal/evidence-map.ts";
 import { buildLegalFinalExport } from "../legal/export.ts";
 import { renderLegalReviewDecisionSet } from "../legal/review-decisions.ts";
+import { renderLegalBoundary, renderLegalReuseLibrary, renderLegalSourceHistory } from "../legal/reuse-library.ts";
 import { renderLegalOutputSpec } from "../legal/spec.ts";
 import { renderLegalSourcePacket, type LegalSourcePacket } from "../legal/source-packet.ts";
-import type { LegalEvidenceMap, LegalOutputSpec, LegalPropositionRecord, LegalReviewDecisionSet } from "../legal/types.ts";
+import type { LegalEvidenceMap, LegalOutputSpec, LegalPropositionRecord, LegalReuseLibrary, LegalReviewDecisionSet } from "../legal/types.ts";
 
 export async function writeRunArtifacts(input: {
   baseDir: string;
@@ -31,6 +32,7 @@ export async function writeRunArtifacts(input: {
   legalEvidenceMap?: LegalEvidenceMap;
   legalDraftPropositions?: LegalPropositionRecord[];
   legalReviewDecisionSet?: LegalReviewDecisionSet;
+  legalReuseLibrary?: LegalReuseLibrary;
 }) {
   const runDir = join(input.baseDir, "deliverables", input.run.slug);
   const sourceDir = join(runDir, "01_source-packet");
@@ -49,12 +51,20 @@ export async function writeRunArtifacts(input: {
     await writeJson(join(sourceDir, "legal-passages.json"), input.legalSourcePacket.passages);
     await writeFile(join(sourceDir, "legal-source-packet.md"), renderLegalSourcePacket(input.legalSourcePacket));
   }
+  if (input.legalReuseLibrary) {
+    await writeJson(join(sourceDir, "legal-source-history.json"), input.legalReuseLibrary.sourceVersions);
+    await writeFile(join(sourceDir, "legal-source-history.md"), renderLegalSourceHistory(input.legalReuseLibrary));
+  }
 
   await writeJson(join(specDir, "artifact-spec.json"), input.spec);
   await writeFile(join(specDir, "artifact-spec.md"), renderSpec(input.spec));
   if (input.legalOutputSpec) {
     await writeJson(join(specDir, "legal-output-spec.json"), input.legalOutputSpec);
     await writeFile(join(specDir, "legal-output-spec.md"), renderLegalOutputSpec(input.legalOutputSpec));
+  }
+  if (input.legalReuseLibrary) {
+    await writeJson(join(specDir, "legal-boundary.json"), input.legalReuseLibrary.boundary);
+    await writeFile(join(specDir, "legal-boundary.md"), renderLegalBoundary(input.legalReuseLibrary.boundary));
   }
 
   await writeJson(join(verifyDir, "verification-findings.json"), input.findings);
@@ -69,6 +79,10 @@ export async function writeRunArtifacts(input: {
   if (input.legalReviewDecisionSet) {
     await writeJson(join(verifyDir, "legal-review-decisions.json"), input.legalReviewDecisionSet);
     await writeFile(join(verifyDir, "legal-review-decisions.md"), renderLegalReviewDecisionSet(input.legalReviewDecisionSet));
+  }
+  if (input.legalReuseLibrary) {
+    await writeJson(join(verifyDir, "legal-reuse-library.json"), input.legalReuseLibrary);
+    await writeFile(join(verifyDir, "legal-reuse-library.md"), renderLegalReuseLibrary(input.legalReuseLibrary));
   }
   await writeJson(join(verifyDir, "trust-report.json"), input.trustReport);
   await writeFile(join(verifyDir, "verification-report.md"), renderVerification(input.findings, input.trustReport));

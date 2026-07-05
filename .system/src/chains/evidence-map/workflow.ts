@@ -61,7 +61,8 @@ export async function runEvidenceMapWorkflow(
       legalSourcePacket: legalArtifacts?.legalSourcePacket,
       legalOutputSpec: legalArtifacts?.legalOutputSpec,
       legalEvidenceMap: legalArtifacts?.legalEvidenceMap,
-      legalDraftPropositions: legalArtifacts?.legalDraftPropositions
+      legalDraftPropositions: legalArtifacts?.legalDraftPropositions,
+      legalReuseLibrary: legalArtifacts?.legalReuseLibrary
     });
 
     return {

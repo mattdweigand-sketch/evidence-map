@@ -20,7 +20,7 @@ export function buildLegalOutputSpec(input: {
     audience: "Human legal reviewer, course reviewer, or operator.",
     assignmentOrUseCase: "Reviewable legal work product from the supplied packet.",
     jurisdiction: inferJurisdiction(context),
-    courseOrMatter: undefined,
+    courseOrMatter: inferCourseOrMatter(context),
     questionPresented: inferQuestionPresented(context),
     requiredSections: requiredSectionsFor(outputKind),
     citationStyle: inferCitationStyle(context),
@@ -114,6 +114,11 @@ function inferAllowedSourceScope(value: string): LegalOutputSpec["allowedSourceS
 
 function inferQuestionPresented(value: string) {
   const match = value.match(/\bquestion presented\s*:\s*([^\n\r]+)/i);
+  return match?.[1]?.trim();
+}
+
+function inferCourseOrMatter(value: string) {
+  const match = value.match(/\b(?:course|class|matter|course or matter)\s*:\s*([^\n\r]+)/i);
   return match?.[1]?.trim();
 }
 

@@ -564,7 +564,8 @@ async function regenerateLegalRunAfterDecision(input: LegalDecisionContext & { d
     legalOutputSpec: legalArtifacts.legalOutputSpec,
     legalEvidenceMap: legalArtifacts.legalEvidenceMap,
     legalDraftPropositions: legalArtifacts.legalDraftPropositions,
-    legalReviewDecisionSet: input.decisionResult.decisionSet
+    legalReviewDecisionSet: input.decisionResult.decisionSet,
+    legalReuseLibrary: legalArtifacts.legalReuseLibrary
   });
 
   return {

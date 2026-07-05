@@ -245,3 +245,71 @@ export interface LegalReviewDecisionSet {
   decisions: LegalReviewDecisionRecord[];
   auditEvents: LegalReviewAuditEvent[];
 }
+
+export interface LegalMatterBoundary {
+  id: string;
+  runId: string;
+  profile: "legal";
+  boundaryKey: string;
+  courseOrMatter?: string;
+  jurisdiction?: string;
+  assignmentOrUseCase: string;
+  allowedSourceScope: LegalOutputSpec["allowedSourceScope"];
+  reusePolicy: "same_boundary_only";
+  notes: string[];
+}
+
+export interface LegalSourceVersionRecord {
+  id: string;
+  runId: string;
+  sourceId: string;
+  sourceVersionKey: string;
+  title: string;
+  citationText?: string;
+  jurisdiction?: string;
+  sourceKind: LegalSourceKind;
+  authorityLevel: LegalAuthorityLevel;
+  sourceStatus: LegalSourceStatus;
+  treatmentStatus: LegalTreatmentStatus;
+  extractionStatus: LegalExtractionStatus;
+  reviewStatus: ReviewStatus;
+  sourceHash?: string;
+  passageQuoteHashes: string[];
+}
+
+export interface LegalReusablePropositionRecord {
+  id: string;
+  runId: string;
+  propositionId: string;
+  boundaryKey: string;
+  propositionType: LegalPropositionType;
+  text: string;
+  sourceIds: string[];
+  sourceVersionKeys: string[];
+  passageIds: string[];
+  pinCites: string[];
+  quoteHashes: string[];
+  authorityLevelRequired: LegalPropositionRecord["authorityLevelRequired"];
+  reviewStatus: ReviewStatus;
+  notes?: string;
+}
+
+export interface LegalImportedReuseLibrary {
+  sourcePath: string;
+  id: string;
+  runId: string;
+  boundary: LegalMatterBoundary;
+  sourceVersions: LegalSourceVersionRecord[];
+  propositions: LegalReusablePropositionRecord[];
+}
+
+export interface LegalReuseLibrary {
+  id: string;
+  runId: string;
+  profile: "legal";
+  boundary: LegalMatterBoundary;
+  sourceVersions: LegalSourceVersionRecord[];
+  propositions: LegalReusablePropositionRecord[];
+  importedLibraries: LegalImportedReuseLibrary[];
+  notes: string[];
+}
