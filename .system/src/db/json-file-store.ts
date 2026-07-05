@@ -47,6 +47,7 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
         slug: createRunSlug(input.name, id),
         name: input.name,
         artifactKind: input.artifactKind,
+        profile: input.profile ?? "general",
         status: "running",
         inputPaths: input.inputPaths,
         createdAt: now,
@@ -202,7 +203,7 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   private async load(): Promise<StoreData> {
     try {
       const raw = await readFile(this.path, "utf8");
-      return { ...emptyData(), ...JSON.parse(raw) };
+      return withDefaults({ ...emptyData(), ...JSON.parse(raw) });
     } catch (error) {
       if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") return emptyData();
       throw error;
@@ -224,6 +225,13 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
     );
     return current;
   }
+}
+
+function withDefaults(data: StoreData): StoreData {
+  return {
+    ...data,
+    runs: data.runs.map((run) => ({ ...run, profile: run.profile ?? "general" }))
+  };
 }
 
 function emptyData(): StoreData {

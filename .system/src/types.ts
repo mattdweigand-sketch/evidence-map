@@ -1,6 +1,9 @@
 export const artifactKinds = ["deck", "workbook", "document", "report", "mixed"] as const;
 export type ArtifactKind = (typeof artifactKinds)[number];
 
+export const workflowProfiles = ["general", "legal"] as const;
+export type WorkflowProfile = (typeof workflowProfiles)[number];
+
 export type RunStatus = "running" | "waiting_for_review" | "blocked" | "export_ready" | "failed";
 
 export type SourceStatus =
@@ -24,6 +27,7 @@ export interface EvidenceMapRun {
   slug: string;
   name: string;
   artifactKind: ArtifactKind;
+  profile: WorkflowProfile;
   status: RunStatus;
   inputPaths: string[];
   createdAt: string;
@@ -123,6 +127,7 @@ export interface VerificationFinding {
   runId: string;
   location: string;
   issue: string;
+  category?: string;
   severity: FindingSeverity;
   evidence: string;
   recommendedRepair: string;
@@ -149,5 +154,6 @@ export interface TrustReport {
 export interface StartRunInput {
   name: string;
   artifactKind: ArtifactKind;
+  profile?: WorkflowProfile;
   inputPaths: string[];
 }

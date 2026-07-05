@@ -83,6 +83,40 @@ test("workflow maps inferred conflicts to persisted source ids", async () => {
   assert.ok(result.conflicts[0]?.sourceIds.every((id) => id.startsWith("src_")));
 });
 
+test("legal profile workflow writes legal source packet artifacts", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-legal-"));
+  const inputDir = join(baseDir, "input", "legal-duty");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(
+    join(inputDir, "assignment-prompt.md"),
+    "# Assignment Prompt\nPrepare a case brief using only the supplied packet.\n"
+  );
+  await writeFile(
+    join(inputDir, "palsgraf-v-long-island-railroad.md"),
+    "# Palsgraf v. Long Island Railroad\n248 N.Y. 339\nCourt of Appeals of New York\n"
+  );
+
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+    baseDir,
+    name: "legal-duty",
+    artifactKind: "document",
+    profile: "legal",
+    inputPaths: ["input/legal-duty"]
+  });
+
+  assert.equal(result.run.profile, "legal");
+  assert.ok(result.findings.some((finding) => finding.issue === "Legal proposition has no source support."));
+  const legalPacket = JSON.parse(await readFile(join(result.artifacts.sourceDir, "legal-source-packet.json"), "utf8"));
+  assert.equal(legalPacket.profile, "legal");
+  assert.ok(legalPacket.passages.length > 0);
+  assert.ok(legalPacket.sources.some((source: { sourceKind?: string }) => source.sourceKind === "case"));
+  assert.ok(legalPacket.sources.some((source: { sourceKind?: string }) => source.sourceKind === "assignment"));
+  const legalPassages = JSON.parse(await readFile(join(result.artifacts.sourceDir, "legal-passages.json"), "utf8"));
+  assert.equal(legalPassages.length, legalPacket.passages.length);
+  const legalPacketMarkdown = await readFile(join(result.artifacts.sourceDir, "legal-source-packet.md"), "utf8");
+  assert.match(legalPacketMarkdown, /Legal Source Packet/);
+});
+
 test("failed durable workflow runs are not left running", async () => {
   const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-failed-"));
   const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
@@ -142,6 +176,28 @@ test("run command rejects invalid artifact kinds", async () => {
       const stderr = String((error as { stderr?: string }).stderr);
       assert.match(stderr, /Invalid --kind: banana/);
       assert.match(stderr, /Valid kinds: deck, workbook, document, report, mixed/);
+      return true;
+    }
+  );
+});
+
+test("run command rejects invalid workflow profiles", async () => {
+  const scriptPath = fileURLToPath(new URL("../scripts/run.ts", import.meta.url));
+
+  await assert.rejects(
+    execFileAsync(process.execPath, [
+      "--experimental-strip-types",
+      scriptPath,
+      "--profile",
+      "banana",
+      "--input",
+      "input/examples/capstone-report"
+    ]),
+    (error: unknown) => {
+      assert.equal((error as { code?: number }).code, 1);
+      const stderr = String((error as { stderr?: string }).stderr);
+      assert.match(stderr, /Invalid --profile: banana/);
+      assert.match(stderr, /Valid profiles: general, legal/);
       return true;
     }
   );

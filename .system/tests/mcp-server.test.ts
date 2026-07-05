@@ -131,6 +131,59 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   await server.close();
 });
 
+test("MCP tools accept legal workflow profile", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-legal-"));
+  fixtureDirs.push(baseDir);
+  const inputDir = join(baseDir, "input", "legal-project");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "assignment-prompt.md"), "# Assignment\nUse only the supplied packet.\n");
+  await writeFile(join(inputDir, "case-excerpt.md"), "# Hawkins v. McGee\n84 N.H. 114\nSupreme Court of New Hampshire\n");
+
+  const { server } = createEvidenceMapMcpServer(new MemoryEvidenceMapStore());
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const sourcePacket = await client.callTool({
+    name: "evidencemap_inspect_source_packet",
+    arguments: {
+      baseDir,
+      profile: "legal",
+      inputPaths: ["input/legal-project"]
+    }
+  });
+  assert.equal((sourcePacket.structuredContent as { legalSourcePacket?: { profile?: string } }).legalSourcePacket?.profile, "legal");
+
+  const runResult = await client.callTool({
+    name: "evidencemap_run_workflow",
+    arguments: {
+      baseDir,
+      name: "legal-project",
+      artifactKind: "document",
+      profile: "legal",
+      inputPaths: ["input/legal-project"]
+    }
+  });
+  const run = runResult.structuredContent as { runId?: string; profile?: string };
+  assert.ok(run.runId);
+  assert.equal(run.profile, "legal");
+
+  const verification = await client.callTool({
+    name: "evidencemap_get_verification_report",
+    arguments: { runId: run.runId }
+  });
+  assert.ok(
+    (verification.structuredContent as { findings?: Array<{ issue?: string }> }).findings?.some(
+      (finding) => finding.issue === "Legal proposition has no source support."
+    )
+  );
+
+  await client.close();
+  await server.close();
+});
+
 test("MCP source packet rejects input paths outside baseDir", async () => {
   const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-guard-"));
   fixtureDirs.push(baseDir);

@@ -2,10 +2,11 @@ import { resolve } from "node:path";
 import { writeRunArtifacts } from "../../artifacts/write.ts";
 import type { EvidenceMapStore } from "../../db/store.ts";
 import { buildSourcePacket } from "../../ingest/source-packet.ts";
+import { buildLegalSourcePacket } from "../../legal/source-packet.ts";
 import { buildArtifactSpec, seedCalculations, seedClaims } from "../../spec/build.ts";
 import { evaluateTrust } from "../../trust/evaluate.ts";
 import { runHostileReview } from "../../verify/hostile-review.ts";
-import type { ArtifactKind } from "../../types.ts";
+import type { ArtifactKind, WorkflowProfile } from "../../types.ts";
 
 export async function runEvidenceMapWorkflow(
   store: EvidenceMapStore,
@@ -13,6 +14,7 @@ export async function runEvidenceMapWorkflow(
     baseDir: string;
     name: string;
     artifactKind: ArtifactKind;
+    profile?: WorkflowProfile;
     inputPaths: string[];
   }
 ) {
@@ -20,6 +22,7 @@ export async function runEvidenceMapWorkflow(
   const run = await store.createRun({
     name: input.name,
     artifactKind: input.artifactKind,
+    profile: input.profile ?? "general",
     inputPaths: resolvedInputPaths
   });
 
@@ -45,6 +48,7 @@ export async function runEvidenceMapWorkflow(
     const trustReport = await evaluateTrust(store, run.id);
     const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
     const updatedRun = await store.updateRunStatus(run.id, status);
+    const legalSourcePacket = updatedRun.profile === "legal" ? await buildLegalSourcePacket({ runId: run.id, sources, inspections }) : undefined;
     const artifacts = await writeRunArtifacts({
       baseDir: input.baseDir,
       run: updatedRun,
@@ -53,7 +57,8 @@ export async function runEvidenceMapWorkflow(
       conflicts,
       spec,
       findings,
-      trustReport
+      trustReport,
+      legalSourcePacket
     });
 
     return {

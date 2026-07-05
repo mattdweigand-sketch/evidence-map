@@ -4,6 +4,7 @@ import { exit } from "node:process";
 import { getDefaultBaseDir } from "../src/artifacts/paths.ts";
 import { writeRunArtifacts } from "../src/artifacts/write.ts";
 import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
+import { buildLegalSourcePacket } from "../src/legal/source-packet.ts";
 import { evaluateTrust } from "../src/trust/evaluate.ts";
 import { buildHostileReviewFindings } from "../src/verify/hostile-review.ts";
 
@@ -35,6 +36,7 @@ try {
     store.getArtifactSpec(run.id)
   ]);
   if (!spec) throw new Error(`No artifact spec found for ${run.id}.`);
+  const legalSourcePacket = updatedRun.profile === "legal" ? await buildLegalSourcePacket({ runId: run.id, sources, inspections }) : undefined;
 
   await writeRunArtifacts({
     baseDir,
@@ -44,7 +46,8 @@ try {
     conflicts,
     spec,
     findings,
-    trustReport
+    trustReport,
+    legalSourcePacket
   });
   console.log(JSON.stringify(trustReport, null, 2));
 } catch (error) {

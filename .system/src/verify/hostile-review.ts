@@ -1,4 +1,6 @@
 import type { EvidenceMapStore } from "../db/store.ts";
+import { buildLegalSourcePacket } from "../legal/source-packet.ts";
+import { buildLegalTrustFindings, seedLegalPropositions } from "../legal/trust.ts";
 import type { VerificationFinding } from "../types.ts";
 import { workbookInspectionFindings } from "./workbook-findings.ts";
 
@@ -13,6 +15,7 @@ export async function buildHostileReviewFindings(
   store: EvidenceMapStore,
   runId: string
 ): Promise<Omit<VerificationFinding, "id" | "runId">[]> {
+  const run = await store.getRun(runId);
   const sources = await store.listSources(runId);
   const inspections = await store.listFileInspections(runId);
   const conflicts = await store.listSourceConflicts(runId);
@@ -133,6 +136,17 @@ export async function buildHostileReviewFindings(
         humanReviewRequired: true
       });
     }
+  }
+
+  if (run?.profile === "legal") {
+    const legalPacket = await buildLegalSourcePacket({ runId, sources, inspections });
+    findings.push(
+      ...buildLegalTrustFindings({
+        legalSources: legalPacket.sources,
+        passages: legalPacket.passages,
+        propositions: seedLegalPropositions({ runId, artifactKind: run.artifactKind })
+      })
+    );
   }
 
   return findings;

@@ -34,6 +34,7 @@ export class MemoryEvidenceMapStore implements EvidenceMapStore {
       slug: createRunSlug(input.name, id),
       name: input.name,
       artifactKind: input.artifactKind,
+      profile: input.profile ?? "general",
       status: "running",
       inputPaths: input.inputPaths,
       createdAt: now,

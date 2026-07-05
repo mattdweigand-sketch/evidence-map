@@ -8,10 +8,12 @@ import { runEvidenceMapWorkflow } from "../chains/evidence-map/workflow.ts";
 import { JsonFileEvidenceMapStore } from "../db/json-file-store.ts";
 import type { EvidenceMapStore } from "../db/store.ts";
 import { buildSourcePacket } from "../ingest/source-packet.ts";
+import { buildLegalSourcePacketFromDrafts } from "../legal/source-packet.ts";
 import { getDefaultBaseDir } from "../artifacts/paths.ts";
-import { artifactKinds } from "../types.ts";
+import { artifactKinds, workflowProfiles, type WorkflowProfile } from "../types.ts";
 
 const artifactKindSchema = z.enum(artifactKinds);
+const workflowProfileSchema = z.enum(workflowProfiles);
 type ResolvedWorkspaceInputPaths = { paths: string[] } | { error: string };
 
 export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefaultMcpStore()) {
@@ -28,13 +30,15 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       description: "Build a source inventory and inferred conflict log for one or more local source paths.",
       inputSchema: {
         inputPaths: z.array(z.string()).min(1),
+        profile: workflowProfileSchema.default("general"),
         baseDir: z.string().default(defaultBaseDir)
       }
     },
-    async ({ inputPaths, baseDir }) => {
+    async ({ inputPaths, profile, baseDir }) => {
       const resolvedInputPaths = resolveWorkspaceInputPaths(baseDir, inputPaths);
       if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
-      return jsonToolResult(await buildSourcePacket(resolvedInputPaths.paths));
+      const packet = await buildSourcePacket(resolvedInputPaths.paths);
+      return jsonToolResult(await withLegalSourcePacket(packet, profile));
     }
   );
 
@@ -46,23 +50,26 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       inputSchema: {
         name: z.string(),
         artifactKind: artifactKindSchema,
+        profile: workflowProfileSchema.default("general"),
         inputPaths: z.array(z.string()).min(1),
         baseDir: z.string().default(defaultBaseDir)
       }
     },
-    async ({ name, artifactKind, inputPaths, baseDir }) => {
+    async ({ name, artifactKind, profile, inputPaths, baseDir }) => {
       const resolvedInputPaths = resolveWorkspaceInputPaths(baseDir, inputPaths);
       if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
       const result = await runEvidenceMapWorkflow(store, {
         baseDir,
         name,
         artifactKind,
+        profile,
         inputPaths: resolvedInputPaths.paths
       });
 
       return jsonToolResult({
         runId: result.run.id,
         slug: result.run.slug,
+        profile: result.run.profile,
         status: result.run.status,
         readiness: result.trustReport.readiness,
         sourceCount: result.sources.length,
@@ -175,6 +182,21 @@ function hasWorkspaceInputPathError(result: ResolvedWorkspaceInputPaths): result
 
 function createDefaultMcpStore() {
   return new JsonFileEvidenceMapStore(join(getDefaultBaseDir(), "deliverables", "evidence-map-store.json"));
+}
+
+async function withLegalSourcePacket(
+  packet: Awaited<ReturnType<typeof buildSourcePacket>>,
+  profile: WorkflowProfile
+) {
+  if (profile !== "legal") return packet;
+  return {
+    ...packet,
+    legalSourcePacket: await buildLegalSourcePacketFromDrafts({
+      runId: "preview",
+      sources: packet.sources,
+      inspections: packet.inspections
+    })
+  };
 }
 
 export async function runStdioMcpServer() {
