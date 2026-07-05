@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { writeRunArtifacts } from "../src/artifacts/write.ts";
 import { runEvidenceMapWorkflow } from "../src/chains/evidence-map/workflow.ts";
 import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
 import { MemoryEvidenceMapStore } from "../src/db/memory-store.ts";
@@ -133,6 +134,231 @@ test("legal profile workflow writes legal source packet artifacts", async () => 
   assert.deepEqual(legalDraftPropositions, []);
   const legalDraftPropositionsMarkdown = await readFile(join(result.artifacts.verifyDir, "legal-draft-propositions.md"), "utf8");
   assert.match(legalDraftPropositionsMarkdown, /Legal Draft Propositions/);
+  const legalExportReadme = await readFile(join(result.artifacts.exportDir, "README.md"), "utf8");
+  assert.match(legalExportReadme, /Legal Final Export Receipt/);
+  assert.match(legalExportReadme, /Status: refused/);
+  assert.match(legalExportReadme, /01_source-packet\/legal-source-packet\.json/);
+  assert.match(legalExportReadme, /03_verification\/legal-evidence-map\.json/);
+  assert.match(legalExportReadme, /03_verification\/verification-findings\.json/);
+  assert.match(legalExportReadme, /03_verification\/trust-report\.json/);
+  const refusal = await readFile(join(result.artifacts.exportDir, "legal-export-refusal.md"), "utf8");
+  assert.match(refusal, /Exact Unresolved Blockers/);
+  assert.match(refusal, /Legal proposition has no source support/);
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "final-legal.md"), "utf8"));
+});
+
+test("legal final export writes markdown and receipt when gates are ready", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-legal-export-ready-"));
+  const runId = "run_legal_export_ready";
+  const sourceId = "src_case";
+  const passageId = "passage_hawkins_p0002";
+  const decisionId = "legal_review_decision_1234567890abcdef";
+  const run = {
+    id: runId,
+    slug: "legal-export-ready-12345678",
+    name: "legal-export-ready",
+    artifactKind: "document" as const,
+    profile: "legal" as const,
+    status: "export_ready" as const,
+    inputPaths: [],
+    createdAt: "2026-07-05T00:00:00.000Z",
+    updatedAt: "2026-07-05T00:00:00.000Z"
+  };
+  const source = {
+    id: sourceId,
+    runId,
+    name: "hawkins-case.md",
+    path: join(baseDir, "hawkins-case.md"),
+    fileType: "md",
+    status: "current" as const,
+    intendedUse: "Legal authority."
+  };
+  const legalSource = {
+    id: "legal_src_case",
+    runId,
+    sourceId,
+    sourceKind: "case" as const,
+    title: "hawkins-case.md",
+    citationText: "Hawkins v. McGee, 84 N.H. 114",
+    authorityLevel: "binding" as const,
+    sourceStatus: "current" as const,
+    treatmentStatus: "checked_current" as const,
+    extractionStatus: "extracted" as const,
+    reviewStatus: "verified" as const
+  };
+  const passage = {
+    id: "legal_passage_hawkins_p0002",
+    runId,
+    sourceId,
+    passageId,
+    locationKind: "paragraph" as const,
+    paragraphNumber: 2,
+    pinpoint: "para. 2",
+    quote: "A promise may create a warranty.",
+    quoteHash: "quotehash",
+    extractionStatus: "extracted" as const
+  };
+  const proposition = {
+    id: "legal_map_prop_hawkins_rule",
+    runId,
+    artifactLocation: "legal-memo:Rules",
+    propositionType: "rule" as const,
+    text: "A promise may create a warranty.",
+    sourceIds: [sourceId],
+    passageIds: [passageId],
+    pinCites: ["para. 2"],
+    assumptions: [],
+    authorityLevelRequired: "binding" as const,
+    reviewStatus: "verified" as const
+  };
+  const findings = [
+    {
+      id: "finding_accepted",
+      runId,
+      location: "legal-memo:Rules",
+      issue: "Binding-law proposition lacks binding authority support.",
+      category: "authority_level_mismatch",
+      severity: "polish" as const,
+      evidence: `Accepted legal risk by ${decisionId}. Reason: Fixture review.`,
+      recommendedRepair: `Accepted or carried by legal review decision ${decisionId}.`,
+      humanReviewRequired: false
+    }
+  ];
+  const artifacts = await writeRunArtifacts({
+    baseDir,
+    run,
+    sources: [source],
+    inspections: [
+      {
+        id: "inspect_case",
+        runId,
+        sourceId,
+        name: source.name,
+        path: source.path,
+        fileType: "md",
+        parser: "markdown-text-v1",
+        status: "inspected" as const,
+        sizeBytes: 100,
+        sourceDateCandidates: [],
+        ownerCandidates: [],
+        structuredSummary: {},
+        textPreview: "A promise may create a warranty.",
+        warnings: []
+      }
+    ],
+    conflicts: [],
+    spec: {
+      id: "spec_legal_export",
+      runId,
+      artifactKind: "document",
+      audience: "Reviewer.",
+      decisionContext: "Legal memo.",
+      narrativeSpine: "Review a supported legal memo.",
+      structure: ["Rules"],
+      requiredChecks: ["Legal source support"],
+      reviewRules: ["Do not treat as legal advice."]
+    },
+    findings,
+    trustReport: {
+      id: "trust_ready",
+      runId,
+      readiness: "ready",
+      summary: {
+        sourceCount: 1,
+        claimCount: 0,
+        calculationCount: 0,
+        assumptionCount: 0,
+        findingCount: findings.length,
+        blockingCount: 0,
+        needsReviewCount: 0
+      },
+      blockingIssues: [],
+      warnings: []
+    },
+    legalSourcePacket: {
+      runId,
+      profile: "legal",
+      sources: [legalSource],
+      passages: [passage]
+    },
+    legalOutputSpec: {
+      id: "legal_output_spec_ready",
+      runId,
+      outputKind: "legal_memo",
+      audience: "Human legal reviewer.",
+      assignmentOrUseCase: "Reviewable legal memo.",
+      jurisdiction: "New Hampshire",
+      questionPresented: "Can a promise create a warranty?",
+      requiredSections: ["Question Presented", "Rules"],
+      citationStyle: "plain",
+      allowedSourceScope: "provided_packet_only",
+      reviewRules: ["Treat as a reliability artifact, not legal advice."]
+    },
+    legalEvidenceMap: {
+      id: "legal_evidence_map_ready",
+      runId,
+      profile: "legal",
+      artifactKind: "document",
+      propositions: [proposition],
+      summary: {
+        propositionCount: 1,
+        mappedPropositionCount: 1,
+        unsupportedPropositionCount: 0,
+        passageSupportedPropositionCount: 1
+      },
+      notes: []
+    },
+    legalDraftPropositions: [],
+    legalReviewDecisionSet: {
+      runId,
+      profile: "legal",
+      decisions: [
+        {
+          id: decisionId,
+          runId,
+          action: "accept_legal_risk",
+          location: "legal-memo:Rules",
+          issue: "Binding-law proposition lacks binding authority support.",
+          category: "authority_level_mismatch",
+          reason: "Fixture review accepted the carried risk.",
+          reviewer: "fixture-reviewer",
+          createdAt: "2026-07-05T00:00:00.000Z",
+          approvalTokenAccepted: true
+        }
+      ],
+      auditEvents: [
+        {
+          id: "legal_review_audit_1234567890abcdef",
+          runId,
+          decisionId,
+          action: "accept_legal_risk",
+          actor: "fixture-reviewer",
+          createdAt: "2026-07-05T00:00:00.000Z",
+          summary: "Accepted fixture risk.",
+          before: {},
+          after: {}
+        }
+      ]
+    }
+  });
+
+  const finalMarkdown = await readFile(join(artifacts.exportDir, "final-legal.md"), "utf8");
+  assert.match(finalMarkdown, /legal-export-ready Legal Memo/);
+  assert.match(finalMarkdown, /A promise may create a warranty\. \(Hawkins v\. McGee, 84 N\.H\. 114; para\. 2\)/);
+  assert.match(finalMarkdown, /not legal advice/);
+  const readme = await readFile(join(artifacts.exportDir, "README.md"), "utf8");
+  assert.match(readme, /Legal Final Export Receipt/);
+  assert.match(readme, /Status: export_ready/);
+  assert.match(readme, /04_export\/final-legal\.md/);
+  assert.match(readme, /01_source-packet\/legal-source-packet\.json/);
+  assert.match(readme, /03_verification\/legal-evidence-map\.json/);
+  assert.match(readme, /03_verification\/verification-findings\.json/);
+  assert.match(readme, /03_verification\/trust-report\.json/);
+  assert.match(readme, /Review audit: `03_verification\/legal-review-decisions\.json`/);
+  assert.match(readme, /Accepted Risks/);
+  assert.match(readme, new RegExp(decisionId));
+  assert.match(readme, /Unresolved Legal Risks\n\n- None/);
+  await assert.rejects(readFile(join(artifacts.exportDir, "legal-export-refusal.md"), "utf8"));
 });
 
 test("failed durable workflow runs are not left running", async () => {

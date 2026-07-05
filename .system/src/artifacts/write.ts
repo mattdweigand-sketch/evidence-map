@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type {
   ArtifactSpec,
@@ -11,6 +11,7 @@ import type {
 } from "../types.ts";
 import { renderLegalDraftPropositions } from "../legal/draft.ts";
 import { renderLegalEvidenceMap } from "../legal/evidence-map.ts";
+import { buildLegalFinalExport } from "../legal/export.ts";
 import { renderLegalReviewDecisionSet } from "../legal/review-decisions.ts";
 import { renderLegalOutputSpec } from "../legal/spec.ts";
 import { renderLegalSourcePacket, type LegalSourcePacket } from "../legal/source-packet.ts";
@@ -72,7 +73,28 @@ export async function writeRunArtifacts(input: {
   await writeJson(join(verifyDir, "trust-report.json"), input.trustReport);
   await writeFile(join(verifyDir, "verification-report.md"), renderVerification(input.findings, input.trustReport));
 
-  await writeFile(join(exportDir, "README.md"), renderExportGate(input.trustReport));
+  if (input.legalSourcePacket && input.legalOutputSpec && input.legalEvidenceMap) {
+    const legalExport = buildLegalFinalExport({
+      run: input.run,
+      legalSourcePacket: input.legalSourcePacket,
+      legalOutputSpec: input.legalOutputSpec,
+      legalEvidenceMap: input.legalEvidenceMap,
+      findings: input.findings,
+      trustReport: input.trustReport,
+      conflicts: input.conflicts,
+      legalReviewDecisionSet: input.legalReviewDecisionSet
+    });
+    await writeFile(join(exportDir, "README.md"), legalExport.readmeMarkdown);
+    if (legalExport.ready && legalExport.finalMarkdown) {
+      await writeFile(join(exportDir, "final-legal.md"), legalExport.finalMarkdown);
+      await rm(join(exportDir, "legal-export-refusal.md"), { force: true });
+    } else if (legalExport.refusalMarkdown) {
+      await writeFile(join(exportDir, "legal-export-refusal.md"), legalExport.refusalMarkdown);
+      await rm(join(exportDir, "final-legal.md"), { force: true });
+    }
+  } else {
+    await writeFile(join(exportDir, "README.md"), renderExportGate(input.trustReport));
+  }
 
   return { runDir, sourceDir, specDir, verifyDir, exportDir };
 }
