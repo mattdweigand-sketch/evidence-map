@@ -3,7 +3,7 @@
 Planned work, roughly in order. No dates. Open an issue if one of these matters to you.
 
 - **PPTX deep parser and claim extraction.** Slide inventory, title and body text, charts, speaker notes, and claim candidates so decks stop being metadata-only.
-- **General review-loop MCP tools.** Add claim, attach evidence, resolve conflict, apply review decision, and export preview/apply for the general profile, so an agent can work findings instead of only reading them.
+- **Broader general review-loop MCP tools.** The first slice can attach source support to existing claims, resolve source conflicts, and accept current findings with audit records. Next slices should add claim creation/editing, calculation repair decisions, richer evidence attachment, and export preview/apply for the general profile.
 - **LLM-assisted evidence matching.** Suggest source-to-claim links with confidence and review status instead of relying on manual mapping.
 - **General-profile hardened export gate.** A real export step that copies approved non-legal artifacts only when blocking findings are closed, with receipts. The legal profile already has a local Markdown export/refusal gate.
 - **General DOCX and PDF deep parsers.** Section maps, tables, citations, and page-cited text for non-legal document workflows. The legal profile already extracts paragraphs from DOCX and page/paragraph anchors from text-based PDFs.

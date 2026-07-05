@@ -6,6 +6,7 @@ import { writeRunArtifacts } from "../src/artifacts/write.ts";
 import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
 import { buildLegalRunArtifacts } from "../src/legal/artifacts.ts";
 import { applyLegalConflictReviewDecisions, readLegalReviewDecisionSet } from "../src/legal/review-decisions.ts";
+import { applyGeneralConflictReviewDecisions, readGeneralReviewDecisionSet } from "../src/review/general-decisions.ts";
 import { evaluateTrust } from "../src/trust/evaluate.ts";
 import { buildHostileReviewFindings } from "../src/verify/hostile-review.ts";
 
@@ -27,9 +28,13 @@ try {
   if (!run) throw new Error(`No persisted run found for ${runMetadata.id}.`);
 
   const legalReviewDecisionSet = run.profile === "legal" ? await readLegalReviewDecisionSet({ baseDir, run }) : undefined;
+  const generalReviewDecisionSet = run.profile === "general" ? await readGeneralReviewDecisionSet({ baseDir, run }) : undefined;
   const findings = await store.replaceVerificationFindings(
     run.id,
-    await buildHostileReviewFindings(store, run.id, { legalReviewDecisions: legalReviewDecisionSet?.decisions })
+    await buildHostileReviewFindings(store, run.id, {
+      legalReviewDecisions: legalReviewDecisionSet?.decisions,
+      generalReviewDecisions: generalReviewDecisionSet?.decisions
+    })
   );
   const trustReport = await evaluateTrust(store, run.id);
   const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
@@ -48,6 +53,8 @@ try {
   const effectiveConflicts =
     updatedRun.profile === "legal" && legalReviewDecisionSet
       ? applyLegalConflictReviewDecisions({ conflicts, decisions: legalReviewDecisionSet.decisions })
+      : updatedRun.profile === "general" && generalReviewDecisionSet
+        ? applyGeneralConflictReviewDecisions({ conflicts, decisions: generalReviewDecisionSet.decisions })
       : conflicts;
 
   await writeRunArtifacts({
@@ -64,7 +71,8 @@ try {
     legalEvidenceMap: legalArtifacts?.legalEvidenceMap,
     legalDraftPropositions: legalArtifacts?.legalDraftPropositions,
     legalReviewDecisionSet,
-    legalReuseLibrary: legalArtifacts?.legalReuseLibrary
+    legalReuseLibrary: legalArtifacts?.legalReuseLibrary,
+    generalReviewDecisionSet
   });
   console.log(JSON.stringify(trustReport, null, 2));
 } catch (error) {

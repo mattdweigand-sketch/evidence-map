@@ -14,7 +14,7 @@ Assumption records: named assumptions, values, source links, ownership, status, 
 
 ## Current Limitation
 
-General-profile v1 runs land blocked or needing review by design because the workflow seeds at least one guaranteed-review record and the general review-loop tools are still roadmap work. Legal-profile runs have a narrower review-decision path and local final export gate, but the gate still refuses unresolved legal blockers or required human review.
+General-profile v1 runs include a narrow review-decision path for attaching source support to seeded claims, accepting current findings with rationale, and resolving source conflicts. Broader claim extraction, calculation repair, and final export are still roadmap work. Legal-profile runs have a narrower review-decision path and local final export gate, but the gate still refuses unresolved legal blockers or required human review.
 
 ## Readiness Rules
 

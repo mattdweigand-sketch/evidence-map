@@ -4,6 +4,12 @@ import { applyLegalConflictReviewDecisions, applyLegalRiskAcceptanceDecisions } 
 import { buildLegalReuseFindings } from "../legal/reuse-library.ts";
 import { buildLegalDraftDisciplineFindings, buildLegalTrustFindings } from "../legal/trust.ts";
 import type { LegalReviewDecisionRecord } from "../legal/types.ts";
+import {
+  applyGeneralClaimReviewDecisions,
+  applyGeneralConflictReviewDecisions,
+  applyGeneralRiskAcceptanceDecisions,
+  type GeneralReviewDecisionRecord
+} from "../review/general-decisions.ts";
 import type { VerificationFinding } from "../types.ts";
 import { workbookInspectionFindings } from "./workbook-findings.ts";
 
@@ -17,20 +23,30 @@ export async function runHostileReview(
 export async function buildHostileReviewFindings(
   store: EvidenceMapStore,
   runId: string,
-  options: { legalReviewDecisions?: LegalReviewDecisionRecord[] } = {}
+  options: {
+    legalReviewDecisions?: LegalReviewDecisionRecord[];
+    generalReviewDecisions?: GeneralReviewDecisionRecord[];
+  } = {}
 ): Promise<Omit<VerificationFinding, "id" | "runId">[]> {
   const run = await store.getRun(runId);
   const sources = await store.listSources(runId);
   const inspections = await store.listFileInspections(runId);
   const storedConflicts = await store.listSourceConflicts(runId);
-  const claims = await store.listClaims(runId);
+  const storedClaims = await store.listClaims(runId);
   const calculations = await store.listCalculations(runId);
   const assumptions = await store.listAssumptions(runId);
   const legalReviewDecisions = run?.profile === "legal" ? options.legalReviewDecisions ?? [] : [];
+  const generalReviewDecisions = run?.profile === "general" ? options.generalReviewDecisions ?? [] : [];
   const conflicts =
     run?.profile === "legal"
       ? applyLegalConflictReviewDecisions({ conflicts: storedConflicts, decisions: legalReviewDecisions })
+      : run?.profile === "general"
+        ? applyGeneralConflictReviewDecisions({ conflicts: storedConflicts, decisions: generalReviewDecisions })
       : storedConflicts;
+  const claims =
+    run?.profile === "general"
+      ? applyGeneralClaimReviewDecisions({ claims: storedClaims, decisions: generalReviewDecisions })
+      : storedClaims;
 
   let findings: Omit<VerificationFinding, "id" | "runId">[] = [];
   const sourceById = new Map(sources.map((source) => [source.id, source]));
@@ -172,6 +188,9 @@ export async function buildHostileReviewFindings(
 
   if (run?.profile === "legal") {
     findings = applyLegalRiskAcceptanceDecisions({ findings, decisions: legalReviewDecisions });
+  }
+  if (run?.profile === "general") {
+    findings = applyGeneralRiskAcceptanceDecisions({ findings, decisions: generalReviewDecisions });
   }
 
   return findings;
