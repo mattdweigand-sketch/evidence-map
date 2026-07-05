@@ -1,15 +1,18 @@
-import { join, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod/v4";
 import { runEvidenceMapWorkflow } from "../chains/evidence-map/workflow.ts";
 import { JsonFileEvidenceMapStore } from "../db/json-file-store.ts";
 import type { EvidenceMapStore } from "../db/store.ts";
 import { buildSourcePacket } from "../ingest/source-packet.ts";
 import { getDefaultBaseDir } from "../artifacts/paths.ts";
+import { artifactKinds } from "../types.ts";
 
-const artifactKindSchema = z.enum(["deck", "workbook", "document", "report", "mixed"]);
+const artifactKindSchema = z.enum(artifactKinds);
+type ResolvedWorkspaceInputPaths = { paths: string[] } | { error: string };
 
 export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefaultMcpStore()) {
   const defaultBaseDir = getDefaultBaseDir();
@@ -29,8 +32,9 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       }
     },
     async ({ inputPaths, baseDir }) => {
-      const resolvedInputPaths = inputPaths.map((inputPath) => resolve(baseDir, inputPath));
-      return jsonToolResult(await buildSourcePacket(resolvedInputPaths));
+      const resolvedInputPaths = resolveWorkspaceInputPaths(baseDir, inputPaths);
+      if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
+      return jsonToolResult(await buildSourcePacket(resolvedInputPaths.paths));
     }
   );
 
@@ -47,11 +51,13 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       }
     },
     async ({ name, artifactKind, inputPaths, baseDir }) => {
+      const resolvedInputPaths = resolveWorkspaceInputPaths(baseDir, inputPaths);
+      if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
       const result = await runEvidenceMapWorkflow(store, {
         baseDir,
         name,
         artifactKind,
-        inputPaths
+        inputPaths: resolvedInputPaths.paths
       });
 
       return jsonToolResult({
@@ -74,7 +80,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
     "evidencemap_status",
     {
       title: "Get Run Status",
-      description: "Return run status, record counts, trust summary, and latest readiness for a evidence-map run.",
+      description: "Return run status, record counts, trust summary, and latest readiness for an evidence-map run.",
       inputSchema: {
         runId: z.string()
       }
@@ -115,7 +121,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
     "evidencemap_next_action",
     {
       title: "Get Next Action",
-      description: "Return the next safe action for a evidence-map run.",
+      description: "Return the next safe action for an evidence-map run.",
       inputSchema: {
         runId: z.string()
       }
@@ -127,7 +133,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
     "evidencemap_get_verification_report",
     {
       title: "Get Verification Report",
-      description: "Return hostile-review findings and the latest trust report for a evidence-map run.",
+      description: "Return hostile-review findings and the latest trust report for an evidence-map run.",
       inputSchema: {
         runId: z.string()
       }
@@ -146,6 +152,25 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
   );
 
   return { server, store };
+}
+
+// This is a convention rail, not a security boundary: the client still chooses baseDir.
+function resolveWorkspaceInputPaths(baseDir: string, inputPaths: string[]): ResolvedWorkspaceInputPaths {
+  const resolvedBaseDir = resolve(baseDir);
+  const paths: string[] = [];
+  for (const inputPath of inputPaths) {
+    const resolvedInputPath = resolve(resolvedBaseDir, inputPath);
+    const relativePath = relative(resolvedBaseDir, resolvedInputPath);
+    if (relativePath.startsWith("..") || isAbsolute(relativePath)) {
+      return { error: `Input path escapes baseDir: ${inputPath}` };
+    }
+    paths.push(resolvedInputPath);
+  }
+  return { paths };
+}
+
+function hasWorkspaceInputPathError(result: ResolvedWorkspaceInputPaths): result is { error: string } {
+  return "error" in result;
 }
 
 function createDefaultMcpStore() {
@@ -212,7 +237,7 @@ async function getNextAction(store: EvidenceMapStore, runId: string) {
   };
 }
 
-function jsonToolResult(data: unknown): any {
+function jsonToolResult(data: unknown): CallToolResult {
   return {
     content: [
       {
@@ -220,8 +245,26 @@ function jsonToolResult(data: unknown): any {
         text: JSON.stringify(data, null, 2)
       }
     ],
-    structuredContent: data ?? {}
+    structuredContent: toStructuredContent(data)
   };
+}
+
+function jsonToolError(message: string): CallToolResult {
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text" as const,
+        text: message
+      }
+    ],
+    structuredContent: { error: message }
+  };
+}
+
+function toStructuredContent(data: unknown): Record<string, unknown> {
+  if (data && typeof data === "object" && !Array.isArray(data)) return data as Record<string, unknown>;
+  return { value: data };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

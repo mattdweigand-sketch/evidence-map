@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type {
   ArtifactSpec,
@@ -13,6 +13,7 @@ import type {
   TrustReport,
   VerificationFinding
 } from "../types.ts";
+import { createId, createRunSlug } from "./ids.ts";
 import type { EvidenceMapStore } from "./store.ts";
 
 interface StoreData {
@@ -30,43 +31,50 @@ interface StoreData {
 
 export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   private readonly path: string;
+  private operationQueue: Promise<unknown> = Promise.resolve();
 
   constructor(path: string) {
     this.path = path;
   }
 
   async createRun(input: StartRunInput): Promise<EvidenceMapRun> {
-    const data = await this.load();
-    const now = new Date().toISOString();
-    const id = createId("run");
-    const run: EvidenceMapRun = {
-      id,
-      slug: createRunSlug(input.name, id),
-      name: input.name,
-      artifactKind: input.artifactKind,
-      status: "running",
-      inputPaths: input.inputPaths,
-      createdAt: now,
-      updatedAt: now
-    };
-    data.runs.push(run);
-    await this.save(data);
-    return run;
+    return this.serialize(async () => {
+      const data = await this.load();
+      const now = new Date().toISOString();
+      const id = createId("run");
+      const run: EvidenceMapRun = {
+        id,
+        slug: createRunSlug(input.name, id),
+        name: input.name,
+        artifactKind: input.artifactKind,
+        status: "running",
+        inputPaths: input.inputPaths,
+        createdAt: now,
+        updatedAt: now
+      };
+      data.runs.push(run);
+      await this.save(data);
+      return run;
+    });
   }
 
   async getRun(id: string) {
-    const data = await this.load();
-    return data.runs.find((run) => run.id === id);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.runs.find((run) => run.id === id);
+    });
   }
 
   async updateRunStatus(runId: string, status: EvidenceMapRun["status"]) {
-    const data = await this.load();
-    const run = data.runs.find((item) => item.id === runId);
-    if (!run) throw new Error(`Unknown run: ${runId}`);
-    const updated = { ...run, status, updatedAt: new Date().toISOString() };
-    data.runs = data.runs.map((item) => (item.id === runId ? updated : item));
-    await this.save(data);
-    return updated;
+    return this.serialize(async () => {
+      const data = await this.load();
+      const run = data.runs.find((item) => item.id === runId);
+      if (!run) throw new Error(`Unknown run: ${runId}`);
+      const updated = { ...run, status, updatedAt: new Date().toISOString() };
+      data.runs = data.runs.map((item) => (item.id === runId ? updated : item));
+      await this.save(data);
+      return updated;
+    });
   }
 
   async createSources(runId: string, sources: Omit<SourceRecord, "id" | "runId">[]) {
@@ -74,8 +82,10 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   }
 
   async listSources(runId: string) {
-    const data = await this.load();
-    return data.sources.filter((source) => source.runId === runId);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.sources.filter((source) => source.runId === runId);
+    });
   }
 
   async createSourceConflicts(runId: string, conflicts: Omit<SourceConflict, "id" | "runId">[]) {
@@ -83,8 +93,10 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   }
 
   async listSourceConflicts(runId: string) {
-    const data = await this.load();
-    return data.conflicts.filter((conflict) => conflict.runId === runId);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.conflicts.filter((conflict) => conflict.runId === runId);
+    });
   }
 
   async createFileInspections(runId: string, inspections: Omit<FileInspectionRecord, "id" | "runId">[]) {
@@ -92,8 +104,10 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   }
 
   async listFileInspections(runId: string) {
-    const data = await this.load();
-    return data.inspections.filter((inspection) => inspection.runId === runId);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.inspections.filter((inspection) => inspection.runId === runId);
+    });
   }
 
   async createAssumptions(runId: string, assumptions: Omit<AssumptionRecord, "id" | "runId">[]) {
@@ -101,8 +115,10 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   }
 
   async listAssumptions(runId: string) {
-    const data = await this.load();
-    return data.assumptions.filter((assumption) => assumption.runId === runId);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.assumptions.filter((assumption) => assumption.runId === runId);
+    });
   }
 
   async createClaims(runId: string, claims: Omit<ClaimRecord, "id" | "runId">[]) {
@@ -110,8 +126,10 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   }
 
   async listClaims(runId: string) {
-    const data = await this.load();
-    return data.claims.filter((claim) => claim.runId === runId);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.claims.filter((claim) => claim.runId === runId);
+    });
   }
 
   async createCalculations(runId: string, calculations: Omit<CalculationRecord, "id" | "runId">[]) {
@@ -119,8 +137,10 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   }
 
   async listCalculations(runId: string) {
-    const data = await this.load();
-    return data.calculations.filter((calculation) => calculation.runId === runId);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.calculations.filter((calculation) => calculation.runId === runId);
+    });
   }
 
   async createArtifactSpec(spec: Omit<ArtifactSpec, "id">) {
@@ -130,8 +150,10 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   }
 
   async getArtifactSpec(runId: string) {
-    const data = await this.load();
-    return data.specs.filter((spec) => spec.runId === runId).at(-1);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.specs.filter((spec) => spec.runId === runId).at(-1);
+    });
   }
 
   async createVerificationFindings(runId: string, findings: Omit<VerificationFinding, "id" | "runId">[]) {
@@ -139,16 +161,20 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   }
 
   async replaceVerificationFindings(runId: string, findings: Omit<VerificationFinding, "id" | "runId">[]) {
-    const data = await this.load();
-    const created = findings.map((finding) => ({ ...finding, id: createId("finding"), runId }));
-    data.findings = [...data.findings.filter((finding) => finding.runId !== runId), ...created];
-    await this.save(data);
-    return created;
+    return this.serialize(async () => {
+      const data = await this.load();
+      const created = findings.map((finding) => ({ ...finding, id: createId("finding"), runId }));
+      data.findings = [...data.findings.filter((finding) => finding.runId !== runId), ...created];
+      await this.save(data);
+      return created;
+    });
   }
 
   async listVerificationFindings(runId: string) {
-    const data = await this.load();
-    return data.findings.filter((finding) => finding.runId === runId);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.findings.filter((finding) => finding.runId === runId);
+    });
   }
 
   async createTrustReport(report: Omit<TrustReport, "id">) {
@@ -158,15 +184,19 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
   }
 
   async getLatestTrustReport(runId: string) {
-    const data = await this.load();
-    return data.reports.filter((report) => report.runId === runId).at(-1);
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.reports.filter((report) => report.runId === runId).at(-1);
+    });
   }
 
   private async append<K extends keyof StoreData>(key: K, records: StoreData[K]) {
-    const data = await this.load();
-    data[key] = [...data[key], ...records] as StoreData[K];
-    await this.save(data);
-    return records;
+    return this.serialize(async () => {
+      const data = await this.load();
+      data[key] = [...data[key], ...records] as StoreData[K];
+      await this.save(data);
+      return records;
+    });
   }
 
   private async load(): Promise<StoreData> {
@@ -181,7 +211,18 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
 
   private async save(data: StoreData) {
     await mkdir(dirname(this.path), { recursive: true });
-    await writeFile(this.path, `${JSON.stringify(data, null, 2)}\n`);
+    const tmpPath = `${this.path}.tmp`;
+    await writeFile(tmpPath, `${JSON.stringify(data, null, 2)}\n`);
+    await rename(tmpPath, this.path);
+  }
+
+  private async serialize<T>(operation: () => Promise<T>): Promise<T> {
+    const current = this.operationQueue.then(operation, operation);
+    this.operationQueue = current.then(
+      () => undefined,
+      () => undefined
+    );
+    return current;
   }
 }
 
@@ -198,21 +239,4 @@ function emptyData(): StoreData {
     findings: [],
     reports: []
   };
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function createRunSlug(name: string, id: string) {
-  const base = slugify(name) || "evidence-map-run";
-  return `${base}-${id.replace(/^run_/, "").slice(0, 8)}`;
-}
-
-function createId(prefix: string) {
-  return `${prefix}_${crypto.randomUUID()}`;
 }

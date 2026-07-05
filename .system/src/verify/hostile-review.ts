@@ -22,7 +22,7 @@ export async function buildHostileReviewFindings(
 
   const findings: Omit<VerificationFinding, "id" | "runId">[] = [];
   const sourceById = new Map(sources.map((source) => [source.id, source]));
-  const sourceByInspectionId = new Map(inspections.map((inspection) => [inspection.sourceId, inspection]));
+  const inspectionBySourceId = new Map(inspections.filter((inspection) => inspection.sourceId).map((inspection) => [inspection.sourceId, inspection]));
 
   if (sources.length === 0) {
     findings.push(mustFix("source-packet", "No source inventory exists.", "The workflow has no source records.", "Create a source packet before artifact work."));
@@ -76,7 +76,7 @@ export async function buildHostileReviewFindings(
     for (const sourceId of claim.sourceIds) {
       const source = sourceById.get(sourceId);
       if (!source) continue;
-      const inspection = sourceByInspectionId.get(sourceId);
+      const inspection = inspectionBySourceId.get(sourceId);
       if ((source.status === "superseded" || source.status === "background") && claim.reviewStatus !== "verified") {
         findings.push({
           location: claim.artifactLocation,

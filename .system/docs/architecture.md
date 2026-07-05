@@ -26,11 +26,4 @@ Postgres can replace the JSON store when recurring workflows need source/version
 
 ## Ownership
 
-- `.system/src/chains/evidence-map/` owns workflow steps.
-- `.system/src/db/` owns persistence contracts and adapters.
-- `.system/src/ingest/` owns source inventory.
-- `.system/src/spec/` owns artifact structure.
-- `.system/src/trust/` owns readiness evaluation.
-- `.system/src/verify/` owns hostile review.
-- `.system/src/artifacts/` owns local receipts.
-- `.system/src/mcp/` owns MCP tool registration and adapter behavior.
+The canonical module ownership list lives in `AGENTS.md`.

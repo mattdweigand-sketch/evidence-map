@@ -124,3 +124,25 @@ test("verify command recomputes findings without duplicating old ones", async ()
   assert.equal(findingsForRun.length, result.findings.length);
   assert.equal(report.readiness, "blocked");
 });
+
+test("run command rejects invalid artifact kinds", async () => {
+  const scriptPath = fileURLToPath(new URL("../scripts/run.ts", import.meta.url));
+
+  await assert.rejects(
+    execFileAsync(process.execPath, [
+      "--experimental-strip-types",
+      scriptPath,
+      "--kind",
+      "banana",
+      "--input",
+      "input/examples/capstone-report"
+    ]),
+    (error: unknown) => {
+      assert.equal((error as { code?: number }).code, 1);
+      const stderr = String((error as { stderr?: string }).stderr);
+      assert.match(stderr, /Invalid --kind: banana/);
+      assert.match(stderr, /Valid kinds: deck, workbook, document, report, mixed/);
+      return true;
+    }
+  );
+});

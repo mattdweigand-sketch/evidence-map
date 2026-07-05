@@ -19,6 +19,11 @@ interface HardcodedNumberCell {
   reason: string;
 }
 
+interface HeaderCandidates {
+  rowNumber?: number;
+  values: string[];
+}
+
 interface FormulaIssue {
   location: string;
   issueType: string;
@@ -39,11 +44,13 @@ export async function inspectXlsxWorkbook(
   const sheetSummaries = workbook.worksheets.map((worksheet) => inspectWorksheet(worksheet));
   const formulaIssues = findFormulaIssues(sheetSummaries.flatMap((sheet) => sheet.formulas));
   const hardcodeIssues = sheetSummaries.flatMap((sheet) => sheet.hardcodedNumbers.slice(0, 25));
+  const hardcodeIssueCount = sheetSummaries.reduce((sum, sheet) => sum + sheet.hardcodedNumberCellCount, 0);
+  const hardcodeWarningSuffix = sheetSummaries.some((sheet) => sheet.hardcodedNumbers.length > 25) ? " (showing first 25 per sheet)" : "";
   const warnings = [
     ...sheetSummaries.filter((sheet) => sheet.state !== "visible").map((sheet) => `${sheet.name}: sheet is ${sheet.state}.`),
     ...sheetSummaries.filter((sheet) => sheet.headerWarnings.length > 0).flatMap((sheet) => sheet.headerWarnings.map((warning) => `${sheet.name}: ${warning}`)),
     ...formulaIssues.map((issue) => `${issue.location}: ${issue.issueType}.`),
-    ...(hardcodeIssues.length > 0 ? [`${hardcodeIssues.length} hardcoded numeric cells found in calculation-like zones.`] : []),
+    ...(hardcodeIssueCount > 0 ? [`${hardcodeIssueCount} hardcoded numeric cells found in calculation-like zones.${hardcodeWarningSuffix}`] : []),
     ...(sheetSummaries.some((sheet) => sheet.hasChecksPurpose) ? [] : ["No checks sheet detected."])
   ];
   const textCorpus = sheetSummaries.flatMap((sheet) => [sheet.name, ...sheet.headers]).join("\n");
@@ -92,12 +99,13 @@ function inspectWorksheet(worksheet: ExcelJS.Worksheet) {
   const hardcodedNumbers: HardcodedNumberCell[] = [];
   const rowsWithValues = new Set<number>();
   const columnsWithValues = new Set<number>();
-  const rowFormulaCounts = new Map<number, number>();
-  const rowNumericCounts = new Map<number, number>();
+  const formulasByRow = new Map<number, FormulaCell[]>();
+  const numericCellsByRow = new Map<number, HardcodedNumberCell[]>();
   let numericCellCount = 0;
-  const headers = getHeaderCandidates(worksheet);
+  const headerCandidates = getHeaderCandidates(worksheet);
+  const headers = headerCandidates.values;
   const apparentPurpose = inferWorksheetPurpose(worksheet.name, headers);
-  const hasCalculationPurpose = ["calculations", "outputs", "checks", "assumptions"].includes(apparentPurpose);
+  const hasCalculationPurpose = ["calculations", "outputs"].includes(apparentPurpose);
 
   worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
     rowsWithValues.add(rowNumber);
@@ -106,43 +114,32 @@ function inspectWorksheet(worksheet: ExcelJS.Worksheet) {
       const formula = getFormula(cell.value);
       const number = getNumber(cell.value);
       if (formula) {
-        formulas.push({ address: cell.address, row: rowNumber, col: colNumber, formula });
-        rowFormulaCounts.set(rowNumber, (rowFormulaCounts.get(rowNumber) ?? 0) + 1);
+        const formulaCell = { address: cell.address, row: rowNumber, col: colNumber, formula };
+        formulas.push(formulaCell);
+        formulasByRow.set(rowNumber, [...(formulasByRow.get(rowNumber) ?? []), formulaCell]);
       }
       if (typeof number === "number") {
         numericCellCount += 1;
-        rowNumericCounts.set(rowNumber, (rowNumericCounts.get(rowNumber) ?? 0) + 1);
-        if (hasCalculationPurpose || (rowFormulaCounts.get(rowNumber) ?? 0) > 0) {
-          hardcodedNumbers.push({
+        numericCellsByRow.set(rowNumber, [
+          ...(numericCellsByRow.get(rowNumber) ?? []),
+          {
             address: cell.address,
             row: rowNumber,
             col: colNumber,
             value: number,
-            reason: hasCalculationPurpose ? "numeric constant on calculation-like sheet" : "numeric constant in formula row"
-          });
-        }
+            reason: ""
+          }
+        ]);
       }
     });
   });
 
-  for (const formula of formulas) {
-    const numericCount = rowNumericCounts.get(formula.row) ?? 0;
-    if (numericCount > 0) {
-      for (const row of [worksheet.getRow(formula.row)]) {
-        row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
-          const number = getNumber(cell.value);
-          if (typeof number === "number" && !getFormula(cell.value)) {
-            hardcodedNumbers.push({
-              address: cell.address,
-              row: formula.row,
-              col: colNumber,
-              value: number,
-              reason: "numeric constant in formula row"
-            });
-          }
-        });
-      }
-    }
+  for (const [rowNumber, numericCells] of numericCellsByRow) {
+    if (rowNumber === headerCandidates.rowNumber) continue;
+    const rowHasFormula = (formulasByRow.get(rowNumber) ?? []).length > 0;
+    if (!hasCalculationPurpose && !rowHasFormula) continue;
+    const reason = hasCalculationPurpose ? "numeric constant on calculation-like sheet" : "numeric constant in formula row";
+    hardcodedNumbers.push(...numericCells.map((cell) => ({ ...cell, reason })));
   }
 
   return {
@@ -159,9 +156,9 @@ function inspectWorksheet(worksheet: ExcelJS.Worksheet) {
     headerWarnings: getHeaderWarnings(headers),
     numericCellCount,
     formulaCellCount: formulas.length,
-    hardcodedNumberCellCount: dedupeHardcodes(hardcodedNumbers).length,
+    hardcodedNumberCellCount: hardcodedNumbers.length,
     formulas,
-    hardcodedNumbers: dedupeHardcodes(hardcodedNumbers)
+    hardcodedNumbers
   };
 }
 
@@ -198,7 +195,7 @@ function findRepeatedFormulaIssues(formulas: FormulaCell[]) {
   return issues;
 }
 
-function getHeaderCandidates(worksheet: ExcelJS.Worksheet) {
+function getHeaderCandidates(worksheet: ExcelJS.Worksheet): HeaderCandidates {
   for (let rowNumber = 1; rowNumber <= Math.min(10, worksheet.rowCount); rowNumber += 1) {
     const row = worksheet.getRow(rowNumber);
     const values: string[] = [];
@@ -206,9 +203,9 @@ function getHeaderCandidates(worksheet: ExcelJS.Worksheet) {
       const value = renderCellValue(cell.value).trim();
       if (value) values.push(value);
     });
-    if (values.length >= 2) return values.slice(0, 50);
+    if (values.length >= 2) return { rowNumber, values: values.slice(0, 50) };
   }
-  return [];
+  return { values: [] };
 }
 
 function getHeaderWarnings(headers: string[]) {
@@ -238,7 +235,7 @@ function getFormula(value: ExcelJS.CellValue) {
 
 function getNumber(value: ExcelJS.CellValue) {
   if (typeof value === "number") return value;
-  if (value && typeof value === "object" && "result" in value && typeof value.result === "number") return undefined;
+  // Formula-result objects are deliberately not treated as numeric constants.
   return undefined;
 }
 
@@ -266,15 +263,6 @@ function groupBy<T>(items: T[], keyFn: (item: T) => string) {
     groups.set(key, [...(groups.get(key) ?? []), item]);
   }
   return [...groups.values()];
-}
-
-function dedupeHardcodes(values: HardcodedNumberCell[]) {
-  const seen = new Set<string>();
-  return values.filter((value) => {
-    if (seen.has(value.address)) return false;
-    seen.add(value.address);
-    return true;
-  });
 }
 
 function dedupeIssues(values: FormulaIssue[]) {

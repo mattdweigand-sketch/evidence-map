@@ -69,9 +69,11 @@ Claude Code (`.mcp.json` in your project, or `claude mcp add`):
 
 The same shape works in any MCP client that supports local stdio servers. Tools exposed: `evidencemap_inspect_source_packet`, `evidencemap_run_workflow`, `evidencemap_status`, `evidencemap_next_action`, `evidencemap_get_verification_report`. Run state persists at `deliverables/evidence-map-store.json`. The full surface is documented in `.system/docs/mcp.md`. The CLI remains useful for smoke tests, fixtures, and CI.
 
+Current v1 runs always land blocked or needing review until the roadmap review-loop MCP tools can resolve seeded claims and findings.
+
 ## What This Is Not
 
-Evidence Map does not generate decks, workbooks, or reports. Drafts come from anywhere — an AI tool, an export, a colleague — and get reviewed here. The premise: AI can make files that look finished before they are true. A chart can mix actuals and plan data. A workbook can contain hardcoded projections instead of live formulas. A deck can carry claims with no source trail. Evidence Map exposes the claim layer before the artifact is approved, so nothing looks polished before anyone has checked whether the underlying content is true, current, approved, and safe to reuse.
+The premise is that AI can make files that look finished before they are true. A chart can mix actuals and plan data. A workbook can contain hardcoded projections instead of live formulas. A deck can carry claims with no source trail. Evidence Map exposes the claim layer before the artifact is approved, so nothing looks polished before anyone has checked whether the underlying content is true, current, approved, and safe to reuse.
 
 ## Repo Layout
 

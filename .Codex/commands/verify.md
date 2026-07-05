@@ -1,6 +1,6 @@
 # /verify
 
-Recompute verification for a evidence-map run folder and rewrite the latest report.
+Recompute verification for an evidence-map run folder and rewrite the latest report.
 
 Use:
 

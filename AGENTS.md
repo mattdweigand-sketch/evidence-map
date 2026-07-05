@@ -4,7 +4,7 @@
 
 Evidence Map is a general-purpose AI workflow harness for reviewing deliverables against the sources behind them.
 
-It supports recurring reports and reviews (quarterly business reviews, program status reports), financial and operating models, external-facing presentations (client, board, grant, thesis defense), compliance and regulatory responses, research summaries and coursework deliverables, and any file where a claim or number can become a decision.
+It supports decision-bearing deliverables such as reports, models, presentations, compliance responses, research summaries, and coursework. See `.system/docs/prd.md` for the canonical target-artifacts statement.
 
 ## How To Run It
 

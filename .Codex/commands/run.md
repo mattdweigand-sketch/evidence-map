@@ -1,6 +1,6 @@
 # /run
 
-Start a evidence-map workflow for a source folder.
+Start an evidence-map workflow for a source folder.
 
 Expected shape:
 

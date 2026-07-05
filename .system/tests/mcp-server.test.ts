@@ -130,3 +130,29 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   await client.close();
   await server.close();
 });
+
+test("MCP source packet rejects input paths outside baseDir", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-guard-"));
+  fixtureDirs.push(baseDir);
+  const { server } = createEvidenceMapMcpServer(new MemoryEvidenceMapStore());
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const result = await client.callTool({
+    name: "evidencemap_inspect_source_packet",
+    arguments: {
+      baseDir,
+      inputPaths: ["../outside"]
+    }
+  });
+
+  assert.equal(result.isError, true);
+  const content = result.content as Array<{ type: string; text?: string }>;
+  assert.match(String(content[0]?.type === "text" ? content[0].text : ""), /\.\.\/outside/);
+
+  await client.close();
+  await server.close();
+});

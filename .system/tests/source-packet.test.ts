@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { inferDateCandidates } from "../src/date-candidates.ts";
 import { buildSourcePacket } from "../src/ingest/source-packet.ts";
 import { inspectFile } from "../src/inspect/index.ts";
 
@@ -44,6 +45,12 @@ test("source packet avoids substring status and invalid date inference", async (
   const packet = await buildSourcePacket([input]);
   assert.equal(packet.sources[0]?.status, "raw_data");
   assert.equal(packet.sources[0]?.sourceDate, undefined);
+});
+
+test("date inference handles single-digit US dates and strict compact year-first dates", () => {
+  assert.deepEqual(inferDateCandidates("survey exported 4/12/2026"), ["2026-04-12"]);
+  assert.deepEqual(inferDateCandidates("bad compact date 2026-0430"), []);
+  assert.deepEqual(inferDateCandidates("survey exported 20260430"), ["2026-04-30"]);
 });
 
 test("csv inspection handles quoted delimiters", async () => {

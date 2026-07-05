@@ -1,6 +1,7 @@
-export type ArtifactKind = "deck" | "workbook" | "document" | "report" | "mixed";
+export const artifactKinds = ["deck", "workbook", "document", "report", "mixed"] as const;
+export type ArtifactKind = (typeof artifactKinds)[number];
 
-export type RunStatus = "running" | "waiting_for_review" | "blocked" | "export_ready" | "completed" | "failed";
+export type RunStatus = "running" | "waiting_for_review" | "blocked" | "export_ready" | "failed";
 
 export type SourceStatus =
   | "current"

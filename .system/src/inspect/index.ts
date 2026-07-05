@@ -1,4 +1,5 @@
-import { readFile, stat } from "node:fs/promises";
+import type { Stats } from "node:fs";
+import { open, stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
 import { inferDateCandidates } from "../date-candidates.ts";
 import type { FileInspectionRecord } from "../types.ts";
@@ -6,14 +7,27 @@ import { expandInputPaths } from "../ingest/expand-input-paths.ts";
 import { inspectXlsxWorkbook } from "./xlsx.ts";
 
 type FileInspectionDraft = Omit<FileInspectionRecord, "id" | "runId" | "sourceId">;
+export interface InspectableFile {
+  path: string;
+  stat: Stats;
+}
 
 export async function buildFileInspections(inputPaths: string[]): Promise<FileInspectionDraft[]> {
   const filePaths = await expandInputPaths(inputPaths);
-  return Promise.all(filePaths.map(inspectFile));
+  const files = await Promise.all(filePaths.map(async (path) => ({ path, stat: await stat(path) })));
+  return inspectFiles(files);
+}
+
+export async function inspectFiles(files: InspectableFile[]): Promise<FileInspectionDraft[]> {
+  return Promise.all(files.map((file) => inspectFileWithStat(file.path, file.stat)));
 }
 
 export async function inspectFile(path: string): Promise<FileInspectionDraft> {
   const info = await stat(path);
+  return inspectFileWithStat(path, info);
+}
+
+async function inspectFileWithStat(path: string, info: Stats): Promise<FileInspectionDraft> {
   const name = basename(path);
   const fileType = extname(path).replace(".", "").toLowerCase() || "unknown";
   const base = {
@@ -169,13 +183,23 @@ async function inspectPdf(base: Pick<FileInspectionDraft, "name" | "path" | "fil
 }
 
 async function readSmallText(path: string) {
-  const buffer = await readFile(path);
-  return buffer.toString("utf8").slice(0, 250_000);
+  const buffer = await readFilePrefix(path, 250_000);
+  return buffer.toString("utf8");
 }
 
 async function readBytes(path: string, length: number) {
-  const buffer = await readFile(path);
-  return [...buffer.subarray(0, length)];
+  return [...(await readFilePrefix(path, length))];
+}
+
+async function readFilePrefix(path: string, length: number) {
+  const handle = await open(path, "r");
+  try {
+    const buffer = Buffer.alloc(length);
+    const { bytesRead } = await handle.read(buffer, 0, length, 0);
+    return buffer.subarray(0, bytesRead);
+  } finally {
+    await handle.close();
+  }
 }
 
 function previewText(value: string) {

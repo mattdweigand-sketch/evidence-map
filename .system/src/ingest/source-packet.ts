@@ -2,20 +2,21 @@ import { stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
 import { firstDateCandidate } from "../date-candidates.ts";
 import type { SourceConflict, SourceRecord, SourceStatus } from "../types.ts";
-import { buildFileInspections } from "../inspect/index.ts";
+import { inspectFiles, type InspectableFile } from "../inspect/index.ts";
 import { expandInputPaths } from "./expand-input-paths.ts";
 
 type SourceConflictDraft = Omit<SourceConflict, "id" | "runId"> & { sourcePaths: string[] };
 
 export async function buildSourcePacket(inputPaths: string[]) {
   const filePaths = await expandInputPaths(inputPaths);
-  const [sources, inspections] = await Promise.all([Promise.all(filePaths.map(toSourceRecord)), buildFileInspections(filePaths)]);
+  const files = await Promise.all(filePaths.map(async (path) => ({ path, stat: await stat(path) })));
+  const [sources, inspections] = await Promise.all([Promise.all(files.map(toSourceRecord)), inspectFiles(files)]);
   const conflicts = inferSourceConflicts(sources);
   return { sources, conflicts, inspections };
 }
 
-async function toSourceRecord(path: string): Promise<Omit<SourceRecord, "id" | "runId">> {
-  const info = await stat(path);
+async function toSourceRecord(file: InspectableFile): Promise<Omit<SourceRecord, "id" | "runId">> {
+  const { path } = file;
   const name = basename(path);
   return {
     name,
@@ -24,7 +25,7 @@ async function toSourceRecord(path: string): Promise<Omit<SourceRecord, "id" | "
     status: inferStatus(name),
     sourceDate: firstDateCandidate(name),
     intendedUse: inferIntendedUse(name),
-    notes: `Imported ${info.size} bytes from source folder.`
+    notes: `Imported ${file.stat.size} bytes from source folder.`
   };
 }
 

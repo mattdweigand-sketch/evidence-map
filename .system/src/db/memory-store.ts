@@ -11,6 +11,7 @@ import type {
   TrustReport,
   VerificationFinding
 } from "../types.ts";
+import { createId, createRunSlug } from "./ids.ts";
 import type { EvidenceMapStore } from "./store.ts";
 
 export class MemoryEvidenceMapStore implements EvidenceMapStore {
@@ -151,21 +152,4 @@ export class MemoryEvidenceMapStore implements EvidenceMapStore {
     map.set(runId, [...existing, ...records]);
     return records;
   }
-}
-
-export function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function createRunSlug(name: string, id: string) {
-  const base = slugify(name) || "evidence-map-run";
-  return `${base}-${id.replace(/^run_/, "").slice(0, 8)}`;
-}
-
-function createId(prefix: string) {
-  return `${prefix}_${crypto.randomUUID()}`;
 }
