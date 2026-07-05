@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import { createHash } from "node:crypto";
 import { inflateRawSync } from "node:zlib";
+import { PDFParse } from "pdf-parse";
 import { slugify } from "../db/ids.ts";
 import type { FileInspectionRecord, SourceRecord } from "../types.ts";
 import type { LegalPassageRecord } from "./types.ts";
@@ -39,6 +40,7 @@ async function extractSourcePassages(input: {
 }): Promise<LegalPassageRecord[]> {
   const fileType = input.source.fileType || extname(input.source.path).replace(".", "").toLowerCase();
   if (fileType === "docx") return extractDocxSourcePassages(input);
+  if (fileType === "pdf") return extractPdfSourcePassages(input);
   if ((fileType !== "md" && fileType !== "txt") || input.inspection?.status !== "inspected") return [];
 
   const content = await readFile(input.source.path, "utf8");
@@ -77,6 +79,39 @@ async function extractDocxSourcePassages(input: {
   }
 }
 
+async function extractPdfSourcePassages(input: {
+  runId: string;
+  source: SourceRecord;
+}): Promise<LegalPassageRecord[]> {
+  let parser: PDFParse | undefined;
+  try {
+    parser = new PDFParse({ data: await readFile(input.source.path) });
+    const textResult = await parser.getText({ pageJoiner: "" });
+    const pagePassages = textResult.pages.flatMap((page) =>
+      buildPageParagraphPassages({
+        runId: input.runId,
+        source: input.source,
+        pageNumber: page.num,
+        paragraphs: splitParagraphs(page.text)
+      })
+    );
+    if (pagePassages.length === 0) {
+      throw new Error("PDF parser did not return extractable text passages.");
+    }
+    return pagePassages;
+  } catch (error) {
+    return [
+      buildFailedPassage({
+        runId: input.runId,
+        source: input.source,
+        notes: `PDF text extraction failed: ${error instanceof Error ? error.message : "Unknown extraction failure."}`
+      })
+    ];
+  } finally {
+    await parser?.destroy();
+  }
+}
+
 function buildParagraphPassages(input: {
   runId: string;
   source: SourceRecord;
@@ -95,6 +130,35 @@ function buildParagraphPassages(input: {
       locationKind: "paragraph",
       paragraphNumber,
       pinpoint: `para. ${paragraphNumber}`,
+      quote: paragraph,
+      quoteHash: quoteHash(paragraph),
+      textBefore: input.paragraphs[index - 1],
+      textAfter: input.paragraphs[index + 1],
+      extractionStatus: "extracted"
+    };
+  });
+}
+
+function buildPageParagraphPassages(input: {
+  runId: string;
+  source: SourceRecord;
+  pageNumber: number;
+  paragraphs: string[];
+}): LegalPassageRecord[] {
+  const sourceKey = stableSourceKey(input.source);
+
+  return input.paragraphs.map((paragraph, index) => {
+    const paragraphNumber = index + 1;
+    const passageId = `passage_${sourceKey}_pg${String(input.pageNumber).padStart(4, "0")}_p${String(paragraphNumber).padStart(4, "0")}`;
+    return {
+      id: `legal_${passageId}`,
+      runId: input.runId,
+      sourceId: input.source.id,
+      passageId,
+      locationKind: "page",
+      pageNumber: input.pageNumber,
+      paragraphNumber,
+      pinpoint: `p. ${input.pageNumber}, para. ${paragraphNumber}`,
       quote: paragraph,
       quoteHash: quoteHash(paragraph),
       textBefore: input.paragraphs[index - 1],

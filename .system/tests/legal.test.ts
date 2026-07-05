@@ -174,10 +174,10 @@ test("legal trust flags failed docx extraction", async () => {
   );
 });
 
-test("legal trust flags metadata-only pdf extraction as review item", async () => {
+test("legal source packet extracts text-based pdf passages with page anchors", async () => {
   const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-pdf-"));
   const path = join(dir, "case-opinion.pdf");
-  await writeFile(path, "%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n");
+  await writeFile(path, makePdfBuffer("The court held that a promise may create a warranty."));
   const packet = await buildLegalSourcePacket({
     runId: "run_1",
     sources: [makeGenericSource({ id: "src_1", name: "case-opinion.pdf", path, fileType: "pdf" })],
@@ -195,8 +195,38 @@ test("legal trust flags metadata-only pdf extraction as review item", async () =
     ]
   });
 
-  assert.equal(packet.sources[0]?.extractionStatus, "metadata_only");
-  assert.equal(packet.passages.length, 0);
+  assert.equal(packet.sources[0]?.extractionStatus, "extracted");
+  assert.equal(packet.passages.length, 1);
+  assert.equal(packet.passages[0]?.passageId, "passage_case-opinion_pg0001_p0001");
+  assert.equal(packet.passages[0]?.locationKind, "page");
+  assert.equal(packet.passages[0]?.pageNumber, 1);
+  assert.equal(packet.passages[0]?.pinpoint, "p. 1, para. 1");
+  assert.ok(packet.passages[0]?.quoteHash);
+});
+
+test("legal trust flags failed pdf extraction", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-legal-bad-pdf-"));
+  const path = join(dir, "bad-opinion.pdf");
+  await writeFile(path, "%PDF-1.4\nnot a parseable pdf\n%%EOF\n");
+  const packet = await buildLegalSourcePacket({
+    runId: "run_1",
+    sources: [makeGenericSource({ id: "src_1", name: "bad-opinion.pdf", path, fileType: "pdf" })],
+    inspections: [
+      makeInspection({
+        sourceId: "src_1",
+        name: "bad-opinion.pdf",
+        path,
+        fileType: "pdf",
+        parser: "pdf-metadata-v1",
+        status: "metadata_only",
+        structuredSummary: { pdfSignature: true },
+        warnings: ["Deep PDF text and table inspection is not implemented yet."]
+      })
+    ]
+  });
+
+  assert.equal(packet.sources[0]?.extractionStatus, "failed");
+  assert.equal(packet.passages[0]?.extractionStatus, "failed");
 
   const findings = buildLegalTrustFindings({
     legalSources: packet.sources,
@@ -207,8 +237,8 @@ test("legal trust flags metadata-only pdf extraction as review item", async () =
   assert.ok(
     findings.some(
       (finding) =>
-        finding.issue === "Legal source has no extracted legal text." &&
-        finding.severity === "should_fix" &&
+        finding.issue === "Legal source text extraction failed." &&
+        finding.severity === "must_fix" &&
         finding.category === "missing_pinpoint"
     )
   );
@@ -424,6 +454,36 @@ function makeZipBuffer(entries: Array<{ name: string; content: Buffer }>) {
   endOfCentralDirectory.writeUInt16LE(0, 20);
 
   return Buffer.concat([...localParts, ...centralParts, endOfCentralDirectory]);
+}
+
+function makePdfBuffer(text: string) {
+  const contentStream = `BT /F1 12 Tf 72 720 Td (${escapePdfText(text)}) Tj ET`;
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    `<< /Length ${Buffer.byteLength(contentStream)} >>\nstream\n${contentStream}\nendstream`
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+
+  for (let index = 0; index < objects.length; index += 1) {
+    offsets.push(Buffer.byteLength(pdf));
+    pdf += `${index + 1} 0 obj\n${objects[index]}\nendobj\n`;
+  }
+
+  const xrefOffset = Buffer.byteLength(pdf);
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const offset of offsets.slice(1)) {
+    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  }
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+  return Buffer.from(pdf, "utf8");
+}
+
+function escapePdfText(value: string) {
+  return value.replace(/[\\()]/g, "\\$&");
 }
 
 function escapeXml(value: string) {
