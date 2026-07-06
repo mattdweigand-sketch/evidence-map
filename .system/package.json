@@ -1,6 +1,6 @@
 {
   "name": "evidence-map",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "MCP-first review and evidence-mapping harness for AI-generated and human-drafted deliverables.",
   "license": "MIT",
