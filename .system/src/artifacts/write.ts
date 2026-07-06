@@ -173,6 +173,11 @@ export async function writeRunArtifacts(input: {
         await writeJson(join(exportDir, "generated-output-receipt.json"), generalExport.generatedOutputReceipt);
         await writeFile(join(exportDir, "generated-output-receipt.md"), generalExport.generatedOutputReceiptMarkdown);
       }
+      if (generalExport.formattedOutputMarkdown && generalExport.formattingReceipt && generalExport.formattingReceiptMarkdown) {
+        await writeFile(join(exportDir, "formatted-output.md"), generalExport.formattedOutputMarkdown);
+        await writeJson(join(exportDir, "formatting-receipt.json"), generalExport.formattingReceipt);
+        await writeFile(join(exportDir, "formatting-receipt.md"), generalExport.formattingReceiptMarkdown);
+      }
       await rm(join(exportDir, "general-export-refusal.md"), { force: true });
     } else if (generalExport.refusalMarkdown) {
       await writeFile(join(exportDir, "general-export-refusal.md"), generalExport.refusalMarkdown);
@@ -181,6 +186,9 @@ export async function writeRunArtifacts(input: {
       await rm(join(exportDir, "final-output.md"), { force: true });
       await rm(join(exportDir, "generated-output-receipt.json"), { force: true });
       await rm(join(exportDir, "generated-output-receipt.md"), { force: true });
+      await rm(join(exportDir, "formatted-output.md"), { force: true });
+      await rm(join(exportDir, "formatting-receipt.json"), { force: true });
+      await rm(join(exportDir, "formatting-receipt.md"), { force: true });
     }
   }
 

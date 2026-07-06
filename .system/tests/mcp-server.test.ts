@@ -200,6 +200,8 @@ test("MCP workflow generation returns generated-output metadata", async () => {
       status?: string;
       format?: string;
       pathRelativeToRun?: string;
+      formattedPathRelativeToRun?: string;
+      formattingReceiptPathRelativeToRun?: string;
       generatedClaimCount?: number;
       selectedEvidenceCount?: number;
       excludedSourceCount?: number;
@@ -212,11 +214,15 @@ test("MCP workflow generation returns generated-output metadata", async () => {
   assert.equal(run.generatedOutput?.status, "export_ready");
   assert.equal(run.generatedOutput?.format, "markdown");
   assert.equal(run.generatedOutput?.pathRelativeToRun, "04_export/final-output.md");
+  assert.equal(run.generatedOutput?.formattedPathRelativeToRun, "04_export/formatted-output.md");
+  assert.equal(run.generatedOutput?.formattingReceiptPathRelativeToRun, "04_export/formatting-receipt.json");
   assert.ok((run.generatedOutput?.generatedClaimCount ?? 0) > 0);
   assert.ok((run.generatedOutput?.selectedEvidenceCount ?? 0) > 0);
   assert.equal(run.generatedOutput?.excludedSourceCount, 0);
   assert.ok(run.artifacts?.exportDir);
   await readFile(join(run.artifacts.exportDir, "final-output.md"), "utf8");
+  await readFile(join(run.artifacts.exportDir, "formatted-output.md"), "utf8");
+  await readFile(join(run.artifacts.exportDir, "formatting-receipt.json"), "utf8");
 
   await client.close();
   await server.close();

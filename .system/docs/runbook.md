@@ -66,6 +66,7 @@ For general report/document workflows, generation mode can create a local Markdo
 - Select current, raw-data, and transcript evidence; exclude stale, failed, risky, and undated numeric evidence with visible reasons.
 - Generate deterministic claims only from selected evidence.
 - Write `04_export/final-output.md` only when the trust report is ready.
+- Write `04_export/formatted-output.md` only as a deterministic derivative of the ready final Markdown output.
 - Otherwise write `04_export/general-export-refusal.md` with exact blockers.
 
 Generation mode does not create `.docx`, `.pptx`, or `.xlsx` files and does not send, file, submit, publish, or call external models.

@@ -80,6 +80,7 @@ Add these modules under `.system/src/`:
 - `evidence/map.ts`: maps generated claims to evidence snippets and source IDs.
 - `generate/markdown.ts`: renders deterministic Markdown output from verified evidence-map records.
 - `generate/output.ts`: orchestrates output generation, refusal, receipts, and manifest inputs.
+- `format/`: renders deterministic formatted Markdown derivatives after generated-output readiness without changing claims, evidence selection, or readiness.
 
 Extend existing modules:
 
@@ -347,10 +348,13 @@ deliverables/<run>/
     final-output.md                  # only when ready
     generated-output-receipt.json     # only when ready
     generated-output-receipt.md       # only when ready
+    formatted-output.md               # deterministic derivative, only when ready
+    formatting-receipt.json           # only when ready
+    formatting-receipt.md             # only when ready
     general-export-refusal.md         # when not ready
 ```
 
-The existing `ready-manifest.json` should include `finalOutput`, `evidenceMap`, and `generatedOutputReceipt` when generated output is ready.
+The existing `ready-manifest.json` should include `finalOutput`, `evidenceMap`, `generatedOutputReceipt`, `formattedOutput`, and `formattingReceipt` when generated output is ready.
 
 ## CLI and MCP
 
@@ -465,4 +469,3 @@ Stop and report instead of papering over the issue if:
 - A source conflict cannot be resolved by source status/date/final-current tie-breaks.
 - Existing legal tests regress.
 - Existing review-only behavior disappears.
-

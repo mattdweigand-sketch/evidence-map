@@ -135,6 +135,8 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
               status: result.generatedOutput.status,
               format: result.generatedOutput.format,
               pathRelativeToRun: result.generatedOutput.pathRelativeToRun,
+              formattedPathRelativeToRun: result.generatedOutput.status === "export_ready" ? "04_export/formatted-output.md" : undefined,
+              formattingReceiptPathRelativeToRun: result.generatedOutput.status === "export_ready" ? "04_export/formatting-receipt.json" : undefined,
               evidenceMapId: result.generatedOutput.evidenceMapId,
               generatedClaimCount: result.generatedClaims?.length ?? 0,
               selectedEvidenceCount: result.sourceEvidence?.filter((item) => item.useStatus === "selected").length ?? 0,

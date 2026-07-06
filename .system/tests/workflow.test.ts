@@ -103,13 +103,26 @@ test("clean end-to-end generation writes final Markdown and ready manifest", asy
   assert.match(finalMarkdown, /active users was 42 as of 2026-05-01/);
   assert.match(finalMarkdown, /sources: src_/);
   assert.match(finalMarkdown, /evidence: evidence_/);
+  const formattedMarkdown = await readFile(join(result.artifacts.exportDir, "formatted-output.md"), "utf8");
+  assert.match(formattedMarkdown, /deterministic formatted derivative/);
+  assert.match(formattedMarkdown, /active users was 42 as of 2026-05-01/);
+  assert.match(formattedMarkdown, /generated claim: generated_claim_/);
+  assert.match(formattedMarkdown, /sources: src_/);
+  assert.match(formattedMarkdown, /evidence: evidence_/);
   const manifest = JSON.parse(await readFile(join(result.artifacts.exportDir, "ready-manifest.json"), "utf8"));
   assert.equal(manifest.artifacts.finalOutput, "04_export/final-output.md");
   assert.equal(manifest.artifacts.evidenceMap, "03_verification/evidence-map.json");
   assert.equal(manifest.artifacts.generatedOutputReceipt, "04_export/generated-output-receipt.json");
+  assert.equal(manifest.artifacts.formattedOutput, "04_export/formatted-output.md");
+  assert.equal(manifest.artifacts.formattingReceipt, "04_export/formatting-receipt.json");
   await readFile(join(result.artifacts.verifyDir, "generated-claims.json"), "utf8");
   await readFile(join(result.artifacts.verifyDir, "evidence-map.json"), "utf8");
   await readFile(join(result.artifacts.exportDir, "generated-output-receipt.json"), "utf8");
+  const formattingReceipt = JSON.parse(await readFile(join(result.artifacts.exportDir, "formatting-receipt.json"), "utf8"));
+  assert.equal(formattingReceipt.status, "formatted");
+  assert.equal(formattingReceipt.canonicalOutput, "04_export/final-output.md");
+  assert.equal(formattingReceipt.formattedOutput, "04_export/formatted-output.md");
+  assert.ok(formattingReceipt.invariantChecks.every((check: { status: string }) => check.status === "passed"));
 });
 
 test("capstone messy-folder generation writes final Markdown and excludes old or risky sources", async () => {
@@ -134,6 +147,10 @@ test("capstone messy-folder generation writes final Markdown and excludes old or
   assert.doesNotMatch(supportSections, /enrollment-analysis\.xlsx/);
   assert.match(finalMarkdown, /enrollment-figures-old\.csv \| Superseded or archived source excluded/);
   assert.match(finalMarkdown, /enrollment-analysis\.xlsx \| Workbook has unresolved calculation risks/);
+  const formattedMarkdown = await readFile(join(result.artifacts.exportDir, "formatted-output.md"), "utf8");
+  assert.match(formattedMarkdown, /enrollment-figures-final\.csv/);
+  assert.match(formattedMarkdown, /enrollment-figures-old\.csv: Superseded or archived source excluded/);
+  assert.match(formattedMarkdown, /enrollment-analysis\.xlsx: Workbook has unresolved calculation risks/);
   const sourceEvidence = await readFile(join(result.artifacts.sourceDir, "source-evidence.md"), "utf8");
   assert.match(sourceEvidence, /enrollment-figures-old\.csv/);
   assert.match(sourceEvidence, /Workbook has unresolved calculation risks/);
@@ -158,6 +175,8 @@ test("generation refuses unresolved current-source conflicts", async () => {
   const refusal = await readFile(join(result.artifacts.exportDir, "general-export-refusal.md"), "utf8");
   assert.match(refusal, /Unresolved current-source conflict for enrollment/);
   await assert.rejects(readFile(join(result.artifacts.exportDir, "final-output.md"), "utf8"));
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "formatted-output.md"), "utf8"));
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "formatting-receipt.json"), "utf8"));
 });
 
 test("generation refuses undated numeric evidence", async () => {
@@ -178,6 +197,8 @@ test("generation refuses undated numeric evidence", async () => {
   const refusal = await readFile(join(result.artifacts.exportDir, "general-export-refusal.md"), "utf8");
   assert.match(refusal, /no source date/i);
   await assert.rejects(readFile(join(result.artifacts.exportDir, "final-output.md"), "utf8"));
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "formatted-output.md"), "utf8"));
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "formatting-receipt.json"), "utf8"));
 });
 
 test("general final export writes ready manifest when gates are ready", async () => {
