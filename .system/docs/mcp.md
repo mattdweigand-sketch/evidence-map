@@ -31,7 +31,10 @@ Use this shape in an MCP client config that supports local stdio servers:
 - `evidencemap_status`
 - `evidencemap_next_action`
 - `evidencemap_get_verification_report`
+- `evidencemap_create_general_claim`
+- `evidencemap_edit_general_claim`
 - `evidencemap_attach_claim_source_support`
+- `evidencemap_resolve_calculation_risk`
 - `evidencemap_resolve_source_conflict`
 - `evidencemap_accept_general_risk`
 - `evidencemap_attach_legal_passage_support`
@@ -40,7 +43,7 @@ Use this shape in an MCP client config that supports local stdio servers:
 - `evidencemap_accept_legal_risk`
 - `evidencemap_resolve_legal_source_conflict`
 
-`evidencemap_inspect_source_packet` and `evidencemap_run_workflow` accept `profile: "general" | "legal"`. The general review tools require `approvalToken: "APPROVE_GENERAL_REVIEW_DECISION"` and write `general-review-decisions.json` / `.md` under `03_verification/`. The legal review tools require `approvalToken: "APPROVE_LEGAL_REVIEW_DECISION"` and only mutate local run artifacts/state.
+`evidencemap_inspect_source_packet` and `evidencemap_run_workflow` accept `profile: "general" | "legal"`. The general review tools require `approvalToken: "APPROVE_GENERAL_REVIEW_DECISION"` and write `general-review-decisions.json` / `.md` under `03_verification/`. They can create/edit general claims, attach source support with optional anchors/quotes/rationale, resolve calculation risks, resolve source conflicts, and accept current findings with rationale. The legal review tools require `approvalToken: "APPROVE_LEGAL_REVIEW_DECISION"` and only mutate local run artifacts/state.
 
 ## Boundary
 

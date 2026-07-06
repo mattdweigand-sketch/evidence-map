@@ -36,9 +36,6 @@ try {
       generalReviewDecisions: generalReviewDecisionSet?.decisions
     })
   );
-  const trustReport = await evaluateTrust(store, run.id);
-  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
-  const updatedRun = await store.updateRunStatus(run.id, status);
   const [sources, inspections, conflicts, spec] = await Promise.all([
     store.listSources(run.id),
     store.listFileInspections(run.id),
@@ -46,16 +43,19 @@ try {
     store.getArtifactSpec(run.id)
   ]);
   if (!spec) throw new Error(`No artifact spec found for ${run.id}.`);
+  const effectiveConflicts =
+    run.profile === "legal" && legalReviewDecisionSet
+      ? applyLegalConflictReviewDecisions({ conflicts, decisions: legalReviewDecisionSet.decisions })
+      : run.profile === "general" && generalReviewDecisionSet
+        ? applyGeneralConflictReviewDecisions({ conflicts, decisions: generalReviewDecisionSet.decisions })
+      : conflicts;
+  const trustReport = await evaluateTrust(store, run.id, { sourceConflicts: effectiveConflicts });
+  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
+  const updatedRun = await store.updateRunStatus(run.id, status);
   const legalArtifacts =
     updatedRun.profile === "legal"
       ? await buildLegalRunArtifacts({ store, run: updatedRun, reviewDecisions: legalReviewDecisionSet?.decisions })
       : undefined;
-  const effectiveConflicts =
-    updatedRun.profile === "legal" && legalReviewDecisionSet
-      ? applyLegalConflictReviewDecisions({ conflicts, decisions: legalReviewDecisionSet.decisions })
-      : updatedRun.profile === "general" && generalReviewDecisionSet
-        ? applyGeneralConflictReviewDecisions({ conflicts, decisions: generalReviewDecisionSet.decisions })
-      : conflicts;
 
   await writeRunArtifacts({
     baseDir,

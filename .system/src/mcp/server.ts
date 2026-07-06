@@ -34,8 +34,13 @@ import {
 } from "../legal/types.ts";
 import {
   appendAttachClaimSourceDecision,
+  appendCreateClaimDecision,
+  appendEditClaimDecision,
   appendGeneralRiskAcceptanceDecision,
   appendGeneralSourceConflictDecision,
+  appendResolveCalculationRiskDecision,
+  applyGeneralCalculationReviewDecisions,
+  applyGeneralClaimReviewDecisions,
   applyGeneralConflictReviewDecisions,
   GENERAL_REVIEW_APPROVAL_TOKEN,
   readGeneralReviewDecisionSet,
@@ -53,6 +58,8 @@ const legalFindingCategorySchema = z.enum(legalFindingCategories);
 const legalTreatmentStatusSchema = z.enum(["not_checked", "checked_current", "questioned", "negative", "superseded"]);
 const legalSourceStatusSchema = z.enum(["current", "superseded", "background", "draft", "unknown"]);
 const generalClaimReviewStatusSchema = z.enum(["needs_review", "verified"]);
+const generalReviewStatusSchema = z.enum(["unreviewed", "needs_review", "verified", "unsupported", "conflicting"]);
+const generalCalculationReviewStatusSchema = z.enum(["needs_review", "verified"]);
 type ResolvedWorkspaceInputPaths = { paths: string[] } | { error: string };
 
 export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefaultMcpStore()) {
@@ -198,6 +205,149 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
   );
 
   server.registerTool(
+    "evidencemap_create_general_claim",
+    {
+      title: "Create General Claim",
+      description: `Create an explicit general-profile claim as an audited review decision. Requires approvalToken ${GENERAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        artifactLocation: z.string().min(1),
+        claim: z.string().min(1),
+        sourceIds: z.array(z.string()).default([]),
+        assumptions: z.array(z.string()).default([]),
+        transformation: z.string().optional(),
+        reviewStatus: generalReviewStatusSchema.default("needs_review"),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, artifactLocation, claim, sourceIds, assumptions, transformation, reviewStatus, reviewer, notes, approvalToken, baseDir }) => {
+      try {
+        const context = await loadGeneralDecisionContext({ store, baseDir, runId, approvalToken });
+        const [storedClaims, sources] = await Promise.all([store.listClaims(runId), store.listSources(runId)]);
+        const effectiveClaims = applyGeneralClaimReviewDecisions({
+          claims: storedClaims,
+          decisions: context.decisionSet.decisions
+        });
+        const decisionResult = appendCreateClaimDecision({
+          decisionSet: context.decisionSet,
+          claims: effectiveClaims,
+          sources,
+          artifactLocation,
+          claim,
+          sourceIds,
+          assumptions,
+          transformation,
+          reviewStatus,
+          reviewer,
+          notes,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateGeneralRunAfterDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "General claim creation failed.");
+      }
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_edit_general_claim",
+    {
+      title: "Edit General Claim",
+      description: `Edit an existing general-profile claim as an audited review decision. Requires approvalToken ${GENERAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        claimId: z.string(),
+        artifactLocation: z.string().optional(),
+        claim: z.string().optional(),
+        sourceIds: z.array(z.string()).optional(),
+        assumptions: z.array(z.string()).optional(),
+        transformation: z.string().optional(),
+        reviewStatus: generalReviewStatusSchema.optional(),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, claimId, artifactLocation, claim, sourceIds, assumptions, transformation, reviewStatus, reviewer, notes, approvalToken, baseDir }) => {
+      try {
+        const context = await loadGeneralDecisionContext({ store, baseDir, runId, approvalToken });
+        const [storedClaims, sources] = await Promise.all([store.listClaims(runId), store.listSources(runId)]);
+        const effectiveClaims = applyGeneralClaimReviewDecisions({
+          claims: storedClaims,
+          decisions: context.decisionSet.decisions
+        });
+        const decisionResult = appendEditClaimDecision({
+          decisionSet: context.decisionSet,
+          claims: effectiveClaims,
+          sources,
+          claimId,
+          artifactLocation,
+          claim,
+          sourceIds,
+          assumptions,
+          transformation,
+          reviewStatus,
+          reviewer,
+          notes,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateGeneralRunAfterDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "General claim edit failed.");
+      }
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_resolve_calculation_risk",
+    {
+      title: "Resolve Calculation Risk",
+      description: `Resolve one or more calculation risk flags for a general-profile run. Requires approvalToken ${GENERAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        calculationId: z.string(),
+        riskFlags: z.array(z.string()).min(1),
+        inputs: z.array(z.string()).default([]),
+        resolution: z.string().min(1),
+        reviewStatus: generalCalculationReviewStatusSchema.default("verified"),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, calculationId, riskFlags, inputs, resolution, reviewStatus, reviewer, notes, approvalToken, baseDir }) => {
+      try {
+        const context = await loadGeneralDecisionContext({ store, baseDir, runId, approvalToken });
+        const storedCalculations = await store.listCalculations(runId);
+        const effectiveCalculations = applyGeneralCalculationReviewDecisions({
+          calculations: storedCalculations,
+          decisions: context.decisionSet.decisions
+        });
+        const decisionResult = appendResolveCalculationRiskDecision({
+          decisionSet: context.decisionSet,
+          calculations: effectiveCalculations,
+          calculationId,
+          riskFlags,
+          inputs,
+          resolution,
+          reviewStatus,
+          reviewer,
+          notes,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateGeneralRunAfterDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "General calculation risk resolution failed.");
+      }
+    }
+  );
+
+  server.registerTool(
     "evidencemap_attach_claim_source_support",
     {
       title: "Attach Claim Source Support",
@@ -207,16 +357,23 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
         claimId: z.string(),
         sourceId: z.string(),
         reviewStatus: generalClaimReviewStatusSchema.default("needs_review"),
+        evidenceAnchor: z.string().optional(),
+        evidenceQuote: z.string().optional(),
+        rationale: z.string().optional(),
         reviewer: z.string().optional(),
         notes: z.string().optional(),
         approvalToken: z.string(),
         baseDir: z.string().default(defaultBaseDir)
       }
     },
-    async ({ runId, claimId, sourceId, reviewStatus, reviewer, notes, approvalToken, baseDir }) => {
+    async ({ runId, claimId, sourceId, reviewStatus, evidenceAnchor, evidenceQuote, rationale, reviewer, notes, approvalToken, baseDir }) => {
       try {
         const context = await loadGeneralDecisionContext({ store, baseDir, runId, approvalToken });
-        const [claims, sources] = await Promise.all([store.listClaims(runId), store.listSources(runId)]);
+        const [storedClaims, sources] = await Promise.all([store.listClaims(runId), store.listSources(runId)]);
+        const claims = applyGeneralClaimReviewDecisions({
+          claims: storedClaims,
+          decisions: context.decisionSet.decisions
+        });
         const decisionResult = appendAttachClaimSourceDecision({
           decisionSet: context.decisionSet,
           claims,
@@ -224,6 +381,9 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
           claimId,
           sourceId,
           reviewStatus,
+          evidenceAnchor,
+          evidenceQuote,
+          rationale,
           reviewer,
           notes,
           approvalToken
@@ -649,9 +809,6 @@ async function regenerateGeneralRunAfterDecision(input: GeneralDecisionContext &
     input.run.id,
     await buildHostileReviewFindings(input.store, input.run.id, { generalReviewDecisions: input.decisionResult.decisionSet.decisions })
   );
-  const trustReport = await evaluateTrust(input.store, input.run.id);
-  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
-  const updatedRun = await input.store.updateRunStatus(input.run.id, status);
   const [sources, inspections, conflicts, spec] = await Promise.all([
     input.store.listSources(input.run.id),
     input.store.listFileInspections(input.run.id),
@@ -663,6 +820,9 @@ async function regenerateGeneralRunAfterDecision(input: GeneralDecisionContext &
     conflicts,
     decisions: input.decisionResult.decisionSet.decisions
   });
+  const trustReport = await evaluateTrust(input.store, input.run.id, { sourceConflicts: effectiveConflicts });
+  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
+  const updatedRun = await input.store.updateRunStatus(input.run.id, status);
   const artifacts = await writeRunArtifacts({
     baseDir: input.baseDir,
     run: updatedRun,
@@ -730,9 +890,6 @@ async function regenerateLegalRunAfterDecision(input: LegalDecisionContext & { d
     input.run.id,
     await buildHostileReviewFindings(input.store, input.run.id, { legalReviewDecisions: input.decisionResult.decisionSet.decisions })
   );
-  const trustReport = await evaluateTrust(input.store, input.run.id);
-  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
-  const updatedRun = await input.store.updateRunStatus(input.run.id, status);
   const [sources, inspections, conflicts, spec] = await Promise.all([
     input.store.listSources(input.run.id),
     input.store.listFileInspections(input.run.id),
@@ -744,6 +901,9 @@ async function regenerateLegalRunAfterDecision(input: LegalDecisionContext & { d
     conflicts,
     decisions: input.decisionResult.decisionSet.decisions
   });
+  const trustReport = await evaluateTrust(input.store, input.run.id, { sourceConflicts: effectiveConflicts });
+  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
+  const updatedRun = await input.store.updateRunStatus(input.run.id, status);
   const legalArtifacts = await buildLegalRunArtifacts({
     store: input.store,
     run: updatedRun,

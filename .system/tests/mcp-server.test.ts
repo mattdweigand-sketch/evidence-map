@@ -87,7 +87,10 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_status"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_next_action"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_get_verification_report"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_create_general_claim"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_edit_general_claim"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_attach_claim_source_support"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_resolve_calculation_risk"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_resolve_source_conflict"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_accept_general_risk"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_attach_legal_passage_support"));
@@ -261,6 +264,9 @@ test("MCP general claim source decision writes an audit trail and verifies idemp
       claimId: claim.id,
       sourceId: source.id,
       reviewStatus: "verified",
+      evidenceAnchor: "row 2",
+      evidenceQuote: "revenue,100",
+      rationale: "The CSV row directly supports the seeded claim.",
       reviewer: "fixture-reviewer",
       approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
     }
@@ -285,11 +291,15 @@ test("MCP general claim source decision writes an audit trail and verifies idemp
   }>;
   assert.equal(reviewedFindings.length, 0);
   const reviewDecisionSet = JSON.parse(await readFile(join(run.artifacts.verifyDir, "general-review-decisions.json"), "utf8")) as {
-    decisions: unknown[];
+    decisions: Array<{ action?: string; evidenceAnchor?: string; evidenceQuote?: string; rationale?: string }>;
     auditEvents: unknown[];
   };
   assert.equal(reviewDecisionSet.decisions.length, 1);
   assert.equal(reviewDecisionSet.auditEvents.length, 1);
+  assert.equal(reviewDecisionSet.decisions[0]?.action, "attach_claim_source");
+  assert.equal(reviewDecisionSet.decisions[0]?.evidenceAnchor, "row 2");
+  assert.equal(reviewDecisionSet.decisions[0]?.evidenceQuote, "revenue,100");
+  assert.equal(reviewDecisionSet.decisions[0]?.rationale, "The CSV row directly supports the seeded claim.");
   const reviewDecisionMarkdown = await readFile(join(run.artifacts.verifyDir, "general-review-decisions.md"), "utf8");
   assert.match(reviewDecisionMarkdown, /General Review Decisions/);
 
@@ -303,6 +313,142 @@ test("MCP general claim source decision writes an audit trail and verifies idemp
   };
   assert.equal(rerunDecisionSet.decisions.length, 1);
   assert.equal(rerunDecisionSet.auditEvents.length, 1);
+
+  await client.close();
+  await server.close();
+});
+
+test("MCP general claim and calculation decisions regenerate ready export idempotently", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-general-advanced-"));
+  fixtureDirs.push(baseDir);
+  const inputDir = join(baseDir, "input", "general-advanced");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-raw-export.csv"), "metric,value\nrevenue,100\n");
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const { server } = createEvidenceMapMcpServer(new JsonFileEvidenceMapStore(storePath));
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const runResult = await client.callTool({
+    name: "evidencemap_run_workflow",
+    arguments: {
+      baseDir,
+      name: "general-advanced",
+      artifactKind: "mixed",
+      inputPaths: ["input/general-advanced"]
+    }
+  });
+  const run = runResult.structuredContent as { runId?: string; slug?: string; artifacts?: { verifyDir?: string; exportDir?: string } };
+  assert.ok(run.runId);
+  assert.ok(run.slug);
+  assert.ok(run.artifacts?.verifyDir);
+  assert.ok(run.artifacts?.exportDir);
+
+  const storeData = JSON.parse(await readFile(storePath, "utf8")) as {
+    claims: Array<{ id: string; runId: string }>;
+    calculations: Array<{ id: string; runId: string; riskFlags: string[] }>;
+    sources: Array<{ id: string; runId: string; name: string }>;
+  };
+  const seededClaim = storeData.claims.find((item) => item.runId === run.runId);
+  const calculation = storeData.calculations.find((item) => item.runId === run.runId);
+  const source = storeData.sources.find((item) => item.runId === run.runId && item.name === "2026-05-01-raw-export.csv");
+  assert.ok(seededClaim);
+  assert.ok(calculation);
+  assert.deepEqual(calculation.riskFlags, ["formula_map_missing", "checks_tab_required"]);
+  assert.ok(source);
+
+  const createdClaim = await client.callTool({
+    name: "evidencemap_create_general_claim",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      artifactLocation: "section-map:Revenue",
+      claim: "Revenue was 100 in the supplied raw export.",
+      sourceIds: [source.id],
+      reviewStatus: "verified",
+      reviewer: "fixture-reviewer",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal((createdClaim.structuredContent as { changed?: boolean; decisionCount?: number }).changed, true);
+  assert.equal((createdClaim.structuredContent as { decisionCount?: number }).decisionCount, 1);
+
+  const editedClaim = await client.callTool({
+    name: "evidencemap_edit_general_claim",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      claimId: seededClaim.id,
+      claim: "The primary artifact claim is supported by the supplied raw export.",
+      sourceIds: [source.id],
+      reviewStatus: "verified",
+      reviewer: "fixture-reviewer",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal((editedClaim.structuredContent as { changed?: boolean; decisionCount?: number }).changed, true);
+  assert.equal((editedClaim.structuredContent as { decisionCount?: number }).decisionCount, 2);
+
+  const resolvedCalculation = await client.callTool({
+    name: "evidencemap_resolve_calculation_risk",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      calculationId: calculation.id,
+      riskFlags: ["formula_map_missing", "checks_tab_required"],
+      inputs: [source.id],
+      resolution: "Fixture reviewer mapped the raw export as the calculation input and accepted the checks coverage for this run.",
+      reviewer: "fixture-reviewer",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  const resolved = resolvedCalculation.structuredContent as {
+    changed?: boolean;
+    readiness?: string;
+    status?: string;
+    decisionCount?: number;
+    auditEventCount?: number;
+    findingCount?: number;
+  };
+  assert.equal(resolved.changed, true);
+  assert.equal(resolved.readiness, "ready");
+  assert.equal(resolved.status, "export_ready");
+  assert.equal(resolved.decisionCount, 3);
+  assert.equal(resolved.auditEventCount, 3);
+  assert.equal(resolved.findingCount, 0);
+
+  const decisionSet = JSON.parse(await readFile(join(run.artifacts.verifyDir, "general-review-decisions.json"), "utf8")) as {
+    decisions: Array<{ action?: string }>;
+    auditEvents: unknown[];
+  };
+  assert.deepEqual(
+    decisionSet.decisions.map((decision) => decision.action),
+    ["create_claim", "edit_claim", "resolve_calculation_risk"]
+  );
+  assert.equal(decisionSet.auditEvents.length, 3);
+  const trustReport = JSON.parse(await readFile(join(run.artifacts.verifyDir, "trust-report.json"), "utf8")) as { readiness?: string };
+  assert.equal(trustReport.readiness, "ready");
+  const readyManifest = JSON.parse(await readFile(join(run.artifacts.exportDir, "ready-manifest.json"), "utf8")) as {
+    status?: string;
+    summary?: { generalReviewDecisionCount?: number };
+  };
+  assert.equal(readyManifest.status, "export_ready");
+  assert.equal(readyManifest.summary?.generalReviewDecisionCount, 3);
+
+  const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
+  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${run.slug}`]);
+  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${run.slug}`]);
+  const rerunDecisionSet = JSON.parse(await readFile(join(run.artifacts.verifyDir, "general-review-decisions.json"), "utf8")) as {
+    decisions: unknown[];
+    auditEvents: unknown[];
+  };
+  assert.equal(rerunDecisionSet.decisions.length, 3);
+  assert.equal(rerunDecisionSet.auditEvents.length, 3);
+  const rerunTrustReport = JSON.parse(await readFile(join(run.artifacts.verifyDir, "trust-report.json"), "utf8")) as { readiness?: string };
+  assert.equal(rerunTrustReport.readiness, "ready");
 
   await client.close();
   await server.close();

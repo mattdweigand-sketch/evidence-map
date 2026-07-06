@@ -1,13 +1,17 @@
 import type { EvidenceMapStore } from "../db/store.ts";
-import type { Readiness, TrustReport } from "../types.ts";
+import type { Readiness, SourceConflict, TrustReport } from "../types.ts";
 
-export async function evaluateTrust(store: EvidenceMapStore, runId: string): Promise<TrustReport> {
+export async function evaluateTrust(
+  store: EvidenceMapStore,
+  runId: string,
+  options: { sourceConflicts?: SourceConflict[] } = {}
+): Promise<TrustReport> {
   const sources = await store.listSources(runId);
   const claims = await store.listClaims(runId);
   const calculations = await store.listCalculations(runId);
   const assumptions = await store.listAssumptions(runId);
   const findings = await store.listVerificationFindings(runId);
-  const conflicts = await store.listSourceConflicts(runId);
+  const conflicts = options.sourceConflicts ?? (await store.listSourceConflicts(runId));
 
   const blockingIssues = [
     ...findings.filter((finding) => finding.severity === "must_fix").map((finding) => `${finding.location}: ${finding.issue}`),

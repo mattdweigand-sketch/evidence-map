@@ -5,6 +5,7 @@ import { buildLegalReuseFindings } from "../legal/reuse-library.ts";
 import { buildLegalDraftDisciplineFindings, buildLegalTrustFindings } from "../legal/trust.ts";
 import type { LegalReviewDecisionRecord } from "../legal/types.ts";
 import {
+  applyGeneralCalculationReviewDecisions,
   applyGeneralClaimReviewDecisions,
   applyGeneralConflictReviewDecisions,
   applyGeneralRiskAcceptanceDecisions,
@@ -33,7 +34,7 @@ export async function buildHostileReviewFindings(
   const inspections = await store.listFileInspections(runId);
   const storedConflicts = await store.listSourceConflicts(runId);
   const storedClaims = await store.listClaims(runId);
-  const calculations = await store.listCalculations(runId);
+  const storedCalculations = await store.listCalculations(runId);
   const assumptions = await store.listAssumptions(runId);
   const legalReviewDecisions = run?.profile === "legal" ? options.legalReviewDecisions ?? [] : [];
   const generalReviewDecisions = run?.profile === "general" ? options.generalReviewDecisions ?? [] : [];
@@ -47,6 +48,10 @@ export async function buildHostileReviewFindings(
     run?.profile === "general"
       ? applyGeneralClaimReviewDecisions({ claims: storedClaims, decisions: generalReviewDecisions })
       : storedClaims;
+  const calculations =
+    run?.profile === "general"
+      ? applyGeneralCalculationReviewDecisions({ calculations: storedCalculations, decisions: generalReviewDecisions })
+      : storedCalculations;
 
   let findings: Omit<VerificationFinding, "id" | "runId">[] = [];
   const sourceById = new Map(sources.map((source) => [source.id, source]));

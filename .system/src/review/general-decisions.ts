@@ -1,11 +1,17 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { ClaimRecord, EvidenceMapRun, SourceConflict, VerificationFinding } from "../types.ts";
+import type { CalculationRecord, ClaimRecord, EvidenceMapRun, ReviewStatus, SourceConflict, VerificationFinding } from "../types.ts";
 
 export const GENERAL_REVIEW_APPROVAL_TOKEN = "APPROVE_GENERAL_REVIEW_DECISION";
 
-export type GeneralReviewDecisionAction = "attach_claim_source" | "accept_general_risk" | "resolve_source_conflict";
+export type GeneralReviewDecisionAction =
+  | "create_claim"
+  | "edit_claim"
+  | "attach_claim_source"
+  | "resolve_calculation_risk"
+  | "accept_general_risk"
+  | "resolve_source_conflict";
 
 interface GeneralReviewDecisionBase {
   id: string;
@@ -21,6 +27,40 @@ export interface GeneralAttachClaimSourceDecision extends GeneralReviewDecisionB
   action: "attach_claim_source";
   claimId: string;
   sourceId: string;
+  reviewStatus: "needs_review" | "verified";
+  evidenceAnchor?: string;
+  evidenceQuote?: string;
+  rationale?: string;
+}
+
+export interface GeneralCreateClaimDecision extends GeneralReviewDecisionBase {
+  action: "create_claim";
+  claimId: string;
+  artifactLocation: string;
+  claim: string;
+  sourceIds: string[];
+  assumptions: string[];
+  transformation?: string;
+  reviewStatus: ReviewStatus;
+}
+
+export interface GeneralEditClaimDecision extends GeneralReviewDecisionBase {
+  action: "edit_claim";
+  claimId: string;
+  artifactLocation?: string;
+  claim?: string;
+  sourceIds?: string[];
+  assumptions?: string[];
+  transformation?: string;
+  reviewStatus?: ReviewStatus;
+}
+
+export interface GeneralResolveCalculationRiskDecision extends GeneralReviewDecisionBase {
+  action: "resolve_calculation_risk";
+  calculationId: string;
+  riskFlags: string[];
+  inputs: string[];
+  resolution: string;
   reviewStatus: "needs_review" | "verified";
 }
 
@@ -38,7 +78,10 @@ export interface GeneralResolveSourceConflictDecision extends GeneralReviewDecis
 }
 
 export type GeneralReviewDecisionRecord =
+  | GeneralCreateClaimDecision
+  | GeneralEditClaimDecision
   | GeneralAttachClaimSourceDecision
+  | GeneralResolveCalculationRiskDecision
   | GeneralAcceptRiskDecision
   | GeneralResolveSourceConflictDecision;
 
@@ -85,7 +128,17 @@ export function applyGeneralClaimReviewDecisions(input: {
   decisions: GeneralReviewDecisionRecord[];
 }): ClaimRecord[] {
   if (input.decisions.length === 0) return input.claims;
-  return input.claims.map((claim) => input.decisions.reduce((current, decision) => applyDecisionToClaim(current, decision), claim));
+  return input.decisions.reduce((claims, decision) => applyDecisionToClaims(claims, decision), input.claims);
+}
+
+export function applyGeneralCalculationReviewDecisions(input: {
+  calculations: CalculationRecord[];
+  decisions: GeneralReviewDecisionRecord[];
+}): CalculationRecord[] {
+  if (input.decisions.length === 0) return input.calculations;
+  return input.calculations.map((calculation) =>
+    input.decisions.reduce((current, decision) => applyDecisionToCalculation(current, decision), calculation)
+  );
 }
 
 export function applyGeneralConflictReviewDecisions(input: {
@@ -118,6 +171,168 @@ export function applyGeneralRiskAcceptanceDecisions<T extends Omit<VerificationF
   });
 }
 
+export function appendCreateClaimDecision(input: {
+  decisionSet: GeneralReviewDecisionSet;
+  claims: ClaimRecord[];
+  sources: Array<{ id: string }>;
+  artifactLocation: string;
+  claim: string;
+  sourceIds?: string[];
+  assumptions?: string[];
+  transformation?: string;
+  reviewStatus?: ReviewStatus;
+  reviewer?: string;
+  notes?: string;
+  approvalToken: string;
+  now?: string;
+}) {
+  requireApproval(input.approvalToken);
+  assertKnownSources(input.sources, input.sourceIds ?? []);
+
+  const sourceIds = uniqueSorted(input.sourceIds ?? []);
+  const assumptions = input.assumptions ?? [];
+  const reviewStatus = input.reviewStatus ?? "needs_review";
+  const claimId = stableRecordId("general_claim", [
+    input.decisionSet.runId,
+    input.artifactLocation,
+    input.claim,
+    ...sourceIds,
+    ...assumptions,
+    input.transformation ?? "",
+    reviewStatus
+  ]);
+  const decisionId = stableDecisionId({
+    runId: input.decisionSet.runId,
+    action: "create_claim",
+    parts: [claimId]
+  });
+  const existingDecision = input.decisionSet.decisions.find((decision) => decision.id === decisionId);
+  const existingClaim = input.claims.find((claim) => claim.id === claimId);
+  if (existingDecision || existingClaim) {
+    return { decisionSet: input.decisionSet, changed: false, decision: undefined, auditEvent: undefined };
+  }
+
+  const now = input.now ?? new Date().toISOString();
+  const decision: GeneralCreateClaimDecision = {
+    id: decisionId,
+    runId: input.decisionSet.runId,
+    action: "create_claim",
+    claimId,
+    artifactLocation: input.artifactLocation,
+    claim: input.claim,
+    sourceIds,
+    assumptions,
+    transformation: input.transformation,
+    reviewStatus,
+    reviewer: input.reviewer,
+    createdAt: now,
+    approvalTokenAccepted: true,
+    notes: input.notes
+  };
+  const createdClaim = claimFromCreateDecision(input.decisionSet.runId, decision);
+  const auditEvent = buildAuditEvent({
+    runId: input.decisionSet.runId,
+    decision,
+    reviewer: input.reviewer,
+    now,
+    summary: `Created general claim ${claimId}.`,
+    before: {},
+    after: claimAuditState(createdClaim)
+  });
+
+  return {
+    decisionSet: appendDecision(input.decisionSet, decision, auditEvent),
+    decision,
+    auditEvent,
+    changed: true
+  };
+}
+
+export function appendEditClaimDecision(input: {
+  decisionSet: GeneralReviewDecisionSet;
+  claims: ClaimRecord[];
+  sources: Array<{ id: string }>;
+  claimId: string;
+  artifactLocation?: string;
+  claim?: string;
+  sourceIds?: string[];
+  assumptions?: string[];
+  transformation?: string;
+  reviewStatus?: ReviewStatus;
+  reviewer?: string;
+  notes?: string;
+  approvalToken: string;
+  now?: string;
+}) {
+  requireApproval(input.approvalToken);
+  const claim = input.claims.find((item) => item.id === input.claimId);
+  if (!claim) throw new Error(`Unknown claim: ${input.claimId}`);
+  if (
+    input.artifactLocation === undefined &&
+    input.claim === undefined &&
+    input.sourceIds === undefined &&
+    input.assumptions === undefined &&
+    input.transformation === undefined &&
+    input.reviewStatus === undefined
+  ) {
+    throw new Error("At least one claim field must be supplied for editing.");
+  }
+  if (input.sourceIds) assertKnownSources(input.sources, input.sourceIds);
+
+  const decisionId = stableDecisionId({
+    runId: input.decisionSet.runId,
+    action: "edit_claim",
+    parts: [
+      input.claimId,
+      input.artifactLocation ?? "",
+      input.claim ?? "",
+      ...(input.sourceIds ? uniqueSorted(input.sourceIds) : []),
+      ...(input.assumptions ?? []),
+      input.transformation ?? "",
+      input.reviewStatus ?? ""
+    ]
+  });
+  const existingDecision = input.decisionSet.decisions.find((decision) => decision.id === decisionId);
+  const draftDecision: GeneralEditClaimDecision = {
+    id: decisionId,
+    runId: input.decisionSet.runId,
+    action: "edit_claim",
+    claimId: input.claimId,
+    artifactLocation: input.artifactLocation,
+    claim: input.claim,
+    sourceIds: input.sourceIds ? uniqueSorted(input.sourceIds) : undefined,
+    assumptions: input.assumptions,
+    transformation: input.transformation,
+    reviewStatus: input.reviewStatus,
+    reviewer: input.reviewer,
+    createdAt: input.now ?? new Date().toISOString(),
+    approvalTokenAccepted: true,
+    notes: input.notes
+  };
+  const updatedClaim = applyDecisionToClaim(claim, draftDecision);
+  if (existingDecision || claimsEqual(claim, updatedClaim)) {
+    return { decisionSet: input.decisionSet, changed: false, decision: undefined, auditEvent: undefined };
+  }
+
+  const now = draftDecision.createdAt;
+  const auditEvent = buildAuditEvent({
+    runId: input.decisionSet.runId,
+    decision: draftDecision,
+    reviewer: input.reviewer,
+    now,
+    summary: `Edited general claim ${input.claimId}.`,
+    before: claimAuditState(claim),
+    after: claimAuditState(updatedClaim)
+  });
+
+  return {
+    decisionSet: appendDecision(input.decisionSet, draftDecision, auditEvent),
+    decision: draftDecision,
+    auditEvent,
+    changed: true
+  };
+}
+
 export function appendAttachClaimSourceDecision(input: {
   decisionSet: GeneralReviewDecisionSet;
   claims: ClaimRecord[];
@@ -125,6 +340,9 @@ export function appendAttachClaimSourceDecision(input: {
   claimId: string;
   sourceId: string;
   reviewStatus?: GeneralAttachClaimSourceDecision["reviewStatus"];
+  evidenceAnchor?: string;
+  evidenceQuote?: string;
+  rationale?: string;
   reviewer?: string;
   notes?: string;
   approvalToken: string;
@@ -140,11 +358,10 @@ export function appendAttachClaimSourceDecision(input: {
   const decisionId = stableDecisionId({
     runId: input.decisionSet.runId,
     action: "attach_claim_source",
-    parts: [input.claimId, input.sourceId, reviewStatus]
+    parts: [input.claimId, input.sourceId, reviewStatus, input.evidenceAnchor ?? "", input.evidenceQuote ?? "", input.rationale ?? ""]
   });
   const existingDecision = input.decisionSet.decisions.find((decision) => decision.id === decisionId);
-  const alreadyApplied = claim.sourceIds.includes(input.sourceId) && claim.reviewStatus === reviewStatus;
-  if (existingDecision || alreadyApplied) {
+  if (existingDecision) {
     return { decisionSet: input.decisionSet, changed: false, decision: undefined, auditEvent: undefined };
   }
 
@@ -156,6 +373,9 @@ export function appendAttachClaimSourceDecision(input: {
     claimId: input.claimId,
     sourceId: input.sourceId,
     reviewStatus,
+    evidenceAnchor: input.evidenceAnchor,
+    evidenceQuote: input.evidenceQuote,
+    rationale: input.rationale,
     reviewer: input.reviewer,
     createdAt: now,
     approvalTokenAccepted: true,
@@ -167,9 +387,79 @@ export function appendAttachClaimSourceDecision(input: {
     decision,
     reviewer: input.reviewer,
     now,
-    summary: `Attached ${input.sourceId} as support for claim ${input.claimId}.`,
+    summary: `Attached ${input.sourceId} as support for claim ${input.claimId}${input.evidenceAnchor ? ` at ${input.evidenceAnchor}` : ""}.`,
     before: claimAuditState(claim),
     after: claimAuditState(updatedClaim)
+  });
+
+  return {
+    decisionSet: appendDecision(input.decisionSet, decision, auditEvent),
+    decision,
+    auditEvent,
+    changed: true
+  };
+}
+
+export function appendResolveCalculationRiskDecision(input: {
+  decisionSet: GeneralReviewDecisionSet;
+  calculations: CalculationRecord[];
+  calculationId: string;
+  riskFlags: string[];
+  inputs?: string[];
+  resolution: string;
+  reviewStatus?: GeneralResolveCalculationRiskDecision["reviewStatus"];
+  reviewer?: string;
+  notes?: string;
+  approvalToken: string;
+  now?: string;
+}) {
+  requireApproval(input.approvalToken);
+  const calculation = input.calculations.find((item) => item.id === input.calculationId);
+  if (!calculation) throw new Error(`Unknown calculation: ${input.calculationId}`);
+  const riskFlags = uniqueSorted(input.riskFlags);
+  if (riskFlags.length === 0) throw new Error("At least one calculation risk flag is required.");
+
+  const reviewStatus = input.reviewStatus ?? "verified";
+  const inputs = uniqueSorted(input.inputs ?? []);
+  const decisionId = stableDecisionId({
+    runId: input.decisionSet.runId,
+    action: "resolve_calculation_risk",
+    parts: [input.calculationId, ...riskFlags, ...inputs, input.resolution, reviewStatus]
+  });
+  const existingDecision = input.decisionSet.decisions.find((decision) => decision.id === decisionId);
+  const alreadyApplied = riskFlags.every((flag) => !calculation.riskFlags.includes(flag)) && inputs.every((item) => calculation.inputs.includes(item));
+  if (existingDecision || alreadyApplied) {
+    return { decisionSet: input.decisionSet, changed: false, decision: undefined, auditEvent: undefined };
+  }
+  const unknownFlags = riskFlags.filter((flag) => !calculation.riskFlags.includes(flag));
+  if (unknownFlags.length > 0) {
+    throw new Error(`Calculation risk is not active: ${unknownFlags.join(", ")}`);
+  }
+
+  const now = input.now ?? new Date().toISOString();
+  const decision: GeneralResolveCalculationRiskDecision = {
+    id: decisionId,
+    runId: input.decisionSet.runId,
+    action: "resolve_calculation_risk",
+    calculationId: input.calculationId,
+    riskFlags,
+    inputs,
+    resolution: input.resolution,
+    reviewStatus,
+    reviewer: input.reviewer,
+    createdAt: now,
+    approvalTokenAccepted: true,
+    notes: input.notes
+  };
+  const updatedCalculation = applyDecisionToCalculation(calculation, decision);
+  const auditEvent = buildAuditEvent({
+    runId: input.decisionSet.runId,
+    decision,
+    reviewer: input.reviewer,
+    now,
+    summary: `Resolved calculation risk for ${input.calculationId}: ${riskFlags.join(", ")}.`,
+    before: calculationAuditState(calculation),
+    after: calculationAuditState(updatedCalculation)
   });
 
   return {
@@ -315,11 +605,63 @@ ${rows}
 `;
 }
 
+function applyDecisionToClaims(claims: ClaimRecord[], decision: GeneralReviewDecisionRecord): ClaimRecord[] {
+  if (decision.action === "create_claim") {
+    if (claims.some((claim) => claim.id === decision.claimId)) return claims;
+    return [...claims, claimFromCreateDecision(decision.runId, decision)];
+  }
+
+  if (decision.action === "edit_claim" || decision.action === "attach_claim_source") {
+    return claims.map((claim) => applyDecisionToClaim(claim, decision));
+  }
+
+  return claims;
+}
+
 function applyDecisionToClaim(claim: ClaimRecord, decision: GeneralReviewDecisionRecord): ClaimRecord {
-  if (decision.action !== "attach_claim_source" || decision.claimId !== claim.id) return claim;
+  if (decision.action === "attach_claim_source" && decision.claimId === claim.id) {
+    return {
+      ...claim,
+      sourceIds: appendUnique(claim.sourceIds, decision.sourceId),
+      reviewStatus: decision.reviewStatus
+    };
+  }
+
+  if (decision.action === "edit_claim" && decision.claimId === claim.id) {
+    return {
+      ...claim,
+      artifactLocation: decision.artifactLocation ?? claim.artifactLocation,
+      claim: decision.claim ?? claim.claim,
+      sourceIds: decision.sourceIds ?? claim.sourceIds,
+      assumptions: decision.assumptions ?? claim.assumptions,
+      transformation: decision.transformation ?? claim.transformation,
+      reviewStatus: decision.reviewStatus ?? claim.reviewStatus
+    };
+  }
+
+  return claim;
+}
+
+function applyDecisionToCalculation(calculation: CalculationRecord, decision: GeneralReviewDecisionRecord): CalculationRecord {
+  if (decision.action !== "resolve_calculation_risk" || decision.calculationId !== calculation.id) return calculation;
+  const remainingRiskFlags = calculation.riskFlags.filter((flag) => !decision.riskFlags.includes(flag));
   return {
-    ...claim,
-    sourceIds: appendUnique(claim.sourceIds, decision.sourceId),
+    ...calculation,
+    inputs: appendUniqueMany(calculation.inputs, decision.inputs),
+    riskFlags: remainingRiskFlags,
+    reviewStatus: remainingRiskFlags.length === 0 ? decision.reviewStatus : calculation.reviewStatus
+  };
+}
+
+function claimFromCreateDecision(runId: string, decision: GeneralCreateClaimDecision): ClaimRecord {
+  return {
+    id: decision.claimId,
+    runId,
+    artifactLocation: decision.artifactLocation,
+    claim: decision.claim,
+    sourceIds: decision.sourceIds,
+    assumptions: decision.assumptions,
+    transformation: decision.transformation,
     reviewStatus: decision.reviewStatus
   };
 }
@@ -397,6 +739,28 @@ function isReviewDecision(value: unknown): value is GeneralReviewDecisionRecord 
   if (decision.action === "attach_claim_source") {
     return typeof decision.claimId === "string" && typeof decision.sourceId === "string" && typeof decision.reviewStatus === "string";
   }
+  if (decision.action === "create_claim") {
+    return (
+      typeof decision.claimId === "string" &&
+      typeof decision.artifactLocation === "string" &&
+      typeof decision.claim === "string" &&
+      Array.isArray(decision.sourceIds) &&
+      Array.isArray(decision.assumptions) &&
+      typeof decision.reviewStatus === "string"
+    );
+  }
+  if (decision.action === "edit_claim") {
+    return typeof decision.claimId === "string";
+  }
+  if (decision.action === "resolve_calculation_risk") {
+    return (
+      typeof decision.calculationId === "string" &&
+      Array.isArray(decision.riskFlags) &&
+      Array.isArray(decision.inputs) &&
+      typeof decision.resolution === "string" &&
+      typeof decision.reviewStatus === "string"
+    );
+  }
   if (decision.action === "accept_general_risk") {
     return typeof decision.location === "string" && typeof decision.issue === "string" && typeof decision.reason === "string";
   }
@@ -447,6 +811,10 @@ function appendUnique(values: string[], value: string) {
   return values.includes(value) ? values : [...values, value];
 }
 
+function appendUniqueMany(values: string[], additions: string[]) {
+  return additions.reduce((current, value) => appendUnique(current, value), values);
+}
+
 function appendNote(existing: string | undefined, note: string) {
   return existing ? `${existing} ${note}` : note;
 }
@@ -455,8 +823,21 @@ function claimAuditState(claim: ClaimRecord) {
   return {
     id: claim.id,
     artifactLocation: claim.artifactLocation,
+    claim: claim.claim,
     sourceIds: claim.sourceIds,
+    assumptions: claim.assumptions,
+    transformation: claim.transformation,
     reviewStatus: claim.reviewStatus
+  };
+}
+
+function calculationAuditState(calculation: CalculationRecord) {
+  return {
+    id: calculation.id,
+    artifactLocation: calculation.artifactLocation,
+    inputs: calculation.inputs,
+    riskFlags: calculation.riskFlags,
+    reviewStatus: calculation.reviewStatus
   };
 }
 
@@ -480,4 +861,22 @@ function conflictAuditState(conflict: SourceConflict) {
 
 function escapeCell(value: string) {
   return value.replace(/\|/g, "\\|").replace(/\n/g, " ");
+}
+
+function assertKnownSources(sources: Array<{ id: string }>, sourceIds: string[]) {
+  const knownSourceIds = new Set(sources.map((source) => source.id));
+  const unknownSourceIds = sourceIds.filter((sourceId) => !knownSourceIds.has(sourceId));
+  if (unknownSourceIds.length > 0) throw new Error(`Unknown source: ${unknownSourceIds.join(", ")}`);
+}
+
+function stableRecordId(prefix: string, parts: string[]) {
+  return `${prefix}_${hashKey(parts.join("|"))}`;
+}
+
+function uniqueSorted(values: string[]) {
+  return [...new Set(values)].sort();
+}
+
+function claimsEqual(left: ClaimRecord, right: ClaimRecord) {
+  return JSON.stringify(claimAuditState(left)) === JSON.stringify(claimAuditState(right));
 }
