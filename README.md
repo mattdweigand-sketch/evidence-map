@@ -90,7 +90,7 @@ Claude Code (`.mcp.json` in your project, or `claude mcp add`):
 
 The same shape works in any MCP client that supports local stdio servers. Core tools exposed: `evidencemap_inspect_source_packet`, `evidencemap_run_workflow`, `evidencemap_status`, `evidencemap_next_action`, and `evidencemap_get_verification_report`. General-profile review tools can attach source support to claims, accept current findings with rationale, and resolve source conflicts with an explicit approval token. Legal-profile review tools can attach passage support, update authority/treatment status, accept legal risks, and resolve source conflicts with an explicit approval token. Run state persists at `deliverables/evidence-map-store.json`. The full surface is documented in `.system/docs/mcp.md`. The CLI remains useful for smoke tests, fixtures, and CI.
 
-General-profile v1 runs can now carry a narrow artifact-backed review-decision trail, but broad claim extraction and final export are still roadmap work. Legal-profile runs have a narrower review-decision path and final Markdown gate, but final export still refuses unresolved blockers.
+General-profile v1 runs can now carry a narrow artifact-backed review-decision trail and a local export gate: blocked or review-required runs write a refusal, while ready runs write a ready manifest. Broad claim extraction and final artifact copy/generation are still roadmap work. Legal-profile runs have a narrower review-decision path and final Markdown gate, but final export still refuses unresolved blockers.
 
 ## What This Is Not
 

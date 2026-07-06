@@ -35,6 +35,229 @@ test("workflow creates source packet, spec, verification report, and export gate
   assert.match(result.artifacts.runDir, /deliverables\/sample-project-[a-f0-9]{8}$/);
   const inspections = JSON.parse(await readFile(join(result.artifacts.sourceDir, "file-inspections.json"), "utf8"));
   assert.equal(inspections.length, 2);
+  const exportReadme = await readFile(join(result.artifacts.exportDir, "README.md"), "utf8");
+  assert.match(exportReadme, /General Export Gate Receipt/);
+  assert.match(exportReadme, /Status: refused/);
+  assert.match(exportReadme, /Ready manifest: not written/);
+  const refusal = await readFile(join(result.artifacts.exportDir, "general-export-refusal.md"), "utf8");
+  assert.match(refusal, /General Export Refusal/);
+  assert.match(refusal, /Claim has no source attribution/);
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "ready-manifest.json"), "utf8"));
+});
+
+test("general final export writes ready manifest when gates are ready", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-general-export-ready-"));
+  const runId = "run_general_export_ready";
+  const sourceId = "src_general";
+  const decisionId = "general_review_decision_1234567890abcdef";
+  const run = {
+    id: runId,
+    slug: "general-export-ready-12345678",
+    name: "general-export-ready",
+    artifactKind: "document" as const,
+    profile: "general" as const,
+    status: "export_ready" as const,
+    inputPaths: [],
+    createdAt: "2026-07-06T00:00:00.000Z",
+    updatedAt: "2026-07-06T00:00:00.000Z"
+  };
+  const source = {
+    id: sourceId,
+    runId,
+    name: "2026-05-01-source.md",
+    path: join(baseDir, "2026-05-01-source.md"),
+    fileType: "md",
+    status: "current" as const,
+    sourceDate: "2026-05-01",
+    intendedUse: "Decision support source."
+  };
+  const findings = [
+    {
+      id: "finding_accepted_general",
+      runId,
+      location: "section-map",
+      issue: "Source status is unclear.",
+      severity: "polish" as const,
+      evidence: `Accepted general review risk by ${decisionId}. Reason: Fixture review.`,
+      recommendedRepair: `Accepted or carried by general review decision ${decisionId}.`,
+      humanReviewRequired: false
+    }
+  ];
+  const artifacts = await writeRunArtifacts({
+    baseDir,
+    run,
+    sources: [source],
+    inspections: [
+      {
+        id: "inspect_general",
+        runId,
+        sourceId,
+        name: source.name,
+        path: source.path,
+        fileType: "md",
+        parser: "markdown-text-v1",
+        status: "inspected" as const,
+        sizeBytes: 100,
+        sourceDateCandidates: ["2026-05-01"],
+        ownerCandidates: [],
+        structuredSummary: {},
+        textPreview: "Supported claim.",
+        warnings: []
+      }
+    ],
+    conflicts: [],
+    spec: {
+      id: "spec_general_export",
+      runId,
+      artifactKind: "document",
+      audience: "Reviewer.",
+      decisionContext: "Ready general artifact.",
+      narrativeSpine: "Review a supported general artifact.",
+      structure: ["Section map"],
+      requiredChecks: ["Every claim has source support."],
+      reviewRules: ["Run hostile verification before export."]
+    },
+    findings,
+    trustReport: {
+      id: "trust_general_ready",
+      runId,
+      readiness: "ready",
+      summary: {
+        sourceCount: 1,
+        claimCount: 1,
+        calculationCount: 0,
+        assumptionCount: 0,
+        findingCount: findings.length,
+        blockingCount: 0,
+        needsReviewCount: 0
+      },
+      blockingIssues: [],
+      warnings: []
+    },
+    generalReviewDecisionSet: {
+      runId,
+      profile: "general",
+      decisions: [
+        {
+          id: decisionId,
+          runId,
+          action: "accept_general_risk",
+          location: "section-map",
+          issue: "Source status is unclear.",
+          reason: "Fixture review accepted this carried risk.",
+          reviewer: "fixture-reviewer",
+          createdAt: "2026-07-06T00:00:00.000Z",
+          approvalTokenAccepted: true
+        }
+      ],
+      auditEvents: [
+        {
+          id: "general_review_audit_1234567890abcdef",
+          runId,
+          decisionId,
+          action: "accept_general_risk",
+          actor: "fixture-reviewer",
+          createdAt: "2026-07-06T00:00:00.000Z",
+          summary: "Accepted fixture risk.",
+          before: {},
+          after: {}
+        }
+      ]
+    }
+  });
+
+  const readme = await readFile(join(artifacts.exportDir, "README.md"), "utf8");
+  assert.match(readme, /General Export Gate Receipt/);
+  assert.match(readme, /Status: export_ready/);
+  assert.match(readme, /04_export\/ready-manifest\.json/);
+  assert.match(readme, /03_verification\/general-review-decisions\.json/);
+  assert.match(readme, new RegExp(decisionId));
+  assert.match(readme, /Unresolved Risks\n\n- None/);
+  const manifest = JSON.parse(await readFile(join(artifacts.exportDir, "ready-manifest.json"), "utf8"));
+  assert.equal(manifest.status, "export_ready");
+  assert.equal(manifest.readiness, "ready");
+  assert.equal(manifest.summary.sourceCount, 1);
+  assert.equal(manifest.summary.generalReviewDecisionCount, 1);
+  const manifestMarkdown = await readFile(join(artifacts.exportDir, "ready-manifest.md"), "utf8");
+  assert.match(manifestMarkdown, /General Ready Manifest/);
+  assert.match(manifestMarkdown, /No external sending, filing, submission, or publication was performed/);
+  await assert.rejects(readFile(join(artifacts.exportDir, "general-export-refusal.md"), "utf8"));
+});
+
+test("general export refuses accepted risk without audit trail", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-general-export-audit-"));
+  const runId = "run_general_export_audit";
+  const decisionId = "general_review_decision_abcdef1234567890";
+  const run = {
+    id: runId,
+    slug: "general-export-audit-12345678",
+    name: "general-export-audit",
+    artifactKind: "report" as const,
+    profile: "general" as const,
+    status: "export_ready" as const,
+    inputPaths: [],
+    createdAt: "2026-07-06T00:00:00.000Z",
+    updatedAt: "2026-07-06T00:00:00.000Z"
+  };
+  const findings = [
+    {
+      id: "finding_accepted_without_audit",
+      runId,
+      location: "section-map",
+      issue: "Source status is unclear.",
+      severity: "polish" as const,
+      evidence: `Accepted general review risk by ${decisionId}.`,
+      recommendedRepair: `Accepted or carried by general review decision ${decisionId}.`,
+      humanReviewRequired: false
+    }
+  ];
+  const artifacts = await writeRunArtifacts({
+    baseDir,
+    run,
+    sources: [],
+    inspections: [],
+    conflicts: [],
+    spec: {
+      id: "spec_general_export_audit",
+      runId,
+      artifactKind: "report",
+      audience: "Reviewer.",
+      decisionContext: "Audit check.",
+      narrativeSpine: "Do not bypass accepted risk audit.",
+      structure: ["Report"],
+      requiredChecks: ["Accepted risks have audit events."],
+      reviewRules: ["Do not bypass verification gates."]
+    },
+    findings,
+    trustReport: {
+      id: "trust_general_audit",
+      runId,
+      readiness: "ready",
+      summary: {
+        sourceCount: 0,
+        claimCount: 0,
+        calculationCount: 0,
+        assumptionCount: 0,
+        findingCount: findings.length,
+        blockingCount: 0,
+        needsReviewCount: 0
+      },
+      blockingIssues: [],
+      warnings: []
+    },
+    generalReviewDecisionSet: {
+      runId,
+      profile: "general",
+      decisions: [],
+      auditEvents: []
+    }
+  });
+
+  const readme = await readFile(join(artifacts.exportDir, "README.md"), "utf8");
+  assert.match(readme, /Status: refused/);
+  const refusal = await readFile(join(artifacts.exportDir, "general-export-refusal.md"), "utf8");
+  assert.match(refusal, /missing a review decision or audit event/);
+  await assert.rejects(readFile(join(artifacts.exportDir, "ready-manifest.json"), "utf8"));
 });
 
 test("workflow writes each same-name run to a unique artifact folder", async () => {

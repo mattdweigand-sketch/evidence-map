@@ -9,6 +9,7 @@ import type {
   TrustReport,
   VerificationFinding
 } from "../types.ts";
+import { buildGeneralFinalExport } from "../export/general.ts";
 import { renderLegalDraftPropositions } from "../legal/draft.ts";
 import { renderLegalEvidenceMap } from "../legal/evidence-map.ts";
 import { buildLegalFinalExport } from "../legal/export.ts";
@@ -113,7 +114,26 @@ export async function writeRunArtifacts(input: {
       await rm(join(exportDir, "final-legal.md"), { force: true });
     }
   } else {
-    await writeFile(join(exportDir, "README.md"), renderExportGate(input.trustReport));
+    const generalExport = buildGeneralFinalExport({
+      run: input.run,
+      sources: input.sources,
+      inspections: input.inspections,
+      conflicts: input.conflicts,
+      spec: input.spec,
+      findings: input.findings,
+      trustReport: input.trustReport,
+      generalReviewDecisionSet: input.generalReviewDecisionSet
+    });
+    await writeFile(join(exportDir, "README.md"), generalExport.readmeMarkdown);
+    if (generalExport.ready && generalExport.readyManifest && generalExport.readyManifestMarkdown) {
+      await writeJson(join(exportDir, "ready-manifest.json"), generalExport.readyManifest);
+      await writeFile(join(exportDir, "ready-manifest.md"), generalExport.readyManifestMarkdown);
+      await rm(join(exportDir, "general-export-refusal.md"), { force: true });
+    } else if (generalExport.refusalMarkdown) {
+      await writeFile(join(exportDir, "general-export-refusal.md"), generalExport.refusalMarkdown);
+      await rm(join(exportDir, "ready-manifest.json"), { force: true });
+      await rm(join(exportDir, "ready-manifest.md"), { force: true });
+    }
   }
 
   return { runDir, sourceDir, specDir, verifyDir, exportDir };
@@ -193,27 +213,5 @@ Needs review: ${report.summary.needsReviewCount}
 | Severity | Location | Issue | Repair |
 |---|---|---|---|
 ${findingRows}
-`;
-}
-
-function renderExportGate(report: TrustReport) {
-  if (report.readiness === "ready") {
-    return "# Export Gate\n\nReady for artifact approval or export.\n";
-  }
-
-  const gateText =
-    report.readiness === "blocked"
-      ? "Artifact approval is blocked until verification issues are resolved."
-      : "Artifact approval requires human review before export.";
-
-  return `# Export Gate
-
-${gateText}
-
-Readiness: ${report.readiness}
-
-Blocking issues:
-
-${report.blockingIssues.map((issue) => `- ${issue}`).join("\n") || "- None"}
 `;
 }

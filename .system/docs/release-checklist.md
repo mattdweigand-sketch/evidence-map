@@ -38,6 +38,8 @@ For the general quickstart, confirm:
 
 - `03_verification/verification-report.md` exists.
 - `03_verification/trust-report.json` reports `readiness: "blocked"`.
+- `04_export/README.md` reports a refused general export gate.
+- `04_export/general-export-refusal.md` explains unresolved blockers.
 - The planted workbook, source-date, conflict, and seeded-claim findings remain visible.
 
 For the legal quickstart, confirm:
