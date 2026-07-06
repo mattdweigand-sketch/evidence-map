@@ -1,4 +1,4 @@
-import type { ArtifactKind, ArtifactSpec, CalculationRecord, ClaimRecord } from "../types.ts";
+import type { ArtifactKind, ArtifactSpec, CalculationRecord, ClaimRecord, FileInspectionRecord } from "../types.ts";
 
 export function buildArtifactSpec(input: {
   runId: string;
@@ -29,8 +29,15 @@ export function buildArtifactSpec(input: {
   };
 }
 
-export function seedClaims(input: { runId: string; artifactKind: ArtifactKind }): Omit<ClaimRecord, "id" | "runId">[] {
+export function seedClaims(input: {
+  runId: string;
+  artifactKind: ArtifactKind;
+  inspections?: FileInspectionRecord[];
+}): Omit<ClaimRecord, "id" | "runId">[] {
   if (input.artifactKind === "workbook") return [];
+  const pptxClaims = seedPptxClaims(input);
+  if (pptxClaims.length > 0) return pptxClaims;
+
   return [
     {
       artifactLocation: input.artifactKind === "deck" ? "slide-map" : "section-map",
@@ -40,6 +47,103 @@ export function seedClaims(input: { runId: string; artifactKind: ArtifactKind })
       reviewStatus: "unsupported"
     }
   ];
+}
+
+interface PptxSlideSummary {
+  slideNumber: number;
+  title?: string;
+  text?: string;
+  notesText?: string;
+}
+
+function seedPptxClaims(input: {
+  artifactKind: ArtifactKind;
+  inspections?: FileInspectionRecord[];
+}): Omit<ClaimRecord, "id" | "runId">[] {
+  if (input.artifactKind !== "deck" && input.artifactKind !== "mixed") return [];
+
+  const claims: Omit<ClaimRecord, "id" | "runId">[] = [];
+  const seenClaims = new Set<string>();
+
+  for (const inspection of input.inspections ?? []) {
+    if (inspection.parser !== "pptx-deep-v1" || inspection.status !== "inspected") continue;
+
+    for (const slide of getPptxSlides(inspection.structuredSummary)) {
+      const slideLocation = `deck:${inspection.name}:slide:${slide.slideNumber}`;
+      for (const candidate of claimCandidates(slide.text ?? "", slide.title)) {
+        addPptxClaim(claims, seenClaims, slideLocation, candidate);
+      }
+      for (const candidate of claimCandidates(slide.notesText ?? "", slide.title)) {
+        addPptxClaim(claims, seenClaims, `${slideLocation}:notes`, candidate);
+      }
+    }
+  }
+
+  return claims.slice(0, 50);
+}
+
+function getPptxSlides(summary: Record<string, unknown>): PptxSlideSummary[] {
+  const slides = summary.slides;
+  if (!Array.isArray(slides)) return [];
+
+  return slides.flatMap((slide) => {
+    if (!slide || typeof slide !== "object") return [];
+    const record = slide as Record<string, unknown>;
+    const slideNumber = typeof record.slideNumber === "number" && Number.isFinite(record.slideNumber) ? record.slideNumber : undefined;
+    if (slideNumber === undefined) return [];
+    return [
+      {
+        slideNumber,
+        title: typeof record.title === "string" ? record.title : undefined,
+        text: typeof record.text === "string" ? record.text : undefined,
+        notesText: typeof record.notesText === "string" ? record.notesText : undefined
+      }
+    ];
+  });
+}
+
+function addPptxClaim(
+  claims: Omit<ClaimRecord, "id" | "runId">[],
+  seenClaims: Set<string>,
+  artifactLocation: string,
+  claim: string
+) {
+  const key = claim.toLowerCase();
+  if (seenClaims.has(key)) return;
+  seenClaims.add(key);
+  claims.push({
+    artifactLocation,
+    claim,
+    sourceIds: [],
+    assumptions: [],
+    reviewStatus: "unsupported"
+  });
+}
+
+function claimCandidates(value: string, title?: string) {
+  const titleKey = title ? normalizeClaimText(title).toLowerCase() : undefined;
+  return value
+    .split(/\r?\n+|(?<=[.!?])\s+/g)
+    .map(normalizeClaimText)
+    .filter((candidate) => candidate && candidate.toLowerCase() !== titleKey)
+    .filter(isClaimCandidate);
+}
+
+function normalizeClaimText(value: string) {
+  return value.replace(/^[\s*-]+/, "").replace(/\s+/g, " ").trim();
+}
+
+function isClaimCandidate(value: string) {
+  if (value.length < 25 || value.length > 280) return false;
+  if (!/[A-Za-z]/.test(value)) return false;
+  if (/^(owner|prepared by|author|reviewer|date|source|sources|note|notes|todo|draft|confidential)\b\s*:?/i.test(value)) return false;
+  if (/^use the\b/i.test(value)) return false;
+  return hasClaimSignal(value);
+}
+
+function hasClaimSignal(value: string) {
+  if (/[$%]|\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b/.test(value)) return true;
+  return /\b(is|are|was|were|has|have|had|will|would|should|can|could|must|may|increased|decreased|grew|declined|rose|fell|reduced|improved|worsened|exceeds|trails|supports|shows|indicates|requires|creates|demonstrates|drives|depends|remains|became|becomes|totaled|reached)\b/i.test(value);
 }
 
 export function seedCalculations(input: { artifactKind: ArtifactKind }): Omit<CalculationRecord, "id" | "runId">[] {

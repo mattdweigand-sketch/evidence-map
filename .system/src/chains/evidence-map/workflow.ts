@@ -42,7 +42,7 @@ export async function runEvidenceMapWorkflow(
       }))
     );
     const spec = await store.createArtifactSpec(buildArtifactSpec({ runId: run.id, artifactKind: input.artifactKind, name: input.name }));
-    await store.createClaims(run.id, seedClaims({ runId: run.id, artifactKind: input.artifactKind }));
+    await store.createClaims(run.id, seedClaims({ runId: run.id, artifactKind: input.artifactKind, inspections }));
     await store.createCalculations(run.id, seedCalculations({ artifactKind: input.artifactKind }));
     const findings = await runHostileReview(store, run.id);
     const trustReport = await evaluateTrust(store, run.id);

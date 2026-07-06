@@ -2,7 +2,7 @@
 
 Planned work, roughly in order. No dates. Open an issue if one of these matters to you.
 
-- **PPTX claim extraction.** PPTX inspection now captures slide text, notes, and chart references. A later slice should promote deterministic claim candidates from that extracted text.
+- **Richer general claim extraction and matching.** PPTX inspection now captures slide text, notes, and chart references, and deck/mixed runs seed deterministic unsupported claim candidates from that extracted text. Later slices should broaden claim extraction to other artifact formats and suggest reviewed source-to-claim links.
 - **Broader general review-loop MCP tools.** Current general review tools can create/edit/delete/merge claims, attach source support with anchors/quotes/rationale, resolve calculation risks, resolve source conflicts, accept current findings with audit records, and copy approved final artifacts locally after readiness. Next slices should add richer calculation repair artifacts.
 - **LLM-assisted evidence matching.** Suggest source-to-claim links with confidence and review status instead of relying on manual mapping.
 - **General-profile final artifact generation/editing.** The general profile now writes a local export refusal or ready manifest and can copy approved user-supplied final artifacts once gates are ready. A later step should prepare or apply generated edits only after the same gates pass.
