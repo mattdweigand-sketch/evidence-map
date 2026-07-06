@@ -15,6 +15,19 @@ export function firstDateCandidate(value: string) {
   return inferDateCandidates(value)[0];
 }
 
+export function normalizeSourceDate(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+
+  const yearFirst = trimmed.match(/^(20\d{2})([-_/]?)([01]\d)\2([0-3]\d)$/);
+  if (yearFirst) return toIsoDate(yearFirst[1], yearFirst[3], yearFirst[4]);
+
+  const usDate = trimmed.match(/^([01]?\d)[-_/]([0-3]?\d)[-_/](20\d{2})$/);
+  if (usDate) return toIsoDate(usDate[3], usDate[1], usDate[2]);
+
+  return undefined;
+}
+
 function toIsoDate(yearValue: string, monthValue: string, dayValue: string) {
   const year = Number(yearValue);
   const month = Number(monthValue);

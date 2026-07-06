@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
@@ -24,6 +24,19 @@ const execFileAsync = promisify(execFile);
 
 after(async () => {
   await Promise.all(fixtureDirs.map((dir) => rm(dir, { recursive: true, force: true })));
+});
+
+test("MCP server version matches package version", async () => {
+  const packagePath = fileURLToPath(new URL("../package.json", import.meta.url));
+  const packageVersion = (JSON.parse(await readFile(packagePath, "utf8")) as { version?: string }).version;
+  const { server } = createEvidenceMapMcpServer(new MemoryEvidenceMapStore());
+  const serverInfo = (server as unknown as { server?: { _serverInfo?: { version?: string } } }).server?._serverInfo;
+
+  assert.equal(serverInfo?.version, packageVersion);
+  const versionModule = await import("../src/version.ts").catch(() => undefined);
+  assert.equal(versionModule?.PACKAGE_VERSION, packageVersion);
+
+  await server.close();
 });
 
 test("MCP run state persists across JSON store reloads", async () => {
@@ -163,6 +176,38 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   });
   assert.equal(rejectedApply.isError, true);
   assert.match(String((rejectedApply.structuredContent as { error?: string }).error), /requires ready gates/);
+
+  await client.close();
+  await server.close();
+});
+
+test("MCP source packet rejects symlink targets outside baseDir", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-symlink-"));
+  const outsideDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-outside-"));
+  fixtureDirs.push(baseDir, outsideDir);
+  const inputDir = join(baseDir, "input", "linked-source");
+  await mkdir(inputDir, { recursive: true });
+  const outsideSource = join(outsideDir, "private-source.md");
+  await writeFile(outsideSource, "# Private Source\n\nsecret outside content\n");
+  await symlink(outsideSource, join(inputDir, "linked-private.md"));
+
+  const { server } = createEvidenceMapMcpServer(new MemoryEvidenceMapStore());
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const sourcePacket = await client.callTool({
+    name: "evidencemap_inspect_source_packet",
+    arguments: {
+      baseDir,
+      inputPaths: ["input/linked-source"]
+    }
+  });
+  assert.equal(sourcePacket.isError, true);
+  assert.match(String((sourcePacket.structuredContent as { error?: string }).error), /linked-private\.md/);
+  assert.match(String((sourcePacket.structuredContent as { error?: string }).error), /real path escapes baseDir|escapes baseDir/);
 
   await client.close();
   await server.close();

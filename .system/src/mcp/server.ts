@@ -1,3 +1,4 @@
+import { realpath } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -26,6 +27,7 @@ import { buildLegalSourcePacketFromDrafts } from "../legal/source-packet.ts";
 import { getDefaultBaseDir } from "../artifacts/paths.ts";
 import { evaluateTrust } from "../trust/evaluate.ts";
 import { artifactKinds, workflowProfiles, type EvidenceMapRun, type SourceConflict, type WorkflowProfile } from "../types.ts";
+import { PACKAGE_VERSION } from "../version.ts";
 import {
   legalAuthorityLevels,
   legalFindingCategories,
@@ -83,7 +85,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
   const defaultBaseDir = getDefaultBaseDir();
   const server = new McpServer({
     name: "evidence-map",
-    version: "0.1.0"
+    version: PACKAGE_VERSION
   });
 
   server.registerTool(
@@ -98,10 +100,14 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       }
     },
     async ({ inputPaths, profile, baseDir }) => {
-      const resolvedInputPaths = resolveWorkspaceInputPaths(baseDir, inputPaths);
-      if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
-      const packet = await buildSourcePacket(resolvedInputPaths.paths);
-      return jsonToolResult(await withLegalSourcePacket(packet, profile));
+      try {
+        const resolvedInputPaths = await resolveWorkspaceInputPaths(baseDir, inputPaths);
+        if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
+        const packet = await buildSourcePacket(resolvedInputPaths.paths, { baseDir });
+        return jsonToolResult(await withLegalSourcePacket(packet, profile));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "Source packet inspection failed.");
+      }
     }
   );
 
@@ -120,45 +126,49 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       }
     },
     async ({ name, artifactKind, profile, generate, inputPaths, baseDir }) => {
-      const resolvedInputPaths = resolveWorkspaceInputPaths(baseDir, inputPaths);
-      if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
-      const result = await runEvidenceMapWorkflow(store, {
-        baseDir,
-        name,
-        artifactKind,
-        profile,
-        inputPaths: resolvedInputPaths.paths,
-        generate
-      });
+      try {
+        const resolvedInputPaths = await resolveWorkspaceInputPaths(baseDir, inputPaths);
+        if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
+        const result = await runEvidenceMapWorkflow(store, {
+          baseDir,
+          name,
+          artifactKind,
+          profile,
+          inputPaths: resolvedInputPaths.paths,
+          generate
+        });
 
-      return jsonToolResult({
-        runId: result.run.id,
-        slug: result.run.slug,
-        profile: result.run.profile,
-        status: result.run.status,
-        readiness: result.trustReport.readiness,
-        sourceCount: result.sources.length,
-        inspectionCount: result.inspections.length,
-        conflictCount: result.conflicts.length,
-        findingCount: result.findings.length,
-        blockingCount: result.trustReport.summary.blockingCount,
-        needsReviewCount: result.trustReport.summary.needsReviewCount,
-        generatedOutput: result.generatedOutput
-          ? {
-              status: result.generatedOutput.status,
-              format: result.generatedOutput.format,
-              pathRelativeToRun: result.generatedOutput.pathRelativeToRun,
-              formattedPathRelativeToRun: result.generatedOutput.status === "export_ready" ? "04_export/formatted-output.md" : undefined,
-              formattingReceiptPathRelativeToRun: result.generatedOutput.status === "export_ready" ? "04_export/formatting-receipt.json" : undefined,
-              evidenceMapId: result.generatedOutput.evidenceMapId,
-              generatedClaimCount: result.generatedClaims?.length ?? 0,
-              selectedEvidenceCount: result.sourceEvidence?.filter((item) => item.useStatus === "selected").length ?? 0,
-              excludedEvidenceCount: result.sourceEvidence?.filter((item) => item.useStatus === "excluded").length ?? 0,
-              excludedSourceCount: result.sourceExclusions?.length ?? 0
-            }
-          : null,
-        artifacts: result.artifacts
-      });
+        return jsonToolResult({
+          runId: result.run.id,
+          slug: result.run.slug,
+          profile: result.run.profile,
+          status: result.run.status,
+          readiness: result.trustReport.readiness,
+          sourceCount: result.sources.length,
+          inspectionCount: result.inspections.length,
+          conflictCount: result.conflicts.length,
+          findingCount: result.findings.length,
+          blockingCount: result.trustReport.summary.blockingCount,
+          needsReviewCount: result.trustReport.summary.needsReviewCount,
+          generatedOutput: result.generatedOutput
+            ? {
+                status: result.generatedOutput.status,
+                format: result.generatedOutput.format,
+                pathRelativeToRun: result.generatedOutput.pathRelativeToRun,
+                formattedPathRelativeToRun: result.generatedOutput.status === "export_ready" ? "04_export/formatted-output.md" : undefined,
+                formattingReceiptPathRelativeToRun: result.generatedOutput.status === "export_ready" ? "04_export/formatting-receipt.json" : undefined,
+                evidenceMapId: result.generatedOutput.evidenceMapId,
+                generatedClaimCount: result.generatedClaims?.length ?? 0,
+                selectedEvidenceCount: result.sourceEvidence?.filter((item) => item.useStatus === "selected").length ?? 0,
+                excludedEvidenceCount: result.sourceEvidence?.filter((item) => item.useStatus === "excluded").length ?? 0,
+                excludedSourceCount: result.sourceExclusions?.length ?? 0
+              }
+            : null,
+          artifacts: result.artifacts
+        });
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "Workflow run failed.");
+      }
     }
   );
 
@@ -968,14 +978,20 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
 }
 
 // This is a convention rail, not a security boundary: the client still chooses baseDir.
-function resolveWorkspaceInputPaths(baseDir: string, inputPaths: string[]): ResolvedWorkspaceInputPaths {
+async function resolveWorkspaceInputPaths(baseDir: string, inputPaths: string[]): Promise<ResolvedWorkspaceInputPaths> {
   const resolvedBaseDir = resolve(baseDir);
+  const realBaseDir = await realpath(resolvedBaseDir);
   const paths: string[] = [];
   for (const inputPath of inputPaths) {
     const resolvedInputPath = resolve(resolvedBaseDir, inputPath);
     const relativePath = relative(resolvedBaseDir, resolvedInputPath);
     if (relativePath.startsWith("..") || isAbsolute(relativePath)) {
       return { error: `Input path escapes baseDir: ${inputPath}` };
+    }
+    const realInputPath = await realpath(resolvedInputPath);
+    const realRelativePath = relative(realBaseDir, realInputPath);
+    if (realRelativePath.startsWith("..") || isAbsolute(realRelativePath)) {
+      return { error: `Input path ${inputPath} real path escapes baseDir: ${realInputPath}` };
     }
     paths.push(resolvedInputPath);
   }

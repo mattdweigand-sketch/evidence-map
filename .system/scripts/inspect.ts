@@ -13,7 +13,8 @@ if (!input) {
   exit(1);
 }
 
-const packet = await buildSourcePacket([resolve(getDefaultBaseDir(), input)]);
+const baseDir = getDefaultBaseDir();
+const packet = await buildSourcePacket([resolve(baseDir, input)], { baseDir });
 console.log(JSON.stringify(await withLegalSourcePacket(packet, profile), null, 2));
 
 async function withLegalSourcePacket(packet: Awaited<ReturnType<typeof buildSourcePacket>>, profile: WorkflowProfile) {

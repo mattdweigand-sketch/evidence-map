@@ -33,7 +33,7 @@ export async function runEvidenceMapWorkflow(
   });
 
   try {
-    const sourcePacket = await buildSourcePacket(resolvedInputPaths);
+    const sourcePacket = await buildSourcePacket(resolvedInputPaths, { baseDir: input.baseDir });
     const sources = await store.createSources(run.id, sourcePacket.sources);
     const sourceIdByPath = new Map(sources.map((source) => [source.path, source.id]));
     const inspections = await store.createFileInspections(

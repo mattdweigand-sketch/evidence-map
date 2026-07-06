@@ -15,8 +15,12 @@ export interface InspectableFile {
   stat: Stats;
 }
 
-export async function buildFileInspections(inputPaths: string[]): Promise<FileInspectionDraft[]> {
-  const filePaths = await expandInputPaths(inputPaths);
+const delimitedRowCaptureLimit = 10_000;
+const delimitedColumnCaptureLimit = 50;
+const delimitedCellTextLimit = 500;
+
+export async function buildFileInspections(inputPaths: string[], options: { baseDir?: string } = {}): Promise<FileInspectionDraft[]> {
+  const filePaths = await expandInputPaths(inputPaths, options);
   const files = await Promise.all(filePaths.map(async (path) => ({ path, stat: await stat(path) })));
   return inspectFiles(files);
 }
@@ -88,10 +92,17 @@ async function inspectDelimitedText(
   const inconsistentRows = columnCounts.filter((count) => count !== expectedColumnCount).length;
   const duplicateHeaders = headers.filter((headerValue, index) => headers.indexOf(headerValue) !== index);
   const numberCandidateCount = nonEmptyRows.slice(1).flat().filter(isNumberLike).length;
+  const capturedRows = nonEmptyRows.slice(0, delimitedRowCaptureLimit);
+  const omittedRowCount = Math.max(0, nonEmptyRows.length - capturedRows.length);
   const warnings = [
     ...(headers.length === 0 ? ["No header row detected."] : []),
     ...(duplicateHeaders.length > 0 ? [`Duplicate headers detected: ${[...new Set(duplicateHeaders)].join(", ")}.`] : []),
-    ...(inconsistentRows > 0 ? [`${inconsistentRows} rows have a different column count from the header row.`] : [])
+    ...(inconsistentRows > 0 ? [`${inconsistentRows} rows have a different column count from the header row.`] : []),
+    ...(omittedRowCount > 0
+      ? [
+          `Delimited row capture truncated: captured ${capturedRows.length} of ${nonEmptyRows.length} non-empty rows (limit ${delimitedRowCaptureLimit}).`
+        ]
+      : [])
   ];
 
   return {
@@ -104,9 +115,15 @@ async function inspectDelimitedText(
       delimiter,
       rowCount: rows.length,
       nonEmptyRowCount: nonEmptyRows.length,
+      capturedRowCount: capturedRows.length,
+      omittedRowCount,
+      rowCaptureLimit: delimitedRowCaptureLimit,
+      rowCaptureTruncated: omittedRowCount > 0,
       headerCount: headers.length,
       headers,
-      rows: nonEmptyRows.slice(0, 101).map((row) => row.slice(0, 50).map((value) => value.trim().slice(0, 500))),
+      rows: capturedRows.map((row) =>
+        row.slice(0, delimitedColumnCaptureLimit).map((value) => value.trim().slice(0, delimitedCellTextLimit))
+      ),
       blankRowCount: rows.length - nonEmptyRows.length,
       inconsistentRowCount: inconsistentRows,
       numberCandidateCount
@@ -123,7 +140,7 @@ async function inspectPlainText(
   const content = await readSmallText(base.path);
   const lines = content.split(/\r?\n/);
   const headings = lines.filter((line) => /^#{1,6}\s+\S/.test(line) || /^[A-Z][A-Za-z0-9 ,:&/-]{4,}$/.test(line.trim()));
-  const excerpts = splitParagraphs(content).slice(0, 100).map((text, index) => ({
+  const excerpts = splitParagraphs(content).map((text, index) => ({
     paragraphNumber: index + 1,
     text: text.slice(0, 500)
   }));
@@ -180,9 +197,9 @@ async function inspectPdf(base: Pick<FileInspectionDraft, "name" | "path" | "fil
         extractablePageCount: extraction.extractablePageCount,
         paragraphCount: extraction.paragraphCount,
         numberCandidateCount: extraction.numberCandidateCount,
-        pages: extraction.pages.slice(0, 100).map((page) => ({
+        pages: extraction.pages.map((page) => ({
           pageNumber: page.pageNumber,
-          paragraphs: page.paragraphs.slice(0, 20).map((paragraph) => paragraph.slice(0, 500))
+          paragraphs: page.paragraphs.map((paragraph) => paragraph.slice(0, 500))
         }))
       },
       textPreview: previewText(extraction.text),

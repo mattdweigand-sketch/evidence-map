@@ -156,6 +156,11 @@ function blockingSelectionIssues(input: {
     }
   }
 
+  for (const assessment of input.assessments.values()) {
+    const rowCaptureBlocker = tableRowCaptureBlocker(assessment);
+    if (rowCaptureBlocker) blockers.push(rowCaptureBlocker);
+  }
+
   for (const item of input.selectedEvidence) {
     const assessment = input.assessments.get(item.sourceId);
     if (assessment?.inspection?.status === "failed") {
@@ -167,6 +172,21 @@ function blockingSelectionIssues(input: {
   }
 
   return blockers;
+}
+
+function tableRowCaptureBlocker(assessment: SourceAssessment) {
+  if (assessment.sourceExclusionReason || !assessment.inspection) return undefined;
+  const summary = assessment.inspection.structuredSummary as {
+    rowCaptureTruncated?: unknown;
+    capturedRowCount?: unknown;
+    nonEmptyRowCount?: unknown;
+    rowCaptureLimit?: unknown;
+  };
+  if (summary.rowCaptureTruncated !== true) return undefined;
+  const captured = typeof summary.capturedRowCount === "number" ? summary.capturedRowCount : "unknown";
+  const total = typeof summary.nonEmptyRowCount === "number" ? summary.nonEmptyRowCount : "unknown";
+  const limit = typeof summary.rowCaptureLimit === "number" ? summary.rowCaptureLimit : "unknown";
+  return `${assessment.source.name}: table row capture truncated; captured ${captured} of ${total} non-empty rows (limit ${limit}).`;
 }
 
 function currentMetricConflictBlockers(input: {

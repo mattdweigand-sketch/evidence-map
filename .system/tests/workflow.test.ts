@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -142,15 +142,161 @@ test("clean end-to-end generation writes final Markdown and ready manifest", asy
   assert.ok(formattingReceipt.invariantChecks.every((check: { status: string }) => check.status === "passed"));
 });
 
+test("verify command preserves generated output mode and final artifacts", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-verify-generated-"));
+  const inputDir = join(baseDir, "input", "generated-report");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-current-metrics.csv"), "metric,value,as_of_date\nactive_users,42,2026-05-01\n");
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const result = await runEvidenceMapWorkflow(new JsonFileEvidenceMapStore(storePath), {
+    baseDir,
+    name: "generated-report",
+    artifactKind: "report",
+    inputPaths: ["input/generated-report"],
+    generate: true
+  });
+  const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
+
+  const firstVerify = await execFileAsync(process.execPath, [
+    "--experimental-strip-types",
+    scriptPath,
+    "--base-dir",
+    baseDir,
+    "--run",
+    `deliverables/${result.run.slug}`,
+    "--json"
+  ]);
+  const secondVerify = await execFileAsync(process.execPath, [
+    "--experimental-strip-types",
+    scriptPath,
+    "--base-dir",
+    baseDir,
+    "--run",
+    `deliverables/${result.run.slug}`,
+    "--json"
+  ]);
+
+  assert.equal(JSON.parse(firstVerify.stdout).readiness, "ready");
+  assert.equal(JSON.parse(secondVerify.stdout).readiness, "ready");
+  await readFile(join(result.artifacts.exportDir, "final-output.md"), "utf8");
+  await readFile(join(result.artifacts.exportDir, "generated-output-receipt.json"), "utf8");
+  await readFile(join(result.artifacts.exportDir, "formatted-output.md"), "utf8");
+  await readFile(join(result.artifacts.exportDir, "formatting-receipt.json"), "utf8");
+
+  const report = JSON.parse(await readFile(join(result.artifacts.verifyDir, "trust-report.json"), "utf8"));
+  const data = JSON.parse(await readFile(storePath, "utf8"));
+  const findingsForRun = data.findings.filter((finding: { runId: string }) => finding.runId === result.run.id);
+  assert.equal(report.readiness, "ready");
+  assert.equal(findingsForRun.length, result.findings.length);
+});
+
+test("generated metric dates must be valid dates", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-invalid-generated-date-"));
+  const inputDir = join(baseDir, "input", "invalid-date-report");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-current-metrics.csv"), "metric,value,as_of_date\nactive_users,42,TBD\n");
+
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+    baseDir,
+    name: "invalid-date-report",
+    artifactKind: "report",
+    inputPaths: ["input/invalid-date-report"],
+    generate: true
+  });
+
+  assert.equal(result.trustReport.readiness, "blocked");
+  assert.ok(result.findings.some((finding) => /generated numeric claim has (?:no|invalid|no valid) source date/i.test(finding.issue)));
+  const generatedClaims = JSON.parse(await readFile(join(result.artifacts.verifyDir, "generated-claims.json"), "utf8")) as Array<{
+    claim?: string;
+    reviewStatus?: string;
+    sourceDates?: string[];
+  }>;
+  assert.ok(generatedClaims.some((claim) => claim.claim?.includes("active users was 42")));
+  assert.ok(generatedClaims.every((claim) => !claim.claim?.includes("as of TBD")));
+  assert.ok(generatedClaims.every((claim) => !claim.sourceDates?.includes("TBD")));
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "final-output.md"), "utf8"));
+});
+
+test("CSV generation does not silently drop rows beyond 100", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-csv-full-capture-"));
+  const inputDir = join(baseDir, "input", "full-csv-report");
+  await mkdir(inputDir, { recursive: true });
+  const rows = ["metric,value,as_of_date"];
+  for (let index = 1; index <= 150; index += 1) {
+    rows.push(`metric_${index},${index},2026-05-01`);
+  }
+  rows.push("late_metric,151,2026-05-01");
+  await writeFile(join(inputDir, "2026-05-01-current-metrics.csv"), `${rows.join("\n")}\n`);
+
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+    baseDir,
+    name: "full-csv-report",
+    artifactKind: "report",
+    inputPaths: ["input/full-csv-report"],
+    generate: true
+  });
+
+  assert.equal(result.trustReport.readiness, "ready");
+  const inspections = JSON.parse(await readFile(join(result.artifacts.sourceDir, "file-inspections.json"), "utf8")) as Array<{
+    structuredSummary?: Record<string, unknown>;
+  }>;
+  const summary = inspections[0]?.structuredSummary ?? {};
+  assert.equal(summary.nonEmptyRowCount, 152);
+  assert.equal(summary.capturedRowCount, 152);
+  assert.equal(summary.omittedRowCount, 0);
+  assert.equal(summary.rowCaptureTruncated, false);
+
+  const generatedClaims = JSON.parse(await readFile(join(result.artifacts.verifyDir, "generated-claims.json"), "utf8")) as Array<{
+    claim?: string;
+  }>;
+  assert.ok(generatedClaims.some((claim) => claim.claim?.includes("late metric was 151 as of 2026-05-01")));
+  const evidenceMap = JSON.parse(await readFile(join(result.artifacts.verifyDir, "evidence-map.json"), "utf8"));
+  assert.equal(evidenceMap.summary.generatedClaimCount, generatedClaims.length);
+});
+
+test("CSV generation refuses when row capture is truncated", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-csv-truncated-"));
+  const inputDir = join(baseDir, "input", "truncated-csv-report");
+  await mkdir(inputDir, { recursive: true });
+  const rows = ["metric,value,as_of_date"];
+  for (let index = 1; index <= 10_001; index += 1) {
+    rows.push(`m${index},${index},2026-05-01`);
+  }
+  await writeFile(join(inputDir, "2026-05-01-current-large.csv"), `${rows.join("\n")}\n`);
+
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+    baseDir,
+    name: "truncated-csv-report",
+    artifactKind: "report",
+    inputPaths: ["input/truncated-csv-report"],
+    generate: true
+  });
+
+  assert.equal(result.trustReport.readiness, "blocked");
+  assert.ok(result.findings.some((finding) => /row capture truncated/i.test(finding.issue)));
+  const inspections = JSON.parse(await readFile(join(result.artifacts.sourceDir, "file-inspections.json"), "utf8")) as Array<{
+    structuredSummary?: Record<string, unknown>;
+  }>;
+  const summary = inspections[0]?.structuredSummary ?? {};
+  assert.equal(summary.nonEmptyRowCount, 10002);
+  assert.equal(summary.capturedRowCount, 10000);
+  assert.equal(summary.omittedRowCount, 2);
+  assert.equal(summary.rowCaptureTruncated, true);
+  const refusal = await readFile(join(result.artifacts.exportDir, "general-export-refusal.md"), "utf8");
+  assert.match(refusal, /row capture truncated/i);
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "final-output.md"), "utf8"));
+});
+
 test("capstone messy-folder generation writes final Markdown and excludes old or risky sources", async () => {
   const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-generate-capstone-"));
   const fixtureDir = fileURLToPath(new URL("../../input/examples/capstone-report", import.meta.url));
+  await cp(fixtureDir, join(baseDir, "input", "capstone-report"), { recursive: true });
 
   const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
     baseDir,
     name: "capstone-report",
     artifactKind: "report",
-    inputPaths: [fixtureDir],
+    inputPaths: ["input/capstone-report"],
     generate: true
   });
 
@@ -795,6 +941,27 @@ test("failed durable workflow runs are not left running", async () => {
   const data = JSON.parse(await readFile(storePath, "utf8"));
   assert.equal(data.runs.length, 1);
   assert.equal(data.runs[0]?.status, "failed");
+});
+
+test("workflow rejects symlink source targets outside baseDir before import", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-workflow-symlink-"));
+  const outsideDir = await mkdtemp(join(tmpdir(), "evidence-map-workflow-outside-"));
+  const inputDir = join(baseDir, "input", "linked-source");
+  await mkdir(inputDir, { recursive: true });
+  const outsideSource = join(outsideDir, "private-source.md");
+  await writeFile(outsideSource, "# Private Source\n\nsecret outside content\n");
+  await symlink(outsideSource, join(inputDir, "linked-private.md"));
+
+  await assert.rejects(
+    runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+      baseDir,
+      name: "linked-source",
+      artifactKind: "document",
+      inputPaths: ["input/linked-source"],
+      generate: true
+    }),
+    /real path escapes baseDir|escapes baseDir/
+  );
 });
 
 test("verify command recomputes findings without duplicating old ones", async () => {

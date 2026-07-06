@@ -1,4 +1,5 @@
 import type { EvidenceMapStore } from "../db/store.ts";
+import { normalizeSourceDate } from "../date-candidates.ts";
 import { buildLegalRunArtifacts } from "../legal/artifacts.ts";
 import { applyLegalConflictReviewDecisions, applyLegalRiskAcceptanceDecisions } from "../legal/review-decisions.ts";
 import { buildLegalReuseFindings } from "../legal/reuse-library.ts";
@@ -374,7 +375,10 @@ function addGeneratedClaimFindings(
       findings.push(mustFix(claim.artifactLocation, "Generated claim cites excluded evidence.", claim.claim, "Regenerate the evidence map without excluded evidence."));
     }
     const hasNumber = /\b-?\d{1,3}(?:,\d{3})*(?:\.\d+)?%?\b|\b-?\d+(?:\.\d+)?%?\b/.test(claim.claim);
-    if (hasNumber && claim.sourceDates.length === 0) {
+    const validSourceDates = claim.sourceDates.map((date) => normalizeSourceDate(date)).filter((date): date is string => Boolean(date));
+    if (hasNumber && claim.sourceDates.length > 0 && validSourceDates.length === 0) {
+      findings.push(mustFix(claim.artifactLocation, "Generated numeric claim has invalid source date.", claim.claim, "Attach a valid source date before final output."));
+    } else if (hasNumber && validSourceDates.length === 0) {
       findings.push(mustFix(claim.artifactLocation, "Generated numeric claim has no source date.", claim.claim, "Attach a source date before final output."));
     }
   }

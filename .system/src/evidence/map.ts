@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { normalizeSourceDate } from "../date-candidates.ts";
 import type { ArtifactKind, EvidenceMapRecord, GeneratedClaimRecord, ReviewStatus, SourceEvidenceRecord } from "../types.ts";
 
 type GeneratedClaimDraft = Omit<GeneratedClaimRecord, "runId">;
@@ -16,7 +17,7 @@ export function buildGeneratedClaims(input: {
   claims.push(...metricValueClaims(input));
   claims.push(...surveyAggregateClaims(input));
   claims.push(...narrativeClaims(input));
-  return dedupeClaims(claims).slice(0, 100);
+  return dedupeClaims(claims);
 }
 
 export function buildEvidenceMapRecord(input: {
@@ -53,7 +54,8 @@ function metricValueClaims(input: {
     const metric = row.fields.get("metric");
     const value = row.fields.get("value");
     if (!metric || !value) return [];
-    const date = row.fields.get("as_of_date") ?? row.fields.get("date") ?? row.evidence.sourceDate;
+    const explicitDate = row.fields.get("as_of_date") ?? row.fields.get("date");
+    const date = explicitDate === undefined ? normalizeSourceDate(row.evidence.sourceDate) : normalizeSourceDate(explicitDate);
     const claim = `${humanizeMetric(metric)} was ${value}${date ? ` as of ${date}` : ""}.`;
     return [
       buildGeneratedClaim({
@@ -143,15 +145,16 @@ function narrativeClaims(input: {
     if (!["paragraph", "slide_text", "speaker_notes", "file_summary"].includes(evidence.kind)) return [];
     if (!isNarrativeClaimCandidate(evidence.text)) return [];
     const claim = `Source notes report that ${sentenceCase(evidence.text)}`;
+    const sourceDate = normalizeSourceDate(evidence.sourceDate);
     return [
       buildGeneratedClaim({
         runId: input.runId,
         artifactLocation: `generated-output:${evidence.sourceName}:${evidence.anchor}`,
         claim: ensurePeriod(claim),
         evidence: [evidence],
-        sourceDates: evidence.sourceDate ? [evidence.sourceDate] : [],
-        reviewStatus: evidence.numberCandidates.length > 0 && !evidence.sourceDate ? "unsupported" : "verified",
-        assumptions: evidence.sourceDate ? [] : ["Narrative source has no source date; claim is framed only as a reported source note."]
+        sourceDates: sourceDate ? [sourceDate] : [],
+        reviewStatus: evidence.numberCandidates.length > 0 && !sourceDate ? "unsupported" : "verified",
+        assumptions: sourceDate ? [] : ["Narrative source has no source date; claim is framed only as a reported source note."]
       })
     ];
   });
@@ -168,6 +171,7 @@ function buildGeneratedClaim(input: {
 }): GeneratedClaimDraft {
   const sourceIds = unique(input.evidence.map((item) => item.sourceId));
   const evidenceIds = unique(input.evidence.map((item) => item.id));
+  const sourceDates = unique(input.sourceDates.map((date) => normalizeSourceDate(date)).filter((date): date is string => Boolean(date)));
   return {
     id: stableGeneratedClaimId(input.runId, input.claim, evidenceIds),
     artifactLocation: input.artifactLocation,
@@ -175,7 +179,7 @@ function buildGeneratedClaim(input: {
     sourceIds,
     evidenceIds,
     assumptions: input.assumptions,
-    sourceDates: unique(input.sourceDates),
+    sourceDates,
     reviewStatus: input.reviewStatus
   };
 }
@@ -213,7 +217,11 @@ function dedupeClaims(claims: GeneratedClaimDraft[]) {
 }
 
 function commonSourceDate(evidence: SourceEvidenceRecord[]) {
-  return evidence.find((item) => item.sourceDate)?.sourceDate;
+  for (const item of evidence) {
+    const sourceDate = normalizeSourceDate(item.sourceDate);
+    if (sourceDate) return sourceDate;
+  }
+  return undefined;
 }
 
 function humanizeMetric(value: string) {

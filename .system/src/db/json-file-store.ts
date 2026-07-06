@@ -1,4 +1,5 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type {
   ArtifactSpec,
@@ -296,13 +297,18 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
 
   private async save(data: StoreData) {
     await mkdir(dirname(this.path), { recursive: true });
-    const tmpPath = `${this.path}.tmp`;
-    await writeFile(tmpPath, `${JSON.stringify(data, null, 2)}\n`);
-    await rename(tmpPath, this.path);
+    const tmpPath = `${this.path}.${process.pid}.${randomUUID()}.tmp`;
+    try {
+      await writeFile(tmpPath, `${JSON.stringify(data, null, 2)}\n`);
+      await rename(tmpPath, this.path);
+    } catch (error) {
+      await rm(tmpPath, { force: true });
+      throw error;
+    }
   }
 
   private async serialize<T>(operation: () => Promise<T>): Promise<T> {
-    const current = this.operationQueue.then(operation, operation);
+    const current = this.operationQueue.then(() => withFileLock(this.path, operation), () => withFileLock(this.path, operation));
     this.operationQueue = current.then(
       () => undefined,
       () => undefined
@@ -320,6 +326,38 @@ function withDefaults(data: StoreData): StoreData {
     evidenceMaps: data.evidenceMaps ?? [],
     generatedOutputs: data.generatedOutputs ?? []
   };
+}
+
+async function withFileLock<T>(storePath: string, operation: () => Promise<T>): Promise<T> {
+  await mkdir(dirname(storePath), { recursive: true });
+  const lockPath = `${storePath}.lock`;
+  const deadline = Date.now() + 5_000;
+  while (true) {
+    try {
+      await mkdir(lockPath);
+      break;
+    } catch (error) {
+      if (!isFileExistsError(error)) throw error;
+      if (Date.now() >= deadline) {
+        throw new Error(`Timed out waiting for JSON store lock: ${storePath}`);
+      }
+      await sleep(20);
+    }
+  }
+
+  try {
+    return await operation();
+  } finally {
+    await rm(lockPath, { recursive: true, force: true });
+  }
+}
+
+function isFileExistsError(error: unknown) {
+  return Boolean(error && typeof error === "object" && "code" in error && error.code === "EEXIST");
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function emptyData(): StoreData {

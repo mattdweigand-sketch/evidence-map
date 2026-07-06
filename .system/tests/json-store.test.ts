@@ -44,6 +44,47 @@ test("JSON store serializes concurrent source writes", async () => {
   }
 });
 
+test("JSON store serializes writes across store instances", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-json-store-cross-instance-"));
+  try {
+    const storePath = join(dir, "evidence-map-store.json");
+    const setupStore = new JsonFileEvidenceMapStore(storePath);
+    const run = await setupStore.createRun({
+      name: "cross instance sources",
+      artifactKind: "document",
+      inputPaths: []
+    });
+    const firstStore = new JsonFileEvidenceMapStore(storePath);
+    const secondStore = new JsonFileEvidenceMapStore(storePath);
+
+    await Promise.all(
+      Array.from({ length: 20 }, (_, index) => {
+        const store = index % 2 === 0 ? firstStore : secondStore;
+        return store.createSources(run.id, [
+          {
+            name: `cross-instance-${index}.csv`,
+            path: join(dir, `cross-instance-${index}.csv`),
+            fileType: "csv",
+            status: "raw_data",
+            intendedUse: "Cross-instance write test.",
+            notes: "Concurrent cross-instance write test."
+          }
+        ]);
+      })
+    );
+
+    const reloaded = new JsonFileEvidenceMapStore(storePath);
+    const sources = await reloaded.listSources(run.id);
+    assert.equal(sources.length, 20);
+    assert.deepEqual(
+      sources.map((source) => source.name).sort(),
+      Array.from({ length: 20 }, (_, index) => `cross-instance-${index}.csv`).sort()
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("JSON store reload preserves generated output records", async () => {
   const dir = await mkdtemp(join(tmpdir(), "evidence-map-json-generated-"));
   try {

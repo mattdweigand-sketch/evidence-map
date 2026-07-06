@@ -11,8 +11,8 @@ type SourceRecordDraft = Omit<SourceRecord, "id" | "runId">;
 const versionOrStatusTokens = new Set(["old", "final", "draft", "copy", "raw", "export", "exports"]);
 const dataFileTypes = new Set(["csv", "tsv", "xls", "xlsx", "xlsm"]);
 
-export async function buildSourcePacket(inputPaths: string[]) {
-  const filePaths = await expandInputPaths(inputPaths);
+export async function buildSourcePacket(inputPaths: string[], options: { baseDir?: string } = {}) {
+  const filePaths = await expandInputPaths(inputPaths, options);
   const files = await Promise.all(filePaths.map(async (path) => ({ path, stat: await stat(path) })));
   const [sources, inspections] = await Promise.all([Promise.all(files.map(toSourceRecord)), inspectFiles(files)]);
   const conflicts = inferSourceConflicts(sources);

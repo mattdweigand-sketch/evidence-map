@@ -4,6 +4,8 @@ import { exit } from "node:process";
 import { getDefaultBaseDir } from "../src/artifacts/paths.ts";
 import { writeRunArtifacts } from "../src/artifacts/write.ts";
 import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
+import { selectSourceEvidence } from "../src/evidence/select.ts";
+import { finalizeGeneratedOutput } from "../src/generate/output.ts";
 import { buildLegalRunArtifacts } from "../src/legal/artifacts.ts";
 import { applyLegalConflictReviewDecisions, readLegalReviewDecisionSet } from "../src/legal/review-decisions.ts";
 import { applyGeneralConflictReviewDecisions, readGeneralReviewDecisionSet } from "../src/review/general-decisions.ts";
@@ -37,19 +39,15 @@ try {
   const legalReviewDecisionSet = run.profile === "legal" ? await readLegalReviewDecisionSet({ baseDir, run }) : undefined;
   const generalReviewDecisionSet = run.profile === "general" ? await readGeneralReviewDecisionSet({ baseDir, run }) : undefined;
   const sourcePrepReviewDecisionSet = await readSourcePrepReviewDecisionSet({ baseDir, run });
-  const findings = await store.replaceVerificationFindings(
-    run.id,
-    await buildHostileReviewFindings(store, run.id, {
-      legalReviewDecisions: legalReviewDecisionSet?.decisions,
-      generalReviewDecisions: generalReviewDecisionSet?.decisions,
-      sourcePrepReviewDecisions: sourcePrepReviewDecisionSet.decisions
-    })
-  );
-  const [sources, inspections, conflicts, spec] = await Promise.all([
+  const [sources, inspections, conflicts, spec, storedSourceEvidence, generatedClaims, evidenceMap, previousGeneratedOutput] = await Promise.all([
     store.listSources(run.id),
     store.listFileInspections(run.id),
     store.listSourceConflicts(run.id),
-    store.getArtifactSpec(run.id)
+    store.getArtifactSpec(run.id),
+    store.listSourceEvidence(run.id),
+    store.listGeneratedClaims(run.id),
+    store.getEvidenceMap(run.id),
+    store.getGeneratedOutput(run.id)
   ]);
   if (!spec) throw new Error(`No artifact spec found for ${run.id}.`);
   const effectiveSources = applySourcePrepDecisionsToSources({
@@ -66,9 +64,64 @@ try {
       : run.profile === "general" && generalReviewDecisionSet
         ? applyGeneralConflictReviewDecisions({ conflicts, decisions: generalReviewDecisionSet.decisions })
       : conflicts;
-  const trustReport = await evaluateTrust(store, run.id, { sourceConflicts: effectiveConflicts });
+  const generatedMode = run.profile === "general" && Boolean(previousGeneratedOutput || evidenceMap);
+  const generatedSelection =
+    generatedMode
+      ? selectSourceEvidence({
+          sources: effectiveSources,
+          inspections: effectiveInspections,
+          evidence: storedSourceEvidence
+        })
+      : undefined;
+  const sourceEvidence =
+    generatedSelection
+      ? await store.replaceSourceEvidence(
+          run.id,
+          generatedSelection.evidence.map(({ runId: _runId, ...item }) => item)
+        )
+      : storedSourceEvidence;
+  const refreshedGeneratedSelection = generatedSelection
+    ? {
+        ...generatedSelection,
+        evidence: sourceEvidence,
+        selectedEvidence: sourceEvidence.filter((item) => item.useStatus === "selected"),
+        excludedEvidence: sourceEvidence.filter((item) => item.useStatus === "excluded")
+      }
+    : undefined;
+  const findings = await store.replaceVerificationFindings(
+    run.id,
+    await buildHostileReviewFindings(store, run.id, {
+      outputMode: generatedMode ? "generate" : undefined,
+      generationBlockers: refreshedGeneratedSelection?.blockers,
+      generationWarnings: refreshedGeneratedSelection?.warnings,
+      legalReviewDecisions: legalReviewDecisionSet?.decisions,
+      generalReviewDecisions: generalReviewDecisionSet?.decisions,
+      sourcePrepReviewDecisions: sourcePrepReviewDecisionSet.decisions
+    })
+  );
+  const trustReport = await evaluateTrust(store, run.id, {
+    sourceConflicts: effectiveConflicts,
+    outputMode: generatedMode ? "generate" : "review"
+  });
   const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
   const updatedRun = await store.updateRunStatus(run.id, status);
+  const generatedOutput =
+    generatedMode && evidenceMap
+      ? await finalizeGeneratedOutput({
+          store,
+          run: updatedRun,
+          artifactKind: updatedRun.artifactKind,
+          trustReport,
+          evidenceMap,
+          generatedClaims,
+          notes: unique([
+            ...(previousGeneratedOutput?.notes ?? []),
+            ...(refreshedGeneratedSelection?.blockers ?? []).map((blocker) => `Blocker: ${blocker}`),
+            ...(refreshedGeneratedSelection?.warnings ?? []).map((warning) => `Warning: ${warning}`),
+            "Final Markdown is written only when the generated trust report is ready."
+          ])
+        })
+      : undefined;
   const legalArtifacts =
     updatedRun.profile === "legal"
       ? await buildLegalRunArtifacts({
@@ -88,6 +141,11 @@ try {
     spec,
     findings,
     trustReport,
+    sourceEvidence: generatedMode ? sourceEvidence : undefined,
+    generatedClaims: generatedMode ? generatedClaims : undefined,
+    evidenceMap: generatedMode ? evidenceMap : undefined,
+    generatedOutput,
+    sourceExclusions: generatedMode ? refreshedGeneratedSelection?.sourceExclusions : undefined,
     legalSourcePacket: legalArtifacts?.legalSourcePacket,
     legalOutputSpec: legalArtifacts?.legalOutputSpec,
     legalEvidenceMap: legalArtifacts?.legalEvidenceMap,
@@ -127,4 +185,8 @@ function parseArgs(values: string[]) {
     }
   }
   return output;
+}
+
+function unique(values: string[]) {
+  return [...new Set(values)];
 }

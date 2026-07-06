@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { normalizeSourceDate } from "../date-candidates.ts";
 import type { EvidenceSnippetKind, FileInspectionRecord, ReviewStatus, SourceEvidenceRecord, SourceRecord } from "../types.ts";
 
 type SourceEvidenceDraft = Omit<SourceEvidenceRecord, "runId">;
@@ -76,7 +77,7 @@ export function buildSourceEvidenceRecords(input: {
     evidence.push(...snippetsForInspection({ runId: input.runId, source, inspection }));
   }
 
-  return dedupeEvidence(evidence).slice(0, 500);
+  return dedupeEvidence(evidence);
 }
 
 function snippetsForInspection(input: {
@@ -122,7 +123,7 @@ function buildTableRowSnippets(input: {
   const summary = input.inspection.structuredSummary as DelimitedSummary;
   const headers = arrayOfStrings(summary.headers);
   const rows = arrayOfStringRows(summary.rows);
-  const dataRows = rows.slice(headers.length > 0 ? 1 : 0, 101);
+  const dataRows = rows.slice(headers.length > 0 ? 1 : 0);
   return dataRows.flatMap((row, index) => {
     const rowNumber = index + (headers.length > 0 ? 2 : 1);
     const text = headers.length > 0 ? rowToLabeledText(headers, row) : row.join("; ");
@@ -269,7 +270,7 @@ function buildSnippet(input: {
   if (!hasMeaningfulText(text)) return undefined;
   const cappedText = text.slice(0, 1_000);
   const id = stableEvidenceId(input.runId, input.source.id, input.kind, input.anchor, cappedText);
-  const sourceDate = input.source.sourceDate ?? input.inspection.sourceDateCandidates[0];
+  const sourceDate = normalizeSourceDate(input.source.sourceDate) ?? normalizeSourceDate(input.inspection.sourceDateCandidates[0]);
   return {
     id,
     sourceId: input.source.id,
