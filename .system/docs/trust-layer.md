@@ -14,7 +14,7 @@ Assumption records: named assumptions, values, source links, ownership, status, 
 
 ## Current Limitation
 
-General-profile v1 runs include a review-decision path for creating/editing claims, attaching source support with anchors/quotes/rationale, resolving calculation risks, accepting current findings with rationale, and resolving source conflicts. They also write a local export gate receipt: unresolved blockers produce `04_export/general-export-refusal.md`, while ready runs produce `04_export/ready-manifest.json`. Broad automatic claim extraction, richer calculation repair artifacts, and final artifact copy/generation are still roadmap work. Legal-profile runs have a narrower review-decision path and local final export gate, but the gate still refuses unresolved legal blockers or required human review.
+General-profile v1 runs include a review-decision path for creating/editing claims, attaching source support with anchors/quotes/rationale, resolving calculation risks, accepting current findings with rationale, and resolving source conflicts. They also write a local export gate receipt: unresolved blockers produce `04_export/general-export-refusal.md`, while ready runs produce `04_export/ready-manifest.json`. After readiness, MCP can copy approved user-supplied final artifacts locally into `04_export/approved-artifacts/` and write a final artifact receipt. Broad automatic claim extraction, richer calculation repair artifacts, and final artifact generation/editing are still roadmap work. Legal-profile runs have a narrower review-decision path and local final export gate, but the gate still refuses unresolved legal blockers or required human review.
 
 ## Readiness Rules
 

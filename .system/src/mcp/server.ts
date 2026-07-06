@@ -8,6 +8,8 @@ import { writeRunArtifacts } from "../artifacts/write.ts";
 import { runEvidenceMapWorkflow } from "../chains/evidence-map/workflow.ts";
 import { JsonFileEvidenceMapStore } from "../db/json-file-store.ts";
 import type { EvidenceMapStore } from "../db/store.ts";
+import { applyGeneralFinalArtifacts } from "../export/general-artifacts.ts";
+import { buildGeneralFinalExport } from "../export/general.ts";
 import { buildSourcePacket } from "../ingest/source-packet.ts";
 import { buildLegalRunArtifacts, type LegalRunArtifacts } from "../legal/artifacts.ts";
 import {
@@ -464,6 +466,68 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
         return jsonToolResult(await regenerateGeneralRunAfterDecision({ ...context, decisionResult }));
       } catch (error) {
         return jsonToolError(error instanceof Error ? error.message : "General risk acceptance failed.");
+      }
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_apply_general_final_artifacts",
+    {
+      title: "Apply General Final Artifacts",
+      description: `Preview or copy approved user-supplied final artifacts into 04_export when a general run is ready. Requires approvalToken ${GENERAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        artifactPaths: z.array(z.string()).min(1),
+        dryRun: z.boolean().default(false),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, artifactPaths, dryRun, reviewer, notes, approvalToken, baseDir }) => {
+      try {
+        const context = await loadGeneralDecisionContext({ store, baseDir, runId, approvalToken });
+        const [sources, inspections, conflicts, spec, findings, trustReport] = await Promise.all([
+          store.listSources(runId),
+          store.listFileInspections(runId),
+          store.listSourceConflicts(runId),
+          store.getArtifactSpec(runId),
+          store.listVerificationFindings(runId),
+          store.getLatestTrustReport(runId)
+        ]);
+        if (!spec) throw new Error(`No artifact spec found for ${runId}.`);
+        if (!trustReport) throw new Error(`No trust report found for ${runId}.`);
+        const effectiveConflicts = applyGeneralConflictReviewDecisions({
+          conflicts,
+          decisions: context.decisionSet.decisions
+        });
+        const generalExport = buildGeneralFinalExport({
+          run: context.run,
+          sources,
+          inspections,
+          conflicts: effectiveConflicts,
+          spec,
+          findings,
+          trustReport,
+          generalReviewDecisionSet: context.decisionSet
+        });
+        if (!generalExport.ready || !generalExport.readyManifest) {
+          throw new Error(`General final artifact apply requires ready gates. Unresolved blockers: ${generalExport.blockers.join(" | ")}`);
+        }
+        return jsonToolResult(
+          await applyGeneralFinalArtifacts({
+            baseDir,
+            run: context.run,
+            artifactPaths,
+            readyManifest: generalExport.readyManifest,
+            dryRun,
+            reviewer,
+            notes
+          })
+        );
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "General final artifact apply failed.");
       }
     }
   );

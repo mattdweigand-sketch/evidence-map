@@ -93,6 +93,7 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_resolve_calculation_risk"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_resolve_source_conflict"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_accept_general_risk"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_apply_general_final_artifacts"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_attach_legal_passage_support"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_update_legal_source_authority"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_update_legal_source_treatment"));
@@ -143,6 +144,18 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
     arguments: { runId: run.runId }
   });
   assert.equal((verification.structuredContent as { trustReport?: { readiness?: string } }).trustReport?.readiness, "blocked");
+
+  const rejectedApply = await client.callTool({
+    name: "evidencemap_apply_general_final_artifacts",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      artifactPaths: ["input/sample-project/old-board-deck.pptx"],
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal(rejectedApply.isError, true);
+  assert.match(String((rejectedApply.structuredContent as { error?: string }).error), /requires ready gates/);
 
   await client.close();
   await server.close();
@@ -437,6 +450,87 @@ test("MCP general claim and calculation decisions regenerate ready export idempo
   };
   assert.equal(readyManifest.status, "export_ready");
   assert.equal(readyManifest.summary?.generalReviewDecisionCount, 3);
+
+  const finalArtifactPath = join(baseDir, "final", "reviewed-report.md");
+  await mkdir(join(baseDir, "final"), { recursive: true });
+  await writeFile(finalArtifactPath, "# Reviewed Report\n\nRevenue was 100 in the supplied raw export.\n");
+
+  const preview = await client.callTool({
+    name: "evidencemap_apply_general_final_artifacts",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      artifactPaths: ["final/reviewed-report.md"],
+      dryRun: true,
+      reviewer: "fixture-reviewer",
+      notes: "Preview the reviewed report handoff.",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  const previewContent = preview.structuredContent as {
+    status?: string;
+    dryRun?: boolean;
+    artifactCount?: number;
+    approvedArtifacts?: Array<{ copiedPath?: string; sha256?: string }>;
+    receiptJsonPath?: string;
+  };
+  assert.equal(previewContent.status, "preview_ready");
+  assert.equal(previewContent.dryRun, true);
+  assert.equal(previewContent.artifactCount, 1);
+  const plannedCopiedPath = previewContent.approvedArtifacts?.[0]?.copiedPath;
+  assert.ok(plannedCopiedPath);
+  assert.ok(previewContent.approvedArtifacts?.[0]?.sha256);
+  assert.equal(previewContent.receiptJsonPath, undefined);
+  await assert.rejects(readFile(plannedCopiedPath, "utf8"));
+  await assert.rejects(readFile(join(run.artifacts.exportDir, "general-final-artifact-receipt.json"), "utf8"));
+
+  const applied = await client.callTool({
+    name: "evidencemap_apply_general_final_artifacts",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      artifactPaths: ["final/reviewed-report.md"],
+      reviewer: "fixture-reviewer",
+      notes: "Apply the reviewed report for local handoff.",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  const appliedContent = applied.structuredContent as {
+    status?: string;
+    dryRun?: boolean;
+    artifactCount?: number;
+    approvedArtifacts?: Array<{ copiedPath?: string; copiedPathRelativeToRun?: string; sha256?: string }>;
+    receiptJsonPath?: string;
+    receiptMarkdownPath?: string;
+  };
+  assert.equal(appliedContent.status, "applied");
+  assert.equal(appliedContent.dryRun, false);
+  assert.equal(appliedContent.artifactCount, 1);
+  const copiedArtifact = appliedContent.approvedArtifacts?.[0];
+  assert.ok(copiedArtifact?.copiedPath);
+  assert.match(copiedArtifact.copiedPathRelativeToRun ?? "", /^04_export\/approved-artifacts\/reviewed-report-[a-f0-9]{12}\.md$/);
+  assert.equal(await readFile(copiedArtifact.copiedPath, "utf8"), "# Reviewed Report\n\nRevenue was 100 in the supplied raw export.\n");
+  assert.ok(appliedContent.receiptJsonPath);
+  assert.ok(appliedContent.receiptMarkdownPath);
+  const receipt = JSON.parse(await readFile(appliedContent.receiptJsonPath, "utf8")) as {
+    status?: string;
+    readiness?: string;
+    artifacts?: { sourcePacket?: string; readyManifest?: string; verificationReport?: string; trustReport?: string; reviewAudit?: string };
+    approvedArtifacts?: Array<{ originalPathRelativeToBaseDir?: string; copiedPathRelativeToRun?: string; sha256?: string }>;
+  };
+  assert.equal(receipt.status, "applied");
+  assert.equal(receipt.readiness, "ready");
+  assert.equal(receipt.artifacts?.sourcePacket, "01_source-packet/source-inventory.json");
+  assert.equal(receipt.artifacts?.readyManifest, "04_export/ready-manifest.json");
+  assert.equal(receipt.artifacts?.verificationReport, "03_verification/verification-report.md");
+  assert.equal(receipt.artifacts?.trustReport, "03_verification/trust-report.json");
+  assert.equal(receipt.artifacts?.reviewAudit, "03_verification/general-review-decisions.json");
+  assert.equal(receipt.approvedArtifacts?.[0]?.originalPathRelativeToBaseDir, "final/reviewed-report.md");
+  assert.equal(receipt.approvedArtifacts?.[0]?.copiedPathRelativeToRun, copiedArtifact.copiedPathRelativeToRun);
+  assert.equal(receipt.approvedArtifacts?.[0]?.sha256, copiedArtifact.sha256);
+  const receiptMarkdown = await readFile(appliedContent.receiptMarkdownPath, "utf8");
+  assert.match(receiptMarkdown, /General Final Artifact Receipt/);
+  assert.match(receiptMarkdown, /No model calls, external sending, filing, submission, or publication were performed/);
 
   const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
   await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${run.slug}`]);

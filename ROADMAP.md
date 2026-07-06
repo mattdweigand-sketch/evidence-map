@@ -3,9 +3,9 @@
 Planned work, roughly in order. No dates. Open an issue if one of these matters to you.
 
 - **PPTX deep parser and claim extraction.** Slide inventory, title and body text, charts, speaker notes, and claim candidates so decks stop being metadata-only.
-- **Broader general review-loop MCP tools.** Current general review tools can create/edit claims, attach source support with anchors/quotes/rationale, resolve calculation risks, resolve source conflicts, and accept current findings with audit records. Next slices should add claim deletion/merge, richer calculation repair artifacts, and final artifact preview/apply for the general profile.
+- **Broader general review-loop MCP tools.** Current general review tools can create/edit claims, attach source support with anchors/quotes/rationale, resolve calculation risks, resolve source conflicts, accept current findings with audit records, and copy approved final artifacts locally after readiness. Next slices should add claim deletion/merge and richer calculation repair artifacts.
 - **LLM-assisted evidence matching.** Suggest source-to-claim links with confidence and review status instead of relying on manual mapping.
-- **General-profile final artifact copy/apply.** The general profile now writes a local export refusal or ready manifest. A later step should copy or apply approved non-legal artifacts only when blocking findings are closed.
+- **General-profile final artifact generation/editing.** The general profile now writes a local export refusal or ready manifest and can copy approved user-supplied final artifacts once gates are ready. A later step should prepare or apply generated edits only after the same gates pass.
 - **General DOCX and PDF deep parsers.** Section maps, tables, citations, and page-cited text for non-legal document workflows. The legal profile already extracts paragraphs from DOCX and page/paragraph anchors from text-based PDFs.
 - **Update/refresh primitive.** Rebuild a recurring deliverable from a prior run without losing structure, decisions, or the review trail.
 - **Conflict inference for same-metric, different-date source pairs.** Today the conflict log catches same-stem files with differing status labels; two dated exports of the same metric (for example `2026-03-02-enrollment-figures.csv` vs `2026-04-30-enrollment-figures.csv`) are not yet grouped.
