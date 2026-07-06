@@ -7,6 +7,11 @@ import { buildLegalReuseLibrary } from "./reuse-library.ts";
 import { buildLegalSourcePacket, type LegalSourcePacket } from "./source-packet.ts";
 import { buildLegalOutputSpec } from "./spec.ts";
 import type { LegalEvidenceMap, LegalOutputSpec, LegalPropositionRecord, LegalReuseLibrary, LegalReviewDecisionRecord } from "./types.ts";
+import {
+  applySourcePrepDecisionsToInspections,
+  applySourcePrepDecisionsToSources,
+  type SourcePrepReviewDecisionRecord
+} from "../review/source-prep-decisions.ts";
 
 export interface LegalRunArtifacts {
   legalSourcePacket: LegalSourcePacket;
@@ -20,11 +25,21 @@ export async function buildLegalRunArtifacts(input: {
   store: EvidenceMapStore;
   run: EvidenceMapRun;
   reviewDecisions?: LegalReviewDecisionRecord[];
+  sourcePrepReviewDecisions?: SourcePrepReviewDecisionRecord[];
 }): Promise<LegalRunArtifacts> {
-  const [sources, inspections] = await Promise.all([
+  const [storedSources, storedInspections] = await Promise.all([
     input.store.listSources(input.run.id),
     input.store.listFileInspections(input.run.id)
   ]);
+  const sourcePrepReviewDecisions = input.sourcePrepReviewDecisions ?? [];
+  const sources = applySourcePrepDecisionsToSources({
+    sources: storedSources,
+    decisions: sourcePrepReviewDecisions
+  });
+  const inspections = applySourcePrepDecisionsToInspections({
+    inspections: storedInspections,
+    decisions: sourcePrepReviewDecisions
+  });
   const legalSourcePacket = applyLegalSourceReviewDecisions({
     legalSourcePacket: await buildLegalSourcePacket({ runId: input.run.id, sources, inspections }),
     decisions: input.reviewDecisions ?? []

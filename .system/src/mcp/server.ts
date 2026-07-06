@@ -52,6 +52,18 @@ import {
   type GeneralReviewDecisionRecord,
   type GeneralReviewDecisionSet
 } from "../review/general-decisions.ts";
+import {
+  appendMarkOcrRequiredDecision,
+  appendSetSourceDateDecision,
+  applySourcePrepDecisionsToInspections,
+  applySourcePrepDecisionsToSources,
+  readSourcePrepReviewDecisionSet,
+  SOURCE_PREP_APPROVAL_TOKEN,
+  type SourcePrepOcrReviewPath,
+  type SourcePrepReviewAuditEvent,
+  type SourcePrepReviewDecisionRecord,
+  type SourcePrepReviewDecisionSet
+} from "../review/source-prep-decisions.ts";
 import { buildHostileReviewFindings } from "../verify/hostile-review.ts";
 
 const artifactKindSchema = z.enum(artifactKinds);
@@ -64,6 +76,7 @@ const legalSourceStatusSchema = z.enum(["current", "superseded", "background", "
 const generalClaimReviewStatusSchema = z.enum(["needs_review", "verified"]);
 const generalReviewStatusSchema = z.enum(["unreviewed", "needs_review", "verified", "unsupported", "conflicting"]);
 const generalCalculationReviewStatusSchema = z.enum(["needs_review", "verified"]);
+const sourcePrepOcrReviewPathSchema = z.enum(["ocr_required", "replacement_required", "manual_review_required"]);
 type ResolvedWorkspaceInputPaths = { paths: string[] } | { error: string };
 
 export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefaultMcpStore()) {
@@ -242,6 +255,87 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       ]);
 
       return jsonToolResult({ runId, findings, trustReport });
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_set_source_date",
+    {
+      title: "Set Source Date",
+      description: `Attach an audited source date to an existing source. Requires approvalToken ${SOURCE_PREP_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        sourceId: z.string(),
+        sourceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        reason: z.string().min(1),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, sourceId, sourceDate, reason, reviewer, notes, approvalToken, baseDir }) => {
+      try {
+        const context = await loadSourcePrepDecisionContext({ store, baseDir, runId, approvalToken });
+        const sources = applySourcePrepDecisionsToSources({
+          sources: await store.listSources(runId),
+          decisions: context.decisionSet.decisions
+        });
+        const decisionResult = appendSetSourceDateDecision({
+          decisionSet: context.decisionSet,
+          sources,
+          sourceId,
+          sourceDate,
+          reason,
+          reviewer,
+          notes,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateRunAfterSourcePrepDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "Source-date decision failed.");
+      }
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_mark_source_ocr_required",
+    {
+      title: "Mark Source OCR Required",
+      description: `Record that a no-text PDF needs OCR, replacement, or manual OCR review. Requires approvalToken ${SOURCE_PREP_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        sourceId: z.string(),
+        reviewPath: sourcePrepOcrReviewPathSchema.default("ocr_required"),
+        reason: z.string().min(1),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, sourceId, reviewPath, reason, reviewer, notes, approvalToken, baseDir }) => {
+      try {
+        const context = await loadSourcePrepDecisionContext({ store, baseDir, runId, approvalToken });
+        const [sources, inspections] = await Promise.all([
+          store.listSources(runId),
+          store.listFileInspections(runId)
+        ]);
+        const decisionResult = appendMarkOcrRequiredDecision({
+          decisionSet: context.decisionSet,
+          sources,
+          inspections,
+          sourceId,
+          reviewPath: reviewPath as SourcePrepOcrReviewPath,
+          reason,
+          reviewer,
+          notes,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateRunAfterSourcePrepDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "OCR source-prep decision failed.");
+      }
     }
   );
 
@@ -596,7 +690,8 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       try {
         const context = await loadGeneralDecisionContext({ store, baseDir, runId, approvalToken });
         const currentFindings = await buildHostileReviewFindings(store, context.run.id, {
-          generalReviewDecisions: context.decisionSet.decisions
+          generalReviewDecisions: context.decisionSet.decisions,
+          sourcePrepReviewDecisions: context.sourcePrepDecisionSet.decisions
         });
         const decisionResult = appendGeneralRiskAcceptanceDecision({
           decisionSet: context.decisionSet,
@@ -642,14 +737,22 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
         ]);
         if (!spec) throw new Error(`No artifact spec found for ${runId}.`);
         if (!trustReport) throw new Error(`No trust report found for ${runId}.`);
+        const effectiveSources = applySourcePrepDecisionsToSources({
+          sources,
+          decisions: context.sourcePrepDecisionSet.decisions
+        });
+        const effectiveInspections = applySourcePrepDecisionsToInspections({
+          inspections,
+          decisions: context.sourcePrepDecisionSet.decisions
+        });
         const effectiveConflicts = applyGeneralConflictReviewDecisions({
           conflicts,
           decisions: context.decisionSet.decisions
         });
         const generalExport = buildGeneralFinalExport({
           run: context.run,
-          sources,
-          inspections,
+          sources: effectiveSources,
+          inspections: effectiveInspections,
           conflicts: effectiveConflicts,
           spec,
           findings,
@@ -803,7 +906,8 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       try {
         const context = await loadLegalDecisionContext({ store, baseDir, runId, approvalToken });
         const currentFindings = await buildHostileReviewFindings(store, context.run.id, {
-          legalReviewDecisions: context.decisionSet.decisions
+          legalReviewDecisions: context.decisionSet.decisions,
+          sourcePrepReviewDecisions: context.sourcePrepDecisionSet.decisions
         });
         const decisionResult = appendLegalRiskAcceptanceDecision({
           decisionSet: context.decisionSet,
@@ -985,6 +1089,101 @@ async function attachLegalPassageSupport(input: {
   return regenerateLegalRunAfterDecision({ ...context, decisionResult });
 }
 
+async function loadSourcePrepDecisionContext(input: {
+  store: EvidenceMapStore;
+  baseDir: string;
+  runId: string;
+  approvalToken: string;
+}): Promise<SourcePrepDecisionContext> {
+  const run = await input.store.getRun(input.runId);
+  if (!run) throw new Error(`Unknown run: ${input.runId}`);
+  if (input.approvalToken !== SOURCE_PREP_APPROVAL_TOKEN) {
+    throw new Error(`Source-prep review changes require approvalToken ${SOURCE_PREP_APPROVAL_TOKEN}.`);
+  }
+
+  const decisionSet = await readSourcePrepReviewDecisionSet({ baseDir: input.baseDir, run });
+  return {
+    store: input.store,
+    baseDir: input.baseDir,
+    run,
+    decisionSet
+  };
+}
+
+async function regenerateRunAfterSourcePrepDecision(input: SourcePrepDecisionContext & { decisionResult: SourcePrepDecisionResult }) {
+  const legalReviewDecisionSet =
+    input.run.profile === "legal" ? await readLegalReviewDecisionSet({ baseDir: input.baseDir, run: input.run }) : undefined;
+  const generalReviewDecisionSet =
+    input.run.profile === "general" ? await readGeneralReviewDecisionSet({ baseDir: input.baseDir, run: input.run }) : undefined;
+  const findings = await input.store.replaceVerificationFindings(
+    input.run.id,
+    await buildHostileReviewFindings(input.store, input.run.id, {
+      legalReviewDecisions: legalReviewDecisionSet?.decisions,
+      generalReviewDecisions: generalReviewDecisionSet?.decisions,
+      sourcePrepReviewDecisions: input.decisionResult.decisionSet.decisions
+    })
+  );
+  const [sources, inspections, conflicts, spec] = await Promise.all([
+    input.store.listSources(input.run.id),
+    input.store.listFileInspections(input.run.id),
+    input.store.listSourceConflicts(input.run.id),
+    input.store.getArtifactSpec(input.run.id)
+  ]);
+  if (!spec) throw new Error(`No artifact spec found for ${input.run.id}.`);
+  const effectiveConflicts =
+    input.run.profile === "legal" && legalReviewDecisionSet
+      ? applyLegalConflictReviewDecisions({ conflicts, decisions: legalReviewDecisionSet.decisions })
+      : input.run.profile === "general" && generalReviewDecisionSet
+        ? applyGeneralConflictReviewDecisions({ conflicts, decisions: generalReviewDecisionSet.decisions })
+        : conflicts;
+  const trustReport = await evaluateTrust(input.store, input.run.id, { sourceConflicts: effectiveConflicts });
+  const status = trustReport.readiness === "ready" ? "export_ready" : trustReport.readiness === "needs_review" ? "waiting_for_review" : "blocked";
+  const updatedRun = await input.store.updateRunStatus(input.run.id, status);
+  const legalArtifacts =
+    updatedRun.profile === "legal"
+      ? await buildLegalRunArtifacts({
+          store: input.store,
+          run: updatedRun,
+          reviewDecisions: legalReviewDecisionSet?.decisions,
+          sourcePrepReviewDecisions: input.decisionResult.decisionSet.decisions
+        })
+      : undefined;
+  const artifacts = await writeRunArtifacts({
+    baseDir: input.baseDir,
+    run: updatedRun,
+    sources,
+    inspections,
+    conflicts: effectiveConflicts,
+    spec,
+    findings,
+    trustReport,
+    legalSourcePacket: legalArtifacts?.legalSourcePacket,
+    legalOutputSpec: legalArtifacts?.legalOutputSpec,
+    legalEvidenceMap: legalArtifacts?.legalEvidenceMap,
+    legalDraftPropositions: legalArtifacts?.legalDraftPropositions,
+    legalReviewDecisionSet,
+    legalReuseLibrary: legalArtifacts?.legalReuseLibrary,
+    generalReviewDecisionSet,
+    sourcePrepReviewDecisionSet: input.decisionResult.decisionSet
+  });
+
+  return {
+    runId: updatedRun.id,
+    profile: updatedRun.profile,
+    status: updatedRun.status,
+    readiness: trustReport.readiness,
+    changed: input.decisionResult.changed,
+    decision: input.decisionResult.decision ?? null,
+    auditEvent: input.decisionResult.auditEvent ?? null,
+    decisionCount: input.decisionResult.decisionSet.decisions.length,
+    auditEventCount: input.decisionResult.decisionSet.auditEvents.length,
+    findingCount: findings.length,
+    blockingCount: trustReport.summary.blockingCount,
+    needsReviewCount: trustReport.summary.needsReviewCount,
+    artifacts
+  };
+}
+
 async function loadGeneralDecisionContext(input: {
   store: EvidenceMapStore;
   baseDir: string;
@@ -1002,20 +1201,25 @@ async function loadGeneralDecisionContext(input: {
     readGeneralReviewDecisionSet({ baseDir: input.baseDir, run }),
     input.store.listSourceConflicts(run.id)
   ]);
+  const sourcePrepDecisionSet = await readSourcePrepReviewDecisionSet({ baseDir: input.baseDir, run });
 
   return {
     store: input.store,
     baseDir: input.baseDir,
     run,
     decisionSet,
-    conflicts
+    conflicts,
+    sourcePrepDecisionSet
   };
 }
 
 async function regenerateGeneralRunAfterDecision(input: GeneralDecisionContext & { decisionResult: GeneralDecisionResult }) {
   const findings = await input.store.replaceVerificationFindings(
     input.run.id,
-    await buildHostileReviewFindings(input.store, input.run.id, { generalReviewDecisions: input.decisionResult.decisionSet.decisions })
+    await buildHostileReviewFindings(input.store, input.run.id, {
+      generalReviewDecisions: input.decisionResult.decisionSet.decisions,
+      sourcePrepReviewDecisions: input.sourcePrepDecisionSet.decisions
+    })
   );
   const [sources, inspections, conflicts, spec] = await Promise.all([
     input.store.listSources(input.run.id),
@@ -1040,7 +1244,8 @@ async function regenerateGeneralRunAfterDecision(input: GeneralDecisionContext &
     spec,
     findings,
     trustReport,
-    generalReviewDecisionSet: input.decisionResult.decisionSet
+    generalReviewDecisionSet: input.decisionResult.decisionSet,
+    sourcePrepReviewDecisionSet: input.sourcePrepDecisionSet
   });
 
   return {
@@ -1074,11 +1279,13 @@ async function loadLegalDecisionContext(input: {
   }
 
   const decisionSet = await readLegalReviewDecisionSet({ baseDir: input.baseDir, run });
+  const sourcePrepDecisionSet = await readSourcePrepReviewDecisionSet({ baseDir: input.baseDir, run });
   const [legalArtifacts, conflicts] = await Promise.all([
     buildLegalRunArtifacts({
       store: input.store,
       run,
-      reviewDecisions: decisionSet.decisions
+      reviewDecisions: decisionSet.decisions,
+      sourcePrepReviewDecisions: sourcePrepDecisionSet.decisions
     }),
     input.store.listSourceConflicts(run.id)
   ]);
@@ -1089,14 +1296,18 @@ async function loadLegalDecisionContext(input: {
     run,
     decisionSet,
     legalArtifacts,
-    conflicts
+    conflicts,
+    sourcePrepDecisionSet
   };
 }
 
 async function regenerateLegalRunAfterDecision(input: LegalDecisionContext & { decisionResult: LegalDecisionResult }) {
   const findings = await input.store.replaceVerificationFindings(
     input.run.id,
-    await buildHostileReviewFindings(input.store, input.run.id, { legalReviewDecisions: input.decisionResult.decisionSet.decisions })
+    await buildHostileReviewFindings(input.store, input.run.id, {
+      legalReviewDecisions: input.decisionResult.decisionSet.decisions,
+      sourcePrepReviewDecisions: input.sourcePrepDecisionSet.decisions
+    })
   );
   const [sources, inspections, conflicts, spec] = await Promise.all([
     input.store.listSources(input.run.id),
@@ -1115,7 +1326,8 @@ async function regenerateLegalRunAfterDecision(input: LegalDecisionContext & { d
   const legalArtifacts = await buildLegalRunArtifacts({
     store: input.store,
     run: updatedRun,
-    reviewDecisions: input.decisionResult.decisionSet.decisions
+    reviewDecisions: input.decisionResult.decisionSet.decisions,
+    sourcePrepReviewDecisions: input.sourcePrepDecisionSet.decisions
   });
   const artifacts = await writeRunArtifacts({
     baseDir: input.baseDir,
@@ -1131,7 +1343,8 @@ async function regenerateLegalRunAfterDecision(input: LegalDecisionContext & { d
     legalEvidenceMap: legalArtifacts.legalEvidenceMap,
     legalDraftPropositions: legalArtifacts.legalDraftPropositions,
     legalReviewDecisionSet: input.decisionResult.decisionSet,
-    legalReuseLibrary: legalArtifacts.legalReuseLibrary
+    legalReuseLibrary: legalArtifacts.legalReuseLibrary,
+    sourcePrepReviewDecisionSet: input.sourcePrepDecisionSet
   });
 
   return {
@@ -1158,6 +1371,7 @@ interface LegalDecisionContext {
   decisionSet: LegalReviewDecisionSet;
   legalArtifacts: LegalRunArtifacts;
   conflicts: SourceConflict[];
+  sourcePrepDecisionSet: SourcePrepReviewDecisionSet;
 }
 
 interface LegalDecisionResult {
@@ -1173,12 +1387,27 @@ interface GeneralDecisionContext {
   run: EvidenceMapRun;
   decisionSet: GeneralReviewDecisionSet;
   conflicts: SourceConflict[];
+  sourcePrepDecisionSet: SourcePrepReviewDecisionSet;
 }
 
 interface GeneralDecisionResult {
   decisionSet: GeneralReviewDecisionSet;
   decision?: GeneralReviewDecisionRecord;
   auditEvent?: GeneralReviewAuditEvent;
+  changed: boolean;
+}
+
+interface SourcePrepDecisionContext {
+  store: EvidenceMapStore;
+  baseDir: string;
+  run: EvidenceMapRun;
+  decisionSet: SourcePrepReviewDecisionSet;
+}
+
+interface SourcePrepDecisionResult {
+  decisionSet: SourcePrepReviewDecisionSet;
+  decision?: SourcePrepReviewDecisionRecord;
+  auditEvent?: SourcePrepReviewAuditEvent;
   changed: boolean;
 }
 

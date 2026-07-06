@@ -28,6 +28,14 @@ import { renderLegalBoundary, renderLegalReuseLibrary, renderLegalSourceHistory 
 import { renderLegalOutputSpec } from "../legal/spec.ts";
 import { renderLegalSourcePacket, type LegalSourcePacket } from "../legal/source-packet.ts";
 import { renderGeneralReviewDecisionSet, type GeneralReviewDecisionSet } from "../review/general-decisions.ts";
+import { buildReviewQueue, renderReviewQueue } from "../review/review-queue.ts";
+import {
+  applySourcePrepDecisionsToInspections,
+  applySourcePrepDecisionsToSources,
+  emptySourcePrepReviewDecisionSet,
+  renderSourcePrepReviewDecisionSet,
+  type SourcePrepReviewDecisionSet
+} from "../review/source-prep-decisions.ts";
 import type { LegalEvidenceMap, LegalOutputSpec, LegalPropositionRecord, LegalReuseLibrary, LegalReviewDecisionSet } from "../legal/types.ts";
 
 export async function writeRunArtifacts(input: {
@@ -51,19 +59,29 @@ export async function writeRunArtifacts(input: {
   legalReviewDecisionSet?: LegalReviewDecisionSet;
   legalReuseLibrary?: LegalReuseLibrary;
   generalReviewDecisionSet?: GeneralReviewDecisionSet;
+  sourcePrepReviewDecisionSet?: SourcePrepReviewDecisionSet;
 }) {
   const runDir = join(input.baseDir, "deliverables", input.run.slug);
   const sourceDir = join(runDir, "01_source-packet");
   const specDir = join(runDir, "02_artifact-spec");
   const verifyDir = join(runDir, "03_verification");
   const exportDir = join(runDir, "04_export");
+  const sourcePrepReviewDecisionSet = input.sourcePrepReviewDecisionSet ?? emptySourcePrepReviewDecisionSet(input.run.id);
+  const sources = applySourcePrepDecisionsToSources({
+    sources: input.sources,
+    decisions: sourcePrepReviewDecisionSet.decisions
+  });
+  const inspections = applySourcePrepDecisionsToInspections({
+    inspections: input.inspections,
+    decisions: sourcePrepReviewDecisionSet.decisions
+  });
   await Promise.all([sourceDir, specDir, verifyDir, exportDir].map((dir) => mkdir(dir, { recursive: true })));
 
   await writeJson(join(runDir, "run.json"), input.run);
-  await writeJson(join(sourceDir, "source-inventory.json"), input.sources);
-  await writeJson(join(sourceDir, "file-inspections.json"), input.inspections);
+  await writeJson(join(sourceDir, "source-inventory.json"), sources);
+  await writeJson(join(sourceDir, "file-inspections.json"), inspections);
   await writeJson(join(sourceDir, "source-conflicts.json"), input.conflicts);
-  await writeFile(join(sourceDir, "source-packet.md"), renderSourcePacket(input.sources, input.inspections, input.conflicts));
+  await writeFile(join(sourceDir, "source-packet.md"), renderSourcePacket(sources, inspections, input.conflicts));
   if (input.sourceEvidence) {
     await writeJson(join(sourceDir, "source-evidence.json"), input.sourceEvidence);
     await writeFile(join(sourceDir, "source-evidence.md"), renderSourceEvidenceMarkdown(input.sourceEvidence));
@@ -90,6 +108,20 @@ export async function writeRunArtifacts(input: {
   }
 
   await writeJson(join(verifyDir, "verification-findings.json"), input.findings);
+  await writeJson(join(verifyDir, "source-prep-decisions.json"), sourcePrepReviewDecisionSet);
+  await writeFile(join(verifyDir, "source-prep-decisions.md"), renderSourcePrepReviewDecisionSet(sourcePrepReviewDecisionSet));
+  const reviewQueue = buildReviewQueue({
+    run: input.run,
+    sources,
+    inspections,
+    conflicts: input.conflicts,
+    findings: input.findings,
+    trustReport: input.trustReport,
+    legalSourcePacket: input.legalSourcePacket,
+    sourcePrepReviewDecisionSet
+  });
+  await writeJson(join(verifyDir, "review-queue.json"), reviewQueue);
+  await writeFile(join(verifyDir, "review-queue.md"), renderReviewQueue(reviewQueue));
   if (input.generatedClaims) {
     await writeJson(join(verifyDir, "generated-claims.json"), input.generatedClaims);
     await writeFile(join(verifyDir, "generated-claims.md"), renderGeneratedClaimsMarkdown(input.generatedClaims));
@@ -150,8 +182,8 @@ export async function writeRunArtifacts(input: {
   } else {
     const generalExport = buildGeneralFinalExport({
       run: input.run,
-      sources: input.sources,
-      inspections: input.inspections,
+      sources,
+      inspections,
       conflicts: input.conflicts,
       spec: input.spec,
       findings: input.findings,

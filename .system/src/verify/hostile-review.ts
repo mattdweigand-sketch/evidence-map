@@ -11,6 +11,11 @@ import {
   applyGeneralRiskAcceptanceDecisions,
   type GeneralReviewDecisionRecord
 } from "../review/general-decisions.ts";
+import {
+  applySourcePrepDecisionsToInspections,
+  applySourcePrepDecisionsToSources,
+  type SourcePrepReviewDecisionRecord
+} from "../review/source-prep-decisions.ts";
 import type { GeneratedClaimRecord, OutputMode, SourceEvidenceRecord, VerificationFinding } from "../types.ts";
 import { workbookInspectionFindings } from "./workbook-findings.ts";
 
@@ -37,17 +42,27 @@ export async function buildHostileReviewFindings(
     generationWarnings?: string[];
     legalReviewDecisions?: LegalReviewDecisionRecord[];
     generalReviewDecisions?: GeneralReviewDecisionRecord[];
+    sourcePrepReviewDecisions?: SourcePrepReviewDecisionRecord[];
   } = {}
 ): Promise<FindingDraft[]> {
   const run = await store.getRun(runId);
-  const sources = await store.listSources(runId);
-  const inspections = await store.listFileInspections(runId);
+  const storedSources = await store.listSources(runId);
+  const storedInspections = await store.listFileInspections(runId);
   const storedConflicts = await store.listSourceConflicts(runId);
   const storedClaims = await store.listClaims(runId);
   const storedCalculations = await store.listCalculations(runId);
   const assumptions = await store.listAssumptions(runId);
+  const sourcePrepReviewDecisions = options.sourcePrepReviewDecisions ?? [];
   const legalReviewDecisions = run?.profile === "legal" ? options.legalReviewDecisions ?? [] : [];
   const generalReviewDecisions = run?.profile === "general" ? options.generalReviewDecisions ?? [] : [];
+  const sources = applySourcePrepDecisionsToSources({
+    sources: storedSources,
+    decisions: sourcePrepReviewDecisions
+  });
+  const inspections = applySourcePrepDecisionsToInspections({
+    inspections: storedInspections,
+    decisions: sourcePrepReviewDecisions
+  });
   const conflicts =
     run?.profile === "legal"
       ? applyLegalConflictReviewDecisions({ conflicts: storedConflicts, decisions: legalReviewDecisions })
@@ -194,7 +209,8 @@ export async function buildHostileReviewFindings(
     const legalArtifacts = await buildLegalRunArtifacts({
       store,
       run,
-      reviewDecisions: legalReviewDecisions
+      reviewDecisions: legalReviewDecisions,
+      sourcePrepReviewDecisions
     });
     findings.push(
       ...buildLegalTrustFindings({

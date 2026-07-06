@@ -11,6 +11,16 @@ import { writeRunArtifacts } from "../src/artifacts/write.ts";
 import { runEvidenceMapWorkflow } from "../src/chains/evidence-map/workflow.ts";
 import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
 import { MemoryEvidenceMapStore } from "../src/db/memory-store.ts";
+import {
+  appendMarkOcrRequiredDecision,
+  appendSetSourceDateDecision,
+  emptySourcePrepReviewDecisionSet,
+  readSourcePrepReviewDecisionSet,
+  SOURCE_PREP_APPROVAL_TOKEN,
+  sourcePrepReviewDecisionSetPath
+} from "../src/review/source-prep-decisions.ts";
+import { evaluateTrust } from "../src/trust/evaluate.ts";
+import { buildHostileReviewFindings } from "../src/verify/hostile-review.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -43,6 +53,13 @@ test("workflow creates source packet, spec, verification report, and export gate
   const refusal = await readFile(join(result.artifacts.exportDir, "general-export-refusal.md"), "utf8");
   assert.match(refusal, /General Export Refusal/);
   assert.match(refusal, /Claim has no source attribution/);
+  const reviewQueue = JSON.parse(await readFile(join(result.artifacts.verifyDir, "review-queue.json"), "utf8"));
+  assert.equal(reviewQueue.readiness, "blocked");
+  assert.equal(reviewQueue.artifactRefs.trustReport, "03_verification/trust-report.json");
+  assert.ok(reviewQueue.items.some((item: { action?: string }) => item.action === "attach_source_support"));
+  const reviewQueueMarkdown = await readFile(join(result.artifacts.verifyDir, "review-queue.md"), "utf8");
+  assert.match(reviewQueueMarkdown, /Review Queue/);
+  assert.match(reviewQueueMarkdown, /Attach source support/);
   await assert.rejects(readFile(join(result.artifacts.exportDir, "ready-manifest.json"), "utf8"));
 });
 
@@ -528,6 +545,13 @@ test("legal profile workflow writes legal source packet artifacts", async () => 
   assert.deepEqual(legalReuseLibrary.propositions, []);
   const legalReuseLibraryMarkdown = await readFile(join(result.artifacts.verifyDir, "legal-reuse-library.md"), "utf8");
   assert.match(legalReuseLibraryMarkdown, /Legal Reuse Library/);
+  const reviewQueue = JSON.parse(await readFile(join(result.artifacts.verifyDir, "review-queue.json"), "utf8"));
+  assert.equal(reviewQueue.profile, "legal");
+  assert.ok(reviewQueue.legalSummary.treatmentNotCheckedCount >= 1);
+  assert.ok(reviewQueue.items.some((item: { action?: string }) => item.action === "check_legal_treatment"));
+  const reviewQueueMarkdown = await readFile(join(result.artifacts.verifyDir, "review-queue.md"), "utf8");
+  assert.match(reviewQueueMarkdown, /Legal Summary/);
+  assert.match(reviewQueueMarkdown, /Check legal treatment/);
   const legalExportReadme = await readFile(join(result.artifacts.exportDir, "README.md"), "utf8");
   assert.match(legalExportReadme, /Legal Final Export Receipt/);
   assert.match(legalExportReadme, /Status: refused/);
@@ -787,14 +811,206 @@ test("verify command recomputes findings without duplicating old ones", async ()
   });
   const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
 
-  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${result.run.slug}`]);
-  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${result.run.slug}`]);
+  const compactVerify = await execFileAsync(process.execPath, [
+    "--experimental-strip-types",
+    scriptPath,
+    "--base-dir",
+    baseDir,
+    "--run",
+    `deliverables/${result.run.slug}`
+  ]);
+  assert.match(compactVerify.stdout, /Review queue:/);
+  assert.match(compactVerify.stdout, /Use --json to print the full trust report JSON/);
+  const jsonVerify = await execFileAsync(process.execPath, [
+    "--experimental-strip-types",
+    scriptPath,
+    "--base-dir",
+    baseDir,
+    "--run",
+    `deliverables/${result.run.slug}`,
+    "--json"
+  ]);
+  assert.equal(JSON.parse(jsonVerify.stdout).readiness, "blocked");
 
   const data = JSON.parse(await readFile(storePath, "utf8"));
   const findingsForRun = data.findings.filter((finding: { runId: string }) => finding.runId === result.run.id);
   const report = JSON.parse(await readFile(join(result.artifacts.verifyDir, "trust-report.json"), "utf8"));
+  const reviewQueue = JSON.parse(await readFile(join(result.artifacts.verifyDir, "review-queue.json"), "utf8"));
   assert.equal(findingsForRun.length, result.findings.length);
   assert.equal(report.readiness, "blocked");
+  assert.equal(reviewQueue.readiness, "blocked");
+});
+
+test("source-prep source date decision removes the matching date blocker", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-source-date-decision-"));
+  const inputDir = join(baseDir, "input", "undated-source");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "current-metrics.csv"), "metric,value\nrevenue,100\n");
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const result = await runEvidenceMapWorkflow(new JsonFileEvidenceMapStore(storePath), {
+    baseDir,
+    name: "undated-source",
+    artifactKind: "document",
+    inputPaths: ["input/undated-source"]
+  });
+  const source = result.sources[0];
+  assert.ok(source);
+  assert.ok(result.findings.some((finding) => finding.issue === "Number-bearing source has no source date."));
+
+  const decisionSet = await readSourcePrepReviewDecisionSet({ baseDir, run: result.run });
+  const decisionResult = appendSetSourceDateDecision({
+    decisionSet,
+    sources: result.sources,
+    sourceId: source.id,
+    sourceDate: "2026-05-01",
+    reason: "Reviewed source packet and confirmed the metrics are dated 2026-05-01.",
+    reviewer: "fixture-reviewer",
+    approvalToken: SOURCE_PREP_APPROVAL_TOKEN,
+    now: "2026-07-06T00:00:00.000Z"
+  });
+  await writeFile(sourcePrepReviewDecisionSetPath(baseDir, result.run.slug), `${JSON.stringify(decisionResult.decisionSet, null, 2)}\n`);
+
+  const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
+  const firstVerify = await execFileAsync(process.execPath, [
+    "--experimental-strip-types",
+    scriptPath,
+    "--base-dir",
+    baseDir,
+    "--run",
+    `deliverables/${result.run.slug}`
+  ]);
+  const secondVerify = await execFileAsync(process.execPath, [
+    "--experimental-strip-types",
+    scriptPath,
+    "--base-dir",
+    baseDir,
+    "--run",
+    `deliverables/${result.run.slug}`
+  ]);
+  assert.doesNotMatch(firstVerify.stdout, /add_source_date/);
+  assert.doesNotMatch(secondVerify.stdout, /add_source_date/);
+
+  const jsonVerify = await execFileAsync(process.execPath, [
+    "--experimental-strip-types",
+    scriptPath,
+    "--base-dir",
+    baseDir,
+    "--run",
+    `deliverables/${result.run.slug}`,
+    "--json"
+  ]);
+  const trustReport = JSON.parse(jsonVerify.stdout);
+  assert.equal(trustReport.readiness, "blocked");
+
+  const reviewQueue = JSON.parse(await readFile(join(result.artifacts.verifyDir, "review-queue.json"), "utf8"));
+  assert.equal(reviewQueue.sourcePrepSummary.sourceDateDecisionCount, 1);
+  assert.ok(!reviewQueue.items.some((item: { action?: string }) => item.action === "add_source_date"));
+  const sourceInventory = JSON.parse(await readFile(join(result.artifacts.sourceDir, "source-inventory.json"), "utf8"));
+  assert.equal(sourceInventory[0]?.sourceDate, "2026-05-01");
+  const data = JSON.parse(await readFile(storePath, "utf8"));
+  const findingsForRun = data.findings.filter((finding: { runId: string }) => finding.runId === result.run.id);
+  assert.equal(findingsForRun.length, trustReport.summary.findingCount);
+});
+
+test("source-prep OCR decision is audited without marking extraction inspected", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-ocr-decision-"));
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const store = new JsonFileEvidenceMapStore(storePath);
+  const run = await store.createRun({
+    name: "ocr-decision",
+    artifactKind: "document",
+    profile: "general",
+    inputPaths: []
+  });
+  const sourcePath = join(baseDir, "input", "scanned-invoice.pdf");
+  const [source] = await store.createSources(run.id, [
+    {
+      name: "scanned-invoice.pdf",
+      path: sourcePath,
+      fileType: "pdf",
+      status: "current",
+      intendedUse: "Scanned invoice source."
+    }
+  ]);
+  assert.ok(source);
+  const [inspection] = await store.createFileInspections(run.id, [
+    {
+      sourceId: source.id,
+      name: source.name,
+      path: source.path,
+      fileType: "pdf",
+      parser: "pdf-text-v1",
+      status: "metadata_only",
+      sizeBytes: 100,
+      sourceDateCandidates: [],
+      ownerCandidates: [],
+      structuredSummary: {
+        pdfSignature: true,
+        pageCount: 1,
+        extractablePageCount: 0,
+        paragraphCount: 0,
+        numberCandidateCount: 0
+      },
+      warnings: ["PDF parser did not return extractable text."]
+    }
+  ]);
+  assert.ok(inspection);
+  const spec = await store.createArtifactSpec({
+    runId: run.id,
+    artifactKind: "document",
+    audience: "Reviewer.",
+    decisionContext: "OCR decision fixture.",
+    narrativeSpine: "Verify OCR source-prep decisions.",
+    structure: ["Source packet"],
+    requiredChecks: ["No-text PDFs stay blocked or review-routed."],
+    reviewRules: ["Do not mark metadata-only PDFs as inspected without text."]
+  });
+  const findings = await store.createVerificationFindings(run.id, await buildHostileReviewFindings(store, run.id));
+  const trustReport = await evaluateTrust(store, run.id);
+  const updatedRun = await store.updateRunStatus(run.id, "waiting_for_review");
+  const artifacts = await writeRunArtifacts({
+    baseDir,
+    run: updatedRun,
+    sources: [source],
+    inspections: [inspection],
+    conflicts: [],
+    spec,
+    findings,
+    trustReport
+  });
+
+  const decisionResult = appendMarkOcrRequiredDecision({
+    decisionSet: emptySourcePrepReviewDecisionSet(run.id),
+    sources: [source],
+    inspections: [inspection],
+    sourceId: source.id,
+    reviewPath: "manual_review_required",
+    reason: "PDF has no extractable text; route to manual OCR review before reliance.",
+    reviewer: "fixture-reviewer",
+    approvalToken: SOURCE_PREP_APPROVAL_TOKEN,
+    now: "2026-07-06T00:00:00.000Z"
+  });
+  await writeFile(sourcePrepReviewDecisionSetPath(baseDir, updatedRun.slug), `${JSON.stringify(decisionResult.decisionSet, null, 2)}\n`);
+
+  const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
+  await execFileAsync(process.execPath, [
+    "--experimental-strip-types",
+    scriptPath,
+    "--base-dir",
+    baseDir,
+    "--run",
+    `deliverables/${updatedRun.slug}`
+  ]);
+
+  const reviewQueue = JSON.parse(await readFile(join(artifacts.verifyDir, "review-queue.json"), "utf8"));
+  assert.equal(reviewQueue.sourcePrepSummary.ocrDecisionCount, 1);
+  assert.ok(reviewQueue.items.some((item: { action?: string }) => item.action === "ocr_or_replace_pdf"));
+  const sourcePrepDecisions = JSON.parse(await readFile(join(artifacts.verifyDir, "source-prep-decisions.json"), "utf8"));
+  assert.equal(sourcePrepDecisions.auditEvents.length, 1);
+  assert.equal(sourcePrepDecisions.decisions[0]?.action, "mark_ocr_required");
+  const fileInspections = JSON.parse(await readFile(join(artifacts.sourceDir, "file-inspections.json"), "utf8"));
+  assert.equal(fileInspections[0]?.status, "metadata_only");
+  assert.match(fileInspections[0]?.warnings.join(" "), /manual OCR review required/);
 });
 
 test("run command rejects invalid artifact kinds", async () => {

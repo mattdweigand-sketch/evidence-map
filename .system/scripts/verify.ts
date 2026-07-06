@@ -7,14 +7,21 @@ import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
 import { buildLegalRunArtifacts } from "../src/legal/artifacts.ts";
 import { applyLegalConflictReviewDecisions, readLegalReviewDecisionSet } from "../src/legal/review-decisions.ts";
 import { applyGeneralConflictReviewDecisions, readGeneralReviewDecisionSet } from "../src/review/general-decisions.ts";
+import { buildReviewQueue, renderReviewQueueCliSummary } from "../src/review/review-queue.ts";
+import {
+  applySourcePrepDecisionsToInspections,
+  applySourcePrepDecisionsToSources,
+  readSourcePrepReviewDecisionSet
+} from "../src/review/source-prep-decisions.ts";
 import { evaluateTrust } from "../src/trust/evaluate.ts";
 import { buildHostileReviewFindings } from "../src/verify/hostile-review.ts";
 
 const args = parseArgs(process.argv.slice(2));
-const runDirArg = args.run;
-const baseDir = args["base-dir"] ? resolve(args["base-dir"]) : getDefaultBaseDir();
+const runDirArg = typeof args.run === "string" ? args.run : undefined;
+const baseDirArg = typeof args["base-dir"] === "string" ? args["base-dir"] : undefined;
+const baseDir = baseDirArg ? resolve(baseDirArg) : getDefaultBaseDir();
 if (!runDirArg) {
-  console.error("Usage: npm --prefix .system run verify -- --run deliverables/<run-slug>");
+  console.error("Usage: npm --prefix .system run verify -- --run deliverables/<run-slug> [--json]");
   exit(1);
 }
 
@@ -29,11 +36,13 @@ try {
 
   const legalReviewDecisionSet = run.profile === "legal" ? await readLegalReviewDecisionSet({ baseDir, run }) : undefined;
   const generalReviewDecisionSet = run.profile === "general" ? await readGeneralReviewDecisionSet({ baseDir, run }) : undefined;
+  const sourcePrepReviewDecisionSet = await readSourcePrepReviewDecisionSet({ baseDir, run });
   const findings = await store.replaceVerificationFindings(
     run.id,
     await buildHostileReviewFindings(store, run.id, {
       legalReviewDecisions: legalReviewDecisionSet?.decisions,
-      generalReviewDecisions: generalReviewDecisionSet?.decisions
+      generalReviewDecisions: generalReviewDecisionSet?.decisions,
+      sourcePrepReviewDecisions: sourcePrepReviewDecisionSet.decisions
     })
   );
   const [sources, inspections, conflicts, spec] = await Promise.all([
@@ -43,6 +52,14 @@ try {
     store.getArtifactSpec(run.id)
   ]);
   if (!spec) throw new Error(`No artifact spec found for ${run.id}.`);
+  const effectiveSources = applySourcePrepDecisionsToSources({
+    sources,
+    decisions: sourcePrepReviewDecisionSet.decisions
+  });
+  const effectiveInspections = applySourcePrepDecisionsToInspections({
+    inspections,
+    decisions: sourcePrepReviewDecisionSet.decisions
+  });
   const effectiveConflicts =
     run.profile === "legal" && legalReviewDecisionSet
       ? applyLegalConflictReviewDecisions({ conflicts, decisions: legalReviewDecisionSet.decisions })
@@ -54,7 +71,12 @@ try {
   const updatedRun = await store.updateRunStatus(run.id, status);
   const legalArtifacts =
     updatedRun.profile === "legal"
-      ? await buildLegalRunArtifacts({ store, run: updatedRun, reviewDecisions: legalReviewDecisionSet?.decisions })
+      ? await buildLegalRunArtifacts({
+          store,
+          run: updatedRun,
+          reviewDecisions: legalReviewDecisionSet?.decisions,
+          sourcePrepReviewDecisions: sourcePrepReviewDecisionSet.decisions
+        })
       : undefined;
 
   await writeRunArtifacts({
@@ -72,20 +94,37 @@ try {
     legalDraftPropositions: legalArtifacts?.legalDraftPropositions,
     legalReviewDecisionSet,
     legalReuseLibrary: legalArtifacts?.legalReuseLibrary,
-    generalReviewDecisionSet
+    generalReviewDecisionSet,
+    sourcePrepReviewDecisionSet
   });
-  console.log(JSON.stringify(trustReport, null, 2));
+  const reviewQueue = buildReviewQueue({
+    run: updatedRun,
+    sources: effectiveSources,
+    inspections: effectiveInspections,
+    conflicts: effectiveConflicts,
+    findings,
+    trustReport,
+    legalSourcePacket: legalArtifacts?.legalSourcePacket,
+    sourcePrepReviewDecisionSet
+  });
+  console.log(args.json === true ? JSON.stringify(trustReport, null, 2) : renderReviewQueueCliSummary(reviewQueue));
 } catch (error) {
   console.error(error instanceof Error ? error.message : `No runnable verification state found for ${runDir}`);
   exit(1);
 }
 
 function parseArgs(values: string[]) {
-  const output: Record<string, string> = {};
-  for (let index = 0; index < values.length; index += 2) {
+  const output: Record<string, string | boolean> = {};
+  for (let index = 0; index < values.length; index += 1) {
     const key = values[index]?.replace(/^--/, "");
+    if (!key) continue;
     const value = values[index + 1];
-    if (key && value) output[key] = value;
+    if (!value || value.startsWith("--")) {
+      output[key] = true;
+    } else {
+      output[key] = value;
+      index += 1;
+    }
   }
   return output;
 }
