@@ -12,9 +12,11 @@ Calculation records: mapped calculations, inputs, expected behavior, risk flags,
 
 Assumption records: named assumptions, values, source links, ownership, status, and notes; see `AssumptionRecord` in `src/types.ts`.
 
+Generation records: source evidence snippets, generated claims, evidence maps, and generated output receipts; see `SourceEvidenceRecord`, `GeneratedClaimRecord`, `EvidenceMapRecord`, and `GeneratedOutputRecord` in `src/types.ts`.
+
 ## Current Limitation
 
-General-profile v1 runs include a review-decision path for creating/editing/deleting/merging claims, attaching source support with anchors/quotes/rationale, resolving calculation risks, accepting current findings with rationale, and resolving source conflicts. They also write a local export gate receipt: unresolved blockers produce `04_export/general-export-refusal.md`, while ready runs produce `04_export/ready-manifest.json`. Deck and mixed runs seed deterministic unsupported claim candidates from inspected PPTX slide and speaker-notes text. After readiness, MCP can copy approved user-supplied final artifacts locally into `04_export/approved-artifacts/` and write a final artifact receipt. Broad claim extraction for other formats, automatic evidence matching, richer calculation repair artifacts, and final artifact generation/editing are still roadmap work. Legal-profile runs have a narrower review-decision path and local final export gate, but the gate still refuses unresolved legal blockers or required human review.
+General-profile v1 runs include a review-decision path for creating/editing/deleting/merging claims, attaching source support with anchors/quotes/rationale, resolving calculation risks, accepting current findings with rationale, and resolving source conflicts. They also write a local export gate receipt: unresolved blockers produce `04_export/general-export-refusal.md`, while ready runs produce `04_export/ready-manifest.json`. Deck and mixed runs seed deterministic unsupported claim candidates from inspected PPTX slide and speaker-notes text. Generation mode adds source evidence snippets, source selection, generated claims, a generated evidence map, and local Markdown output when ready. After readiness, MCP can copy approved user-supplied final artifacts locally into `04_export/approved-artifacts/` and write a final artifact receipt. Native Office generation, external model calls, and prose-quality synthesis are still out of scope. Legal-profile runs have a narrower review-decision path and local final export gate, but the gate still refuses unresolved legal blockers or required human review.
 
 ## Readiness Rules
 
@@ -34,5 +36,15 @@ Current implemented review rules:
 - An assumption is an estimate.
 - A reviewer must choose between conflicting sources.
 - A source is unclear, unsupported, or metadata-only.
+
+Generation-mode rules:
+
+- Selected evidence is strict: selected inspection failures, selected undated numeric evidence, unresolved selected-source conflicts, unsupported generated claims, and workbook calculation risks block final Markdown.
+- Excluded unused sources stay visible in source evidence, evidence-map, receipt, and final output tables but do not automatically block export.
+- Old/final conflicts can be resolved deterministically by selecting the final/current evidence and excluding the old/superseded evidence.
+- Two current sources with conflicting values for the same metric block export until resolved.
+- No final Markdown is written unless the trust report is `ready`.
+- Every final generated claim must include source IDs and evidence IDs.
+- Every numeric final generated claim must include a source date.
 
 Chart traceability and document-level claim extraction are enforced only after those records exist. General PowerPoint inspection now extracts slide text, notes text, and chart references, and seeds unsupported slide-level claim candidates for deck/mixed runs; general DOCX inspection extracts paragraphs, headings, and tables. The legal profile adds citeable DOCX and text-based PDF passage extraction for supplied legal sources. An artifact is ready only when blocking issues are zero and required review findings are cleared or explicitly accepted through the relevant review path.

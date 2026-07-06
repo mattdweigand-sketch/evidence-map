@@ -5,9 +5,13 @@ import type {
   AssumptionRecord,
   CalculationRecord,
   ClaimRecord,
+  EvidenceMapRecord,
   FileInspectionRecord,
+  GeneratedClaimRecord,
+  GeneratedOutputRecord,
   SourceConflict,
   SourceRecord,
+  SourceEvidenceRecord,
   StartRunInput,
   EvidenceMapRun,
   TrustReport,
@@ -21,8 +25,12 @@ interface StoreData {
   sources: SourceRecord[];
   conflicts: SourceConflict[];
   inspections: FileInspectionRecord[];
+  sourceEvidence: SourceEvidenceRecord[];
   assumptions: AssumptionRecord[];
   claims: ClaimRecord[];
+  generatedClaims: GeneratedClaimRecord[];
+  evidenceMaps: EvidenceMapRecord[];
+  generatedOutputs: GeneratedOutputRecord[];
   calculations: CalculationRecord[];
   specs: ArtifactSpec[];
   findings: VerificationFinding[];
@@ -111,6 +119,27 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
     });
   }
 
+  async createSourceEvidence(runId: string, evidence: Omit<SourceEvidenceRecord, "runId">[]) {
+    return this.append("sourceEvidence", evidence.map((item) => ({ ...item, runId })));
+  }
+
+  async replaceSourceEvidence(runId: string, evidence: Omit<SourceEvidenceRecord, "runId">[]) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      const created = evidence.map((item) => ({ ...item, runId }));
+      data.sourceEvidence = [...data.sourceEvidence.filter((item) => item.runId !== runId), ...created];
+      await this.save(data);
+      return created;
+    });
+  }
+
+  async listSourceEvidence(runId: string) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.sourceEvidence.filter((item) => item.runId === runId);
+    });
+  }
+
   async createAssumptions(runId: string, assumptions: Omit<AssumptionRecord, "id" | "runId">[]) {
     return this.append("assumptions", assumptions.map((assumption) => ({ ...assumption, id: createId("asm"), runId })));
   }
@@ -130,6 +159,61 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
     return this.serialize(async () => {
       const data = await this.load();
       return data.claims.filter((claim) => claim.runId === runId);
+    });
+  }
+
+  async createGeneratedClaims(runId: string, claims: Omit<GeneratedClaimRecord, "runId">[]) {
+    return this.append("generatedClaims", claims.map((claim) => ({ ...claim, runId })));
+  }
+
+  async replaceGeneratedClaims(runId: string, claims: Omit<GeneratedClaimRecord, "runId">[]) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      const created = claims.map((claim) => ({ ...claim, runId }));
+      data.generatedClaims = [...data.generatedClaims.filter((claim) => claim.runId !== runId), ...created];
+      await this.save(data);
+      return created;
+    });
+  }
+
+  async listGeneratedClaims(runId: string) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.generatedClaims.filter((claim) => claim.runId === runId);
+    });
+  }
+
+  async createEvidenceMap(map: Omit<EvidenceMapRecord, "id">) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      const created = { ...map, id: createId("evidence_map") };
+      data.evidenceMaps = [...data.evidenceMaps.filter((item) => item.runId !== map.runId), created];
+      await this.save(data);
+      return created;
+    });
+  }
+
+  async getEvidenceMap(runId: string) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.evidenceMaps.filter((item) => item.runId === runId).at(-1);
+    });
+  }
+
+  async createGeneratedOutput(output: Omit<GeneratedOutputRecord, "id">) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      const created = { ...output, id: createId("generated_output") };
+      data.generatedOutputs = [...data.generatedOutputs.filter((item) => item.runId !== output.runId), created];
+      await this.save(data);
+      return created;
+    });
+  }
+
+  async getGeneratedOutput(runId: string) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.generatedOutputs.filter((item) => item.runId === runId).at(-1);
     });
   }
 
@@ -230,7 +314,11 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
 function withDefaults(data: StoreData): StoreData {
   return {
     ...data,
-    runs: data.runs.map((run) => ({ ...run, profile: run.profile ?? "general" }))
+    runs: data.runs.map((run) => ({ ...run, profile: run.profile ?? "general" })),
+    sourceEvidence: data.sourceEvidence ?? [],
+    generatedClaims: data.generatedClaims ?? [],
+    evidenceMaps: data.evidenceMaps ?? [],
+    generatedOutputs: data.generatedOutputs ?? []
   };
 }
 
@@ -240,8 +328,12 @@ function emptyData(): StoreData {
     sources: [],
     conflicts: [],
     inspections: [],
+    sourceEvidence: [],
     assumptions: [],
     claims: [],
+    generatedClaims: [],
+    evidenceMaps: [],
+    generatedOutputs: [],
     calculations: [],
     specs: [],
     findings: [],

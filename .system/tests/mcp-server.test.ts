@@ -168,6 +168,60 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   await server.close();
 });
 
+test("MCP workflow generation returns generated-output metadata", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-generate-"));
+  fixtureDirs.push(baseDir);
+  const inputDir = join(baseDir, "input", "generated-report");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-current-metrics.csv"), "metric,value,as_of_date\nactive_users,42,2026-05-01\n");
+
+  const { server } = createEvidenceMapMcpServer(new MemoryEvidenceMapStore());
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const runResult = await client.callTool({
+    name: "evidencemap_run_workflow",
+    arguments: {
+      baseDir,
+      name: "generated-report",
+      artifactKind: "report",
+      inputPaths: ["input/generated-report"],
+      generate: true
+    }
+  });
+  const run = runResult.structuredContent as {
+    runId?: string;
+    status?: string;
+    readiness?: string;
+    generatedOutput?: {
+      status?: string;
+      format?: string;
+      pathRelativeToRun?: string;
+      generatedClaimCount?: number;
+      selectedEvidenceCount?: number;
+      excludedSourceCount?: number;
+    } | null;
+    artifacts?: { exportDir?: string };
+  };
+
+  assert.equal(run.status, "export_ready");
+  assert.equal(run.readiness, "ready");
+  assert.equal(run.generatedOutput?.status, "export_ready");
+  assert.equal(run.generatedOutput?.format, "markdown");
+  assert.equal(run.generatedOutput?.pathRelativeToRun, "04_export/final-output.md");
+  assert.ok((run.generatedOutput?.generatedClaimCount ?? 0) > 0);
+  assert.ok((run.generatedOutput?.selectedEvidenceCount ?? 0) > 0);
+  assert.equal(run.generatedOutput?.excludedSourceCount, 0);
+  assert.ok(run.artifacts?.exportDir);
+  await readFile(join(run.artifacts.exportDir, "final-output.md"), "utf8");
+
+  await client.close();
+  await server.close();
+});
+
 test("MCP tools accept legal workflow profile", async () => {
   const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-legal-"));
   fixtureDirs.push(baseDir);

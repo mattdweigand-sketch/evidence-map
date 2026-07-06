@@ -106,6 +106,7 @@ async function inspectDelimitedText(
       nonEmptyRowCount: nonEmptyRows.length,
       headerCount: headers.length,
       headers,
+      rows: nonEmptyRows.slice(0, 101).map((row) => row.slice(0, 50).map((value) => value.trim().slice(0, 500))),
       blankRowCount: rows.length - nonEmptyRows.length,
       inconsistentRowCount: inconsistentRows,
       numberCandidateCount
@@ -122,6 +123,10 @@ async function inspectPlainText(
   const content = await readSmallText(base.path);
   const lines = content.split(/\r?\n/);
   const headings = lines.filter((line) => /^#{1,6}\s+\S/.test(line) || /^[A-Z][A-Za-z0-9 ,:&/-]{4,}$/.test(line.trim()));
+  const excerpts = splitParagraphs(content).slice(0, 100).map((text, index) => ({
+    paragraphNumber: index + 1,
+    text: text.slice(0, 500)
+  }));
   const numberLikeValues = content.match(/\b\d{1,3}(?:,\d{3})*(?:\.\d+)?%?\b/g) ?? [];
 
   return {
@@ -135,6 +140,7 @@ async function inspectPlainText(
       nonEmptyLineCount: lines.filter((line) => line.trim()).length,
       headingCount: headings.length,
       headings: headings.slice(0, 20).map((heading) => heading.replace(/^#{1,6}\s+/, "").trim()),
+      excerpts,
       numberCandidateCount: numberLikeValues.length
     },
     textPreview: previewText(content),
@@ -173,7 +179,11 @@ async function inspectPdf(base: Pick<FileInspectionDraft, "name" | "path" | "fil
         pageCount: extraction.pageCount,
         extractablePageCount: extraction.extractablePageCount,
         paragraphCount: extraction.paragraphCount,
-        numberCandidateCount: extraction.numberCandidateCount
+        numberCandidateCount: extraction.numberCandidateCount,
+        pages: extraction.pages.slice(0, 100).map((page) => ({
+          pageNumber: page.pageNumber,
+          paragraphs: page.paragraphs.slice(0, 20).map((paragraph) => paragraph.slice(0, 500))
+        }))
       },
       textPreview: previewText(extraction.text),
       warnings: hasText ? [] : ["PDF parser did not return extractable text."]
@@ -223,6 +233,20 @@ function inferOwnerCandidates(value: string) {
     candidates.add(match[1].trim().slice(0, 120));
   }
   return [...candidates];
+}
+
+function splitParagraphs(value: string) {
+  return value
+    .split(/\n\s*\n+/)
+    .map((paragraph) =>
+      paragraph
+        .split(/\r?\n/)
+        .map((line) => line.replace(/^#{1,6}\s+/, "").trim())
+        .filter(Boolean)
+        .join(" ")
+        .trim()
+    )
+    .filter((paragraph) => paragraph.length > 0);
 }
 
 function parseDelimitedRows(content: string, delimiter: string) {

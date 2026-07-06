@@ -2,14 +2,24 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type {
   ArtifactSpec,
+  EvidenceMapRecord,
   FileInspectionRecord,
+  GeneratedClaimRecord,
+  GeneratedOutputRecord,
   SourceConflict,
+  SourceEvidenceRecord,
   SourceRecord,
   EvidenceMapRun,
   TrustReport,
   VerificationFinding
 } from "../types.ts";
+import type { SourceExclusion } from "../evidence/select.ts";
 import { buildGeneralFinalExport } from "../export/general.ts";
+import {
+  renderEvidenceMapMarkdown,
+  renderGeneratedClaimsMarkdown,
+  renderSourceEvidenceMarkdown
+} from "../generate/markdown.ts";
 import { renderLegalDraftPropositions } from "../legal/draft.ts";
 import { renderLegalEvidenceMap } from "../legal/evidence-map.ts";
 import { buildLegalFinalExport } from "../legal/export.ts";
@@ -29,6 +39,11 @@ export async function writeRunArtifacts(input: {
   spec: ArtifactSpec;
   findings: VerificationFinding[];
   trustReport: TrustReport;
+  sourceEvidence?: SourceEvidenceRecord[];
+  generatedClaims?: GeneratedClaimRecord[];
+  evidenceMap?: EvidenceMapRecord;
+  generatedOutput?: GeneratedOutputRecord;
+  sourceExclusions?: SourceExclusion[];
   legalSourcePacket?: LegalSourcePacket;
   legalOutputSpec?: LegalOutputSpec;
   legalEvidenceMap?: LegalEvidenceMap;
@@ -49,6 +64,10 @@ export async function writeRunArtifacts(input: {
   await writeJson(join(sourceDir, "file-inspections.json"), input.inspections);
   await writeJson(join(sourceDir, "source-conflicts.json"), input.conflicts);
   await writeFile(join(sourceDir, "source-packet.md"), renderSourcePacket(input.sources, input.inspections, input.conflicts));
+  if (input.sourceEvidence) {
+    await writeJson(join(sourceDir, "source-evidence.json"), input.sourceEvidence);
+    await writeFile(join(sourceDir, "source-evidence.md"), renderSourceEvidenceMarkdown(input.sourceEvidence));
+  }
   if (input.legalSourcePacket) {
     await writeJson(join(sourceDir, "legal-source-packet.json"), input.legalSourcePacket);
     await writeJson(join(sourceDir, "legal-passages.json"), input.legalSourcePacket.passages);
@@ -71,6 +90,21 @@ export async function writeRunArtifacts(input: {
   }
 
   await writeJson(join(verifyDir, "verification-findings.json"), input.findings);
+  if (input.generatedClaims) {
+    await writeJson(join(verifyDir, "generated-claims.json"), input.generatedClaims);
+    await writeFile(join(verifyDir, "generated-claims.md"), renderGeneratedClaimsMarkdown(input.generatedClaims));
+  }
+  if (input.evidenceMap && input.generatedClaims && input.sourceEvidence) {
+    await writeJson(join(verifyDir, "evidence-map.json"), input.evidenceMap);
+    await writeFile(
+      join(verifyDir, "evidence-map.md"),
+      renderEvidenceMapMarkdown({
+        evidenceMap: input.evidenceMap,
+        sourceEvidence: input.sourceEvidence,
+        generatedClaims: input.generatedClaims
+      })
+    );
+  }
   if (input.legalEvidenceMap) {
     await writeJson(join(verifyDir, "legal-evidence-map.json"), input.legalEvidenceMap);
     await writeFile(join(verifyDir, "legal-evidence-map.md"), renderLegalEvidenceMap(input.legalEvidenceMap));
@@ -122,17 +156,31 @@ export async function writeRunArtifacts(input: {
       spec: input.spec,
       findings: input.findings,
       trustReport: input.trustReport,
-      generalReviewDecisionSet: input.generalReviewDecisionSet
+      generalReviewDecisionSet: input.generalReviewDecisionSet,
+      outputMode: input.generatedOutput ? "generate" : "review",
+      sourceEvidence: input.sourceEvidence,
+      generatedClaims: input.generatedClaims,
+      evidenceMap: input.evidenceMap,
+      generatedOutput: input.generatedOutput,
+      sourceExclusions: input.sourceExclusions ?? []
     });
     await writeFile(join(exportDir, "README.md"), generalExport.readmeMarkdown);
     if (generalExport.ready && generalExport.readyManifest && generalExport.readyManifestMarkdown) {
       await writeJson(join(exportDir, "ready-manifest.json"), generalExport.readyManifest);
       await writeFile(join(exportDir, "ready-manifest.md"), generalExport.readyManifestMarkdown);
+      if (generalExport.generatedFinalMarkdown && generalExport.generatedOutputReceipt && generalExport.generatedOutputReceiptMarkdown) {
+        await writeFile(join(exportDir, "final-output.md"), generalExport.generatedFinalMarkdown);
+        await writeJson(join(exportDir, "generated-output-receipt.json"), generalExport.generatedOutputReceipt);
+        await writeFile(join(exportDir, "generated-output-receipt.md"), generalExport.generatedOutputReceiptMarkdown);
+      }
       await rm(join(exportDir, "general-export-refusal.md"), { force: true });
     } else if (generalExport.refusalMarkdown) {
       await writeFile(join(exportDir, "general-export-refusal.md"), generalExport.refusalMarkdown);
       await rm(join(exportDir, "ready-manifest.json"), { force: true });
       await rm(join(exportDir, "ready-manifest.md"), { force: true });
+      await rm(join(exportDir, "final-output.md"), { force: true });
+      await rm(join(exportDir, "generated-output-receipt.json"), { force: true });
+      await rm(join(exportDir, "generated-output-receipt.md"), { force: true });
     }
   }
 

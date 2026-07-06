@@ -57,3 +57,15 @@ Check for:
 - Human judgment items.
 
 The model can enumerate issues. A human owns the final gate.
+
+## 5. Generated Markdown Output
+
+For general report/document workflows, generation mode can create a local Markdown output after source prep and structure:
+
+- Build source evidence snippets from inspected rows, paragraphs, slides, notes, and workbook summaries.
+- Select current, raw-data, and transcript evidence; exclude stale, failed, risky, and undated numeric evidence with visible reasons.
+- Generate deterministic claims only from selected evidence.
+- Write `04_export/final-output.md` only when the trust report is ready.
+- Otherwise write `04_export/general-export-refusal.md` with exact blockers.
+
+Generation mode does not create `.docx`, `.pptx`, or `.xlsx` files and does not send, file, submit, publish, or call external models.

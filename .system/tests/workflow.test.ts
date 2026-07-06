@@ -81,6 +81,105 @@ test("deck workflow seeds unsupported claims from PPTX slide and notes text", as
   );
 });
 
+test("clean end-to-end generation writes final Markdown and ready manifest", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-generate-clean-"));
+  const inputDir = join(baseDir, "input", "clean-report");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-current-metrics.csv"), "metric,value,as_of_date\nactive_users,42,2026-05-01\n");
+  await writeFile(join(inputDir, "interview-notes.md"), "# Interview Notes\n\nOperators report that onboarding was completed before the pilot launch.\n");
+
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+    baseDir,
+    name: "clean-report",
+    artifactKind: "report",
+    inputPaths: ["input/clean-report"],
+    generate: true
+  });
+
+  assert.equal(result.trustReport.readiness, "ready");
+  assert.equal(result.run.status, "export_ready");
+  assert.equal(result.generatedOutput?.status, "export_ready");
+  const finalMarkdown = await readFile(join(result.artifacts.exportDir, "final-output.md"), "utf8");
+  assert.match(finalMarkdown, /active users was 42 as of 2026-05-01/);
+  assert.match(finalMarkdown, /sources: src_/);
+  assert.match(finalMarkdown, /evidence: evidence_/);
+  const manifest = JSON.parse(await readFile(join(result.artifacts.exportDir, "ready-manifest.json"), "utf8"));
+  assert.equal(manifest.artifacts.finalOutput, "04_export/final-output.md");
+  assert.equal(manifest.artifacts.evidenceMap, "03_verification/evidence-map.json");
+  assert.equal(manifest.artifacts.generatedOutputReceipt, "04_export/generated-output-receipt.json");
+  await readFile(join(result.artifacts.verifyDir, "generated-claims.json"), "utf8");
+  await readFile(join(result.artifacts.verifyDir, "evidence-map.json"), "utf8");
+  await readFile(join(result.artifacts.exportDir, "generated-output-receipt.json"), "utf8");
+});
+
+test("capstone messy-folder generation writes final Markdown and excludes old or risky sources", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-generate-capstone-"));
+  const fixtureDir = fileURLToPath(new URL("../../input/examples/capstone-report", import.meta.url));
+
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+    baseDir,
+    name: "capstone-report",
+    artifactKind: "report",
+    inputPaths: [fixtureDir],
+    generate: true
+  });
+
+  assert.equal(result.trustReport.readiness, "ready");
+  const finalMarkdown = await readFile(join(result.artifacts.exportDir, "final-output.md"), "utf8");
+  assert.match(finalMarkdown, /2026-04-12-survey-raw-export\.csv/);
+  assert.match(finalMarkdown, /enrollment-figures-final\.csv/);
+  assert.match(finalMarkdown, /interview-notes\.md/);
+  const supportSections = finalMarkdown.split("## Excluded Sources")[0] ?? finalMarkdown;
+  assert.doesNotMatch(supportSections, /enrollment-figures-old\.csv/);
+  assert.doesNotMatch(supportSections, /enrollment-analysis\.xlsx/);
+  assert.match(finalMarkdown, /enrollment-figures-old\.csv \| Superseded or archived source excluded/);
+  assert.match(finalMarkdown, /enrollment-analysis\.xlsx \| Workbook has unresolved calculation risks/);
+  const sourceEvidence = await readFile(join(result.artifacts.sourceDir, "source-evidence.md"), "utf8");
+  assert.match(sourceEvidence, /enrollment-figures-old\.csv/);
+  assert.match(sourceEvidence, /Workbook has unresolved calculation risks/);
+});
+
+test("generation refuses unresolved current-source conflicts", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-generate-conflict-"));
+  const inputDir = join(baseDir, "input", "conflict-report");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-current-enrollment.csv"), "metric,value,as_of_date\nenrollment,100,2026-05-01\n");
+  await writeFile(join(inputDir, "2026-05-02-current-enrollment.csv"), "metric,value,as_of_date\nenrollment,120,2026-05-02\n");
+
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+    baseDir,
+    name: "conflict-report",
+    artifactKind: "report",
+    inputPaths: ["input/conflict-report"],
+    generate: true
+  });
+
+  assert.equal(result.trustReport.readiness, "blocked");
+  const refusal = await readFile(join(result.artifacts.exportDir, "general-export-refusal.md"), "utf8");
+  assert.match(refusal, /Unresolved current-source conflict for enrollment/);
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "final-output.md"), "utf8"));
+});
+
+test("generation refuses undated numeric evidence", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-generate-undated-"));
+  const inputDir = join(baseDir, "input", "undated-report");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "current-metrics.csv"), "metric,value\nactive_users,42\n");
+
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+    baseDir,
+    name: "undated-report",
+    artifactKind: "report",
+    inputPaths: ["input/undated-report"],
+    generate: true
+  });
+
+  assert.equal(result.trustReport.readiness, "blocked");
+  const refusal = await readFile(join(result.artifacts.exportDir, "general-export-refusal.md"), "utf8");
+  assert.match(refusal, /no source date/i);
+  await assert.rejects(readFile(join(result.artifacts.exportDir, "final-output.md"), "utf8"));
+});
+
 test("general final export writes ready manifest when gates are ready", async () => {
   const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-general-export-ready-"));
   const runId = "run_general_export_ready";

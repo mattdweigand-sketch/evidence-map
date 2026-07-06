@@ -96,16 +96,17 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
     "evidencemap_run_workflow",
     {
       title: "Run Evidence Map Workflow",
-      description: "Run source prep, artifact spec, hostile verification, trust evaluation, and local review artifact writing.",
+      description: "Run source prep, artifact spec, hostile verification, trust evaluation, local review artifacts, and optionally generated Markdown output.",
       inputSchema: {
         name: z.string(),
         artifactKind: artifactKindSchema,
         profile: workflowProfileSchema.default("general"),
+        generate: z.boolean().default(false),
         inputPaths: z.array(z.string()).min(1),
         baseDir: z.string().default(defaultBaseDir)
       }
     },
-    async ({ name, artifactKind, profile, inputPaths, baseDir }) => {
+    async ({ name, artifactKind, profile, generate, inputPaths, baseDir }) => {
       const resolvedInputPaths = resolveWorkspaceInputPaths(baseDir, inputPaths);
       if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
       const result = await runEvidenceMapWorkflow(store, {
@@ -113,7 +114,8 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
         name,
         artifactKind,
         profile,
-        inputPaths: resolvedInputPaths.paths
+        inputPaths: resolvedInputPaths.paths,
+        generate
       });
 
       return jsonToolResult({
@@ -128,6 +130,18 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
         findingCount: result.findings.length,
         blockingCount: result.trustReport.summary.blockingCount,
         needsReviewCount: result.trustReport.summary.needsReviewCount,
+        generatedOutput: result.generatedOutput
+          ? {
+              status: result.generatedOutput.status,
+              format: result.generatedOutput.format,
+              pathRelativeToRun: result.generatedOutput.pathRelativeToRun,
+              evidenceMapId: result.generatedOutput.evidenceMapId,
+              generatedClaimCount: result.generatedClaims?.length ?? 0,
+              selectedEvidenceCount: result.sourceEvidence?.filter((item) => item.useStatus === "selected").length ?? 0,
+              excludedEvidenceCount: result.sourceEvidence?.filter((item) => item.useStatus === "excluded").length ?? 0,
+              excludedSourceCount: result.sourceExclusions?.length ?? 0
+            }
+          : null,
         artifacts: result.artifacts
       });
     }
@@ -146,13 +160,30 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       const run = await store.getRun(runId);
       if (!run) throw new Error(`Unknown run: ${runId}`);
 
-      const [sources, inspections, conflicts, assumptions, claims, calculations, findings, trustReport] = await Promise.all([
+      const [
+        sources,
+        inspections,
+        conflicts,
+        assumptions,
+        claims,
+        calculations,
+        sourceEvidence,
+        generatedClaims,
+        evidenceMap,
+        generatedOutput,
+        findings,
+        trustReport
+      ] = await Promise.all([
         store.listSources(runId),
         store.listFileInspections(runId),
         store.listSourceConflicts(runId),
         store.listAssumptions(runId),
         store.listClaims(runId),
         store.listCalculations(runId),
+        store.listSourceEvidence(runId),
+        store.listGeneratedClaims(runId),
+        store.getEvidenceMap(runId),
+        store.getGeneratedOutput(runId),
         store.listVerificationFindings(runId),
         store.getLatestTrustReport(runId)
       ]);
@@ -166,8 +197,12 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
           assumptions: assumptions.length,
           claims: claims.length,
           calculations: calculations.length,
+          sourceEvidence: sourceEvidence.length,
+          generatedClaims: generatedClaims.length,
           findings: findings.length
         },
+        evidenceMap,
+        generatedOutput,
         trustSummary: trustReport?.summary ?? null,
         readiness: trustReport?.readiness ?? null
       });

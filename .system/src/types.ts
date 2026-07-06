@@ -21,6 +21,16 @@ export type FindingSeverity = "must_fix" | "should_fix" | "polish";
 
 export type Readiness = "ready" | "needs_review" | "blocked";
 export type InspectionStatus = "inspected" | "metadata_only" | "unsupported" | "failed";
+export type OutputMode = "review" | "generate";
+
+export type EvidenceSnippetKind =
+  | "table_row"
+  | "paragraph"
+  | "slide_text"
+  | "speaker_notes"
+  | "workbook_sheet"
+  | "workbook_cell"
+  | "file_summary";
 
 export interface EvidenceMapRun {
   id: string;
@@ -75,6 +85,22 @@ export interface FileInspectionRecord {
   warnings: string[];
 }
 
+export interface SourceEvidenceRecord {
+  id: string;
+  runId: string;
+  sourceId: string;
+  sourceName: string;
+  kind: EvidenceSnippetKind;
+  anchor: string;
+  text: string;
+  sourceDate?: string;
+  numberCandidates: string[];
+  ownerCandidates: string[];
+  reviewStatus: ReviewStatus;
+  useStatus: "candidate" | "selected" | "excluded";
+  exclusionReason?: string;
+}
+
 export interface AssumptionRecord {
   id: string;
   runId: string;
@@ -97,6 +123,49 @@ export interface ClaimRecord {
   assumptions: string[];
   transformation?: string;
   reviewStatus: ReviewStatus;
+}
+
+export interface GeneratedClaimRecord {
+  id: string;
+  runId: string;
+  artifactLocation: string;
+  claim: string;
+  sourceIds: string[];
+  evidenceIds: string[];
+  assumptions: string[];
+  sourceDates: string[];
+  reviewStatus: ReviewStatus;
+}
+
+export interface EvidenceMapRecord {
+  id: string;
+  runId: string;
+  profile: "general";
+  artifactKind: ArtifactKind;
+  generatedClaimIds: string[];
+  selectedEvidenceIds: string[];
+  excludedEvidenceIds: string[];
+  summary: {
+    generatedClaimCount: number;
+    verifiedClaimCount: number;
+    unsupportedClaimCount: number;
+    selectedEvidenceCount: number;
+    excludedEvidenceCount: number;
+  };
+}
+
+export interface GeneratedOutputRecord {
+  id: string;
+  runId: string;
+  profile: "general";
+  artifactKind: ArtifactKind;
+  format: "markdown";
+  status: "candidate" | "export_ready" | "refused";
+  pathRelativeToRun?: string;
+  claimIds: string[];
+  evidenceMapId: string;
+  generatedAt: string;
+  notes: string[];
 }
 
 export interface CalculationRecord {

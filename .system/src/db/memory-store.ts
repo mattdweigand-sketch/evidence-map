@@ -3,9 +3,13 @@ import type {
   AssumptionRecord,
   CalculationRecord,
   ClaimRecord,
+  EvidenceMapRecord,
   FileInspectionRecord,
+  GeneratedClaimRecord,
+  GeneratedOutputRecord,
   SourceConflict,
   SourceRecord,
+  SourceEvidenceRecord,
   StartRunInput,
   EvidenceMapRun,
   TrustReport,
@@ -19,8 +23,12 @@ export class MemoryEvidenceMapStore implements EvidenceMapStore {
   private sources = new Map<string, SourceRecord[]>();
   private conflicts = new Map<string, SourceConflict[]>();
   private inspections = new Map<string, FileInspectionRecord[]>();
+  private sourceEvidence = new Map<string, SourceEvidenceRecord[]>();
   private assumptions = new Map<string, AssumptionRecord[]>();
   private claims = new Map<string, ClaimRecord[]>();
+  private generatedClaims = new Map<string, GeneratedClaimRecord[]>();
+  private evidenceMaps = new Map<string, EvidenceMapRecord>();
+  private generatedOutputs = new Map<string, GeneratedOutputRecord>();
   private calculations = new Map<string, CalculationRecord[]>();
   private specs = new Map<string, ArtifactSpec>();
   private findings = new Map<string, VerificationFinding[]>();
@@ -79,6 +87,20 @@ export class MemoryEvidenceMapStore implements EvidenceMapStore {
     return this.inspections.get(runId) ?? [];
   }
 
+  async createSourceEvidence(runId: string, evidence: Omit<SourceEvidenceRecord, "runId">[]) {
+    return this.append(this.sourceEvidence, runId, evidence.map((item) => ({ ...item, runId })));
+  }
+
+  async replaceSourceEvidence(runId: string, evidence: Omit<SourceEvidenceRecord, "runId">[]) {
+    const created = evidence.map((item) => ({ ...item, runId }));
+    this.sourceEvidence.set(runId, created);
+    return created;
+  }
+
+  async listSourceEvidence(runId: string) {
+    return this.sourceEvidence.get(runId) ?? [];
+  }
+
   async createAssumptions(runId: string, assumptions: Omit<AssumptionRecord, "id" | "runId">[]) {
     return this.append(this.assumptions, runId, assumptions.map((assumption) => ({ ...assumption, id: createId("asm"), runId })));
   }
@@ -93,6 +115,40 @@ export class MemoryEvidenceMapStore implements EvidenceMapStore {
 
   async listClaims(runId: string) {
     return this.claims.get(runId) ?? [];
+  }
+
+  async createGeneratedClaims(runId: string, claims: Omit<GeneratedClaimRecord, "runId">[]) {
+    return this.append(this.generatedClaims, runId, claims.map((claim) => ({ ...claim, runId })));
+  }
+
+  async replaceGeneratedClaims(runId: string, claims: Omit<GeneratedClaimRecord, "runId">[]) {
+    const created = claims.map((claim) => ({ ...claim, runId }));
+    this.generatedClaims.set(runId, created);
+    return created;
+  }
+
+  async listGeneratedClaims(runId: string) {
+    return this.generatedClaims.get(runId) ?? [];
+  }
+
+  async createEvidenceMap(map: Omit<EvidenceMapRecord, "id">) {
+    const created = { ...map, id: createId("evidence_map") };
+    this.evidenceMaps.set(map.runId, created);
+    return created;
+  }
+
+  async getEvidenceMap(runId: string) {
+    return this.evidenceMaps.get(runId);
+  }
+
+  async createGeneratedOutput(output: Omit<GeneratedOutputRecord, "id">) {
+    const created = { ...output, id: createId("generated_output") };
+    this.generatedOutputs.set(output.runId, created);
+    return created;
+  }
+
+  async getGeneratedOutput(runId: string) {
+    return this.generatedOutputs.get(runId);
   }
 
   async createCalculations(runId: string, calculations: Omit<CalculationRecord, "id" | "runId">[]) {

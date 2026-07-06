@@ -3,9 +3,13 @@ import type {
   AssumptionRecord,
   CalculationRecord,
   ClaimRecord,
+  EvidenceMapRecord,
   FileInspectionRecord,
+  GeneratedClaimRecord,
+  GeneratedOutputRecord,
   SourceConflict,
   SourceRecord,
+  SourceEvidenceRecord,
   StartRunInput,
   EvidenceMapRun,
   TrustReport,
@@ -26,11 +30,25 @@ export interface EvidenceMapStore {
   createFileInspections(runId: string, inspections: Omit<FileInspectionRecord, "id" | "runId">[]): Promise<FileInspectionRecord[]>;
   listFileInspections(runId: string): Promise<FileInspectionRecord[]>;
 
+  createSourceEvidence(runId: string, evidence: Omit<SourceEvidenceRecord, "runId">[]): Promise<SourceEvidenceRecord[]>;
+  replaceSourceEvidence(runId: string, evidence: Omit<SourceEvidenceRecord, "runId">[]): Promise<SourceEvidenceRecord[]>;
+  listSourceEvidence(runId: string): Promise<SourceEvidenceRecord[]>;
+
   createAssumptions(runId: string, assumptions: Omit<AssumptionRecord, "id" | "runId">[]): Promise<AssumptionRecord[]>;
   listAssumptions(runId: string): Promise<AssumptionRecord[]>;
 
   createClaims(runId: string, claims: Omit<ClaimRecord, "id" | "runId">[]): Promise<ClaimRecord[]>;
   listClaims(runId: string): Promise<ClaimRecord[]>;
+
+  createGeneratedClaims(runId: string, claims: Omit<GeneratedClaimRecord, "runId">[]): Promise<GeneratedClaimRecord[]>;
+  replaceGeneratedClaims(runId: string, claims: Omit<GeneratedClaimRecord, "runId">[]): Promise<GeneratedClaimRecord[]>;
+  listGeneratedClaims(runId: string): Promise<GeneratedClaimRecord[]>;
+
+  createEvidenceMap(map: Omit<EvidenceMapRecord, "id">): Promise<EvidenceMapRecord>;
+  getEvidenceMap(runId: string): Promise<EvidenceMapRecord | undefined>;
+
+  createGeneratedOutput(output: Omit<GeneratedOutputRecord, "id">): Promise<GeneratedOutputRecord>;
+  getGeneratedOutput(runId: string): Promise<GeneratedOutputRecord | undefined>;
 
   createCalculations(runId: string, calculations: Omit<CalculationRecord, "id" | "runId">[]): Promise<CalculationRecord[]>;
   listCalculations(runId: string): Promise<CalculationRecord[]>;
