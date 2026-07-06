@@ -9,6 +9,8 @@ export type GeneralReviewDecisionAction =
   | "create_claim"
   | "edit_claim"
   | "attach_claim_source"
+  | "delete_claim"
+  | "merge_claims"
   | "resolve_calculation_risk"
   | "accept_general_risk"
   | "resolve_source_conflict";
@@ -55,6 +57,24 @@ export interface GeneralEditClaimDecision extends GeneralReviewDecisionBase {
   reviewStatus?: ReviewStatus;
 }
 
+export interface GeneralDeleteClaimDecision extends GeneralReviewDecisionBase {
+  action: "delete_claim";
+  claimId: string;
+  reason: string;
+}
+
+export interface GeneralMergeClaimsDecision extends GeneralReviewDecisionBase {
+  action: "merge_claims";
+  targetClaimId: string;
+  mergedClaimIds: string[];
+  claim?: string;
+  sourceIds?: string[];
+  assumptions?: string[];
+  transformation?: string;
+  reviewStatus?: ReviewStatus;
+  reason: string;
+}
+
 export interface GeneralResolveCalculationRiskDecision extends GeneralReviewDecisionBase {
   action: "resolve_calculation_risk";
   calculationId: string;
@@ -81,6 +101,8 @@ export type GeneralReviewDecisionRecord =
   | GeneralCreateClaimDecision
   | GeneralEditClaimDecision
   | GeneralAttachClaimSourceDecision
+  | GeneralDeleteClaimDecision
+  | GeneralMergeClaimsDecision
   | GeneralResolveCalculationRiskDecision
   | GeneralAcceptRiskDecision
   | GeneralResolveSourceConflictDecision;
@@ -328,6 +350,164 @@ export function appendEditClaimDecision(input: {
   return {
     decisionSet: appendDecision(input.decisionSet, draftDecision, auditEvent),
     decision: draftDecision,
+    auditEvent,
+    changed: true
+  };
+}
+
+export function appendDeleteClaimDecision(input: {
+  decisionSet: GeneralReviewDecisionSet;
+  claims: ClaimRecord[];
+  claimId: string;
+  reason: string;
+  reviewer?: string;
+  notes?: string;
+  approvalToken: string;
+  now?: string;
+}) {
+  requireApproval(input.approvalToken);
+  const reason = input.reason.trim();
+  if (!reason) throw new Error("A deletion reason is required.");
+
+  const decisionId = stableDecisionId({
+    runId: input.decisionSet.runId,
+    action: "delete_claim",
+    parts: [input.claimId, reason]
+  });
+  const existingDecision = input.decisionSet.decisions.find((decision) => decision.id === decisionId);
+  if (existingDecision) {
+    return { decisionSet: input.decisionSet, changed: false, decision: undefined, auditEvent: undefined };
+  }
+
+  const claim = input.claims.find((item) => item.id === input.claimId);
+  if (!claim) throw new Error(`Unknown claim: ${input.claimId}`);
+
+  const now = input.now ?? new Date().toISOString();
+  const decision: GeneralDeleteClaimDecision = {
+    id: decisionId,
+    runId: input.decisionSet.runId,
+    action: "delete_claim",
+    claimId: input.claimId,
+    reason,
+    reviewer: input.reviewer,
+    createdAt: now,
+    approvalTokenAccepted: true,
+    notes: input.notes
+  };
+  const auditEvent = buildAuditEvent({
+    runId: input.decisionSet.runId,
+    decision,
+    reviewer: input.reviewer,
+    now,
+    summary: `Deleted general claim ${input.claimId}.`,
+    before: claimAuditState(claim),
+    after: {
+      id: input.claimId,
+      deleted: true,
+      reason
+    }
+  });
+
+  return {
+    decisionSet: appendDecision(input.decisionSet, decision, auditEvent),
+    decision,
+    auditEvent,
+    changed: true
+  };
+}
+
+export function appendMergeClaimsDecision(input: {
+  decisionSet: GeneralReviewDecisionSet;
+  claims: ClaimRecord[];
+  sources: Array<{ id: string }>;
+  targetClaimId: string;
+  mergedClaimIds: string[];
+  claim?: string;
+  sourceIds?: string[];
+  assumptions?: string[];
+  transformation?: string;
+  reviewStatus?: ReviewStatus;
+  reason: string;
+  reviewer?: string;
+  notes?: string;
+  approvalToken: string;
+  now?: string;
+}) {
+  requireApproval(input.approvalToken);
+  const reason = input.reason.trim();
+  if (!reason) throw new Error("A merge reason is required.");
+  const mergedClaimIds = uniqueSorted(input.mergedClaimIds);
+  if (mergedClaimIds.length === 0) throw new Error("At least one merged claim is required.");
+  if (mergedClaimIds.includes(input.targetClaimId)) throw new Error("A claim cannot be merged into itself.");
+  const sourceIds = input.sourceIds ? uniqueSorted(input.sourceIds) : undefined;
+  const assumptions = input.assumptions ? uniqueSorted(input.assumptions) : undefined;
+
+  const decisionId = stableDecisionId({
+    runId: input.decisionSet.runId,
+    action: "merge_claims",
+    parts: [
+      input.targetClaimId,
+      ...mergedClaimIds,
+      input.claim ?? "",
+      ...(sourceIds ?? []),
+      ...(assumptions ?? []),
+      input.transformation ?? "",
+      input.reviewStatus ?? "",
+      reason
+    ]
+  });
+  const existingDecision = input.decisionSet.decisions.find((decision) => decision.id === decisionId);
+  if (existingDecision) {
+    return { decisionSet: input.decisionSet, changed: false, decision: undefined, auditEvent: undefined };
+  }
+  if (sourceIds) assertKnownSources(input.sources, sourceIds);
+
+  const targetClaim = input.claims.find((item) => item.id === input.targetClaimId);
+  if (!targetClaim) throw new Error(`Unknown target claim: ${input.targetClaimId}`);
+  const mergedClaims = mergedClaimIds.map((claimId) => input.claims.find((item) => item.id === claimId));
+  const missingClaimIds = mergedClaimIds.filter((_, index) => !mergedClaims[index]);
+  if (missingClaimIds.length > 0) throw new Error(`Unknown merged claim: ${missingClaimIds.join(", ")}`);
+
+  const now = input.now ?? new Date().toISOString();
+  const decision: GeneralMergeClaimsDecision = {
+    id: decisionId,
+    runId: input.decisionSet.runId,
+    action: "merge_claims",
+    targetClaimId: input.targetClaimId,
+    mergedClaimIds,
+    claim: input.claim,
+    sourceIds,
+    assumptions,
+    transformation: input.transformation,
+    reviewStatus: input.reviewStatus,
+    reason,
+    reviewer: input.reviewer,
+    createdAt: now,
+    approvalTokenAccepted: true,
+    notes: input.notes
+  };
+  const concreteMergedClaims = mergedClaims.filter((claim): claim is ClaimRecord => Boolean(claim));
+  const updatedClaim = applyMergeDecisionToClaim(targetClaim, concreteMergedClaims, decision);
+  const auditEvent = buildAuditEvent({
+    runId: input.decisionSet.runId,
+    decision,
+    reviewer: input.reviewer,
+    now,
+    summary: `Merged general claims ${mergedClaimIds.join(", ")} into ${input.targetClaimId}.`,
+    before: {
+      target: claimAuditState(targetClaim),
+      mergedClaims: concreteMergedClaims.map(claimAuditState)
+    },
+    after: {
+      target: claimAuditState(updatedClaim),
+      removedClaimIds: mergedClaimIds,
+      reason
+    }
+  });
+
+  return {
+    decisionSet: appendDecision(input.decisionSet, decision, auditEvent),
+    decision,
     auditEvent,
     changed: true
   };
@@ -611,6 +791,14 @@ function applyDecisionToClaims(claims: ClaimRecord[], decision: GeneralReviewDec
     return [...claims, claimFromCreateDecision(decision.runId, decision)];
   }
 
+  if (decision.action === "delete_claim") {
+    return claims.filter((claim) => claim.id !== decision.claimId);
+  }
+
+  if (decision.action === "merge_claims") {
+    return applyMergeDecisionToClaims(claims, decision);
+  }
+
   if (decision.action === "edit_claim" || decision.action === "attach_claim_source") {
     return claims.map((claim) => applyDecisionToClaim(claim, decision));
   }
@@ -640,6 +828,35 @@ function applyDecisionToClaim(claim: ClaimRecord, decision: GeneralReviewDecisio
   }
 
   return claim;
+}
+
+function applyMergeDecisionToClaims(claims: ClaimRecord[], decision: GeneralMergeClaimsDecision): ClaimRecord[] {
+  const mergedClaimIds = new Set(decision.mergedClaimIds);
+  const targetClaim = claims.find((claim) => claim.id === decision.targetClaimId);
+  const mergedClaims = claims.filter((claim) => mergedClaimIds.has(claim.id));
+  if (!targetClaim) return claims.filter((claim) => !mergedClaimIds.has(claim.id));
+  const updatedTarget = applyMergeDecisionToClaim(targetClaim, mergedClaims, decision);
+  return claims.flatMap((claim) => {
+    if (claim.id === decision.targetClaimId) return [updatedTarget];
+    if (mergedClaimIds.has(claim.id)) return [];
+    return [claim];
+  });
+}
+
+function applyMergeDecisionToClaim(
+  targetClaim: ClaimRecord,
+  mergedClaims: ClaimRecord[],
+  decision: GeneralMergeClaimsDecision
+): ClaimRecord {
+  const allClaims = [targetClaim, ...mergedClaims];
+  return {
+    ...targetClaim,
+    claim: decision.claim ?? targetClaim.claim,
+    sourceIds: decision.sourceIds ?? uniqueSorted(allClaims.flatMap((claim) => claim.sourceIds)),
+    assumptions: decision.assumptions ?? uniqueSorted(allClaims.flatMap((claim) => claim.assumptions)),
+    transformation: decision.transformation ?? deriveMergedTransformation(targetClaim, mergedClaims),
+    reviewStatus: decision.reviewStatus ?? deriveMergedReviewStatus(allClaims)
+  };
 }
 
 function applyDecisionToCalculation(calculation: CalculationRecord, decision: GeneralReviewDecisionRecord): CalculationRecord {
@@ -752,6 +969,16 @@ function isReviewDecision(value: unknown): value is GeneralReviewDecisionRecord 
   if (decision.action === "edit_claim") {
     return typeof decision.claimId === "string";
   }
+  if (decision.action === "delete_claim") {
+    return typeof decision.claimId === "string" && typeof decision.reason === "string";
+  }
+  if (decision.action === "merge_claims") {
+    return (
+      typeof decision.targetClaimId === "string" &&
+      Array.isArray(decision.mergedClaimIds) &&
+      typeof decision.reason === "string"
+    );
+  }
   if (decision.action === "resolve_calculation_risk") {
     return (
       typeof decision.calculationId === "string" &&
@@ -819,6 +1046,20 @@ function appendNote(existing: string | undefined, note: string) {
   return existing ? `${existing} ${note}` : note;
 }
 
+function deriveMergedTransformation(targetClaim: ClaimRecord, mergedClaims: ClaimRecord[]) {
+  const transformations = uniqueSorted(
+    [targetClaim.transformation, ...mergedClaims.map((claim) => claim.transformation)].filter(isNonEmptyString)
+  );
+  if (transformations.length > 0) return transformations.join(" | ");
+  if (mergedClaims.length > 0) return `Merged from ${uniqueSorted(mergedClaims.map((claim) => claim.id)).join(", ")}.`;
+  return targetClaim.transformation;
+}
+
+function deriveMergedReviewStatus(claims: ClaimRecord[]): ReviewStatus {
+  const conservativeOrder: ReviewStatus[] = ["unsupported", "conflicting", "needs_review", "unreviewed", "verified"];
+  return conservativeOrder.find((status) => claims.some((claim) => claim.reviewStatus === status)) ?? "needs_review";
+}
+
 function claimAuditState(claim: ClaimRecord) {
   return {
     id: claim.id,
@@ -875,6 +1116,10 @@ function stableRecordId(prefix: string, parts: string[]) {
 
 function uniqueSorted(values: string[]) {
   return [...new Set(values)].sort();
+}
+
+function isNonEmptyString(value: string | undefined): value is string {
+  return Boolean(value);
 }
 
 function claimsEqual(left: ClaimRecord, right: ClaimRecord) {

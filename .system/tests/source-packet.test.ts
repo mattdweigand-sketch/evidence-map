@@ -47,6 +47,76 @@ test("source packet avoids substring status and invalid date inference", async (
   assert.equal(packet.sources[0]?.sourceDate, undefined);
 });
 
+test("source packet infers same-metric dated conflicts when statuses match", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-metric-conflict-"));
+  const input = join(dir, "input");
+  await mkdir(input);
+  await writeFile(join(input, "2026-03-02-enrollment-figures.csv"), "metric,value\nenrollment,100\n");
+  await writeFile(join(input, "2026-04-30-enrollment-figures.csv"), "metric,value\nenrollment,110\n");
+
+  const packet = await buildSourcePacket([input]);
+
+  assert.equal(packet.conflicts.length, 1);
+  assert.equal(packet.conflicts[0]?.severity, "warning");
+  assert.equal(packet.conflicts[0]?.status, "open");
+  assert.match(packet.conflicts[0]?.description ?? "", /Potential same-metric dated conflict/);
+  assert.ok(packet.conflicts[0]?.sourcePaths.some((path) => path.endsWith("2026-03-02-enrollment-figures.csv")));
+  assert.ok(packet.conflicts[0]?.sourcePaths.some((path) => path.endsWith("2026-04-30-enrollment-figures.csv")));
+});
+
+test("source packet does not infer conflicts for unrelated dated files", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-unrelated-dates-"));
+  const input = join(dir, "input");
+  await mkdir(input);
+  await writeFile(join(input, "2026-03-02-enrollment-figures.csv"), "metric,value\nenrollment,100\n");
+  await writeFile(join(input, "2026-04-30-staffing-figures.csv"), "metric,value\nstaffing,12\n");
+
+  const packet = await buildSourcePacket([input]);
+
+  assert.deepEqual(packet.conflicts, []);
+});
+
+test("source packet does not infer same-metric conflicts for recurring narrative files", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-narrative-dates-"));
+  const input = join(dir, "input");
+  await mkdir(input);
+  await writeFile(join(input, "2026-03-02-board-report.pdf"), "%PDF-1.4\nnot parsed in this test\n%%EOF\n");
+  await writeFile(join(input, "2026-04-30-board-report.pdf"), "%PDF-1.4\nnot parsed in this test\n%%EOF\n");
+
+  const packet = await buildSourcePacket([input]);
+
+  assert.deepEqual(packet.conflicts, []);
+});
+
+test("source packet preserves old/final status conflicts", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-status-conflict-"));
+  const input = join(dir, "input");
+  await mkdir(input);
+  await writeFile(join(input, "old-board-model.csv"), "label\nold\n");
+  await writeFile(join(input, "final-board-model.csv"), "label\nfinal\n");
+
+  const packet = await buildSourcePacket([input]);
+
+  assert.equal(packet.conflicts.length, 1);
+  assert.match(packet.conflicts[0]?.description ?? "", /Potential version\/status conflict/);
+  assert.equal(packet.conflicts[0]?.severity, "warning");
+  assert.equal(packet.conflicts[0]?.status, "open");
+});
+
+test("source packet does not infer same-metric conflicts from invalid date-like names", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-invalid-date-conflict-"));
+  const input = join(dir, "input");
+  await mkdir(input);
+  await writeFile(join(input, "2026-19-39-enrollment-figures.csv"), "metric,value\nenrollment,100\n");
+  await writeFile(join(input, "2026-20-40-enrollment-figures.csv"), "metric,value\nenrollment,110\n");
+
+  const packet = await buildSourcePacket([input]);
+
+  assert.equal(packet.sources[0]?.sourceDate, undefined);
+  assert.equal(packet.sources[1]?.sourceDate, undefined);
+  assert.deepEqual(packet.conflicts, []);
+});
+
 test("date inference handles single-digit US dates and strict compact year-first dates", () => {
   assert.deepEqual(inferDateCandidates("survey exported 4/12/2026"), ["2026-04-12"]);
   assert.deepEqual(inferDateCandidates("bad compact date 2026-0430"), []);

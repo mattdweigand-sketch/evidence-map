@@ -33,6 +33,8 @@ Use this shape in an MCP client config that supports local stdio servers:
 - `evidencemap_get_verification_report`
 - `evidencemap_create_general_claim`
 - `evidencemap_edit_general_claim`
+- `evidencemap_delete_general_claim`
+- `evidencemap_merge_general_claims`
 - `evidencemap_attach_claim_source_support`
 - `evidencemap_resolve_calculation_risk`
 - `evidencemap_resolve_source_conflict`
@@ -44,7 +46,7 @@ Use this shape in an MCP client config that supports local stdio servers:
 - `evidencemap_accept_legal_risk`
 - `evidencemap_resolve_legal_source_conflict`
 
-`evidencemap_inspect_source_packet` and `evidencemap_run_workflow` accept `profile: "general" | "legal"`. The general review tools require `approvalToken: "APPROVE_GENERAL_REVIEW_DECISION"` and write `general-review-decisions.json` / `.md` under `03_verification/`. They can create/edit general claims, attach source support with optional anchors/quotes/rationale, resolve calculation risks, resolve source conflicts, and accept current findings with rationale. `evidencemap_apply_general_final_artifacts` uses the same approval token to preview or copy approved user-supplied files into `04_export/approved-artifacts/` only when the general trust gate is ready; apply writes `general-final-artifact-receipt.json` / `.md`. The legal review tools require `approvalToken: "APPROVE_LEGAL_REVIEW_DECISION"` and only mutate local run artifacts/state.
+`evidencemap_inspect_source_packet` and `evidencemap_run_workflow` accept `profile: "general" | "legal"`. The general review tools require `approvalToken: "APPROVE_GENERAL_REVIEW_DECISION"` and write `general-review-decisions.json` / `.md` under `03_verification/`. They can create/edit/delete/merge general claims, attach source support with optional anchors/quotes/rationale, resolve calculation risks, resolve source conflicts, and accept current findings with rationale. `evidencemap_apply_general_final_artifacts` uses the same approval token to preview or copy approved user-supplied files into `04_export/approved-artifacts/` only when the general trust gate is ready; apply writes `general-final-artifact-receipt.json` / `.md`. The legal review tools require `approvalToken: "APPROVE_LEGAL_REVIEW_DECISION"` and only mutate local run artifacts/state.
 
 ## Boundary
 

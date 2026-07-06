@@ -37,7 +37,9 @@ import {
 import {
   appendAttachClaimSourceDecision,
   appendCreateClaimDecision,
+  appendDeleteClaimDecision,
   appendEditClaimDecision,
+  appendMergeClaimsDecision,
   appendGeneralRiskAcceptanceDecision,
   appendGeneralSourceConflictDecision,
   appendResolveCalculationRiskDecision,
@@ -300,6 +302,111 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
         return jsonToolResult(await regenerateGeneralRunAfterDecision({ ...context, decisionResult }));
       } catch (error) {
         return jsonToolError(error instanceof Error ? error.message : "General claim edit failed.");
+      }
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_delete_general_claim",
+    {
+      title: "Delete General Claim",
+      description: `Delete a general-profile claim from the effective review set as an audited decision. Requires approvalToken ${GENERAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        claimId: z.string(),
+        reason: z.string().min(1),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ runId, claimId, reason, reviewer, notes, approvalToken, baseDir }) => {
+      try {
+        const context = await loadGeneralDecisionContext({ store, baseDir, runId, approvalToken });
+        const storedClaims = await store.listClaims(runId);
+        const claims = applyGeneralClaimReviewDecisions({
+          claims: storedClaims,
+          decisions: context.decisionSet.decisions
+        });
+        const decisionResult = appendDeleteClaimDecision({
+          decisionSet: context.decisionSet,
+          claims,
+          claimId,
+          reason,
+          reviewer,
+          notes,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateGeneralRunAfterDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "General claim deletion failed.");
+      }
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_merge_general_claims",
+    {
+      title: "Merge General Claims",
+      description: `Merge general-profile claims in the effective review set as an audited decision. Requires approvalToken ${GENERAL_REVIEW_APPROVAL_TOKEN}.`,
+      inputSchema: {
+        runId: z.string(),
+        targetClaimId: z.string(),
+        mergedClaimIds: z.array(z.string()).min(1),
+        claim: z.string().optional(),
+        sourceIds: z.array(z.string()).optional(),
+        assumptions: z.array(z.string()).optional(),
+        transformation: z.string().optional(),
+        reviewStatus: generalReviewStatusSchema.optional(),
+        reason: z.string().min(1),
+        reviewer: z.string().optional(),
+        notes: z.string().optional(),
+        approvalToken: z.string(),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({
+      runId,
+      targetClaimId,
+      mergedClaimIds,
+      claim,
+      sourceIds,
+      assumptions,
+      transformation,
+      reviewStatus,
+      reason,
+      reviewer,
+      notes,
+      approvalToken,
+      baseDir
+    }) => {
+      try {
+        const context = await loadGeneralDecisionContext({ store, baseDir, runId, approvalToken });
+        const [storedClaims, sources] = await Promise.all([store.listClaims(runId), store.listSources(runId)]);
+        const claims = applyGeneralClaimReviewDecisions({
+          claims: storedClaims,
+          decisions: context.decisionSet.decisions
+        });
+        const decisionResult = appendMergeClaimsDecision({
+          decisionSet: context.decisionSet,
+          claims,
+          sources,
+          targetClaimId,
+          mergedClaimIds,
+          claim,
+          sourceIds,
+          assumptions,
+          transformation,
+          reviewStatus,
+          reason,
+          reviewer,
+          notes,
+          approvalToken
+        });
+        return jsonToolResult(await regenerateGeneralRunAfterDecision({ ...context, decisionResult }));
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "General claim merge failed.");
       }
     }
   );

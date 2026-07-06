@@ -4,7 +4,9 @@ import { basename, extname } from "node:path";
 import { inferDateCandidates } from "../date-candidates.ts";
 import type { FileInspectionRecord } from "../types.ts";
 import { expandInputPaths } from "../ingest/expand-input-paths.ts";
+import { inspectDocxDocument } from "./docx.ts";
 import { extractPdfText } from "./pdf.ts";
+import { inspectPptxDeck } from "./pptx.ts";
 import { inspectXlsxWorkbook } from "./xlsx.ts";
 
 type FileInspectionDraft = Omit<FileInspectionRecord, "id" | "runId" | "sourceId">;
@@ -45,7 +47,8 @@ async function inspectFileWithStat(path: string, info: Stats): Promise<FileInspe
     if (fileType === "xlsx" || fileType === "xlsm") {
       return await inspectXlsxWorkbook(base, { inferDateCandidates, inferOwnerCandidates, previewText });
     }
-    if (fileType === "pptx" || fileType === "docx") return await inspectOfficePackage(base, fileType);
+    if (fileType === "pptx") return await inspectPptxDeck(base, { inferDateCandidates, inferOwnerCandidates, previewText });
+    if (fileType === "docx") return await inspectDocxDocument(base, { inferDateCandidates, inferOwnerCandidates, previewText });
     if (fileType === "pdf") return await inspectPdf(base);
 
     return {
@@ -136,30 +139,6 @@ async function inspectPlainText(
     },
     textPreview: previewText(content),
     warnings: []
-  };
-}
-
-async function inspectOfficePackage(
-  base: Pick<FileInspectionDraft, "name" | "path" | "fileType" | "sizeBytes" | "modifiedAt">,
-  fileType: string
-): Promise<FileInspectionDraft> {
-  const header = await readBytes(base.path, 4);
-  const isZipPackage = header[0] === 0x50 && header[1] === 0x4b;
-
-  return {
-    ...base,
-    parser: "office-package-metadata-v1",
-    status: "metadata_only",
-    sourceDateCandidates: inferDateCandidates(base.name),
-    ownerCandidates: [],
-    structuredSummary: {
-      packageType: fileType,
-      zipPackage: isZipPackage
-    },
-    warnings: [
-      ...(isZipPackage ? [] : ["File does not have the expected Office ZIP package signature."]),
-      `Deep .${fileType} inspection is not implemented yet.`
-    ]
   };
 }
 

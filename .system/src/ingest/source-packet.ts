@@ -6,6 +6,10 @@ import { inspectFiles, type InspectableFile } from "../inspect/index.ts";
 import { expandInputPaths } from "./expand-input-paths.ts";
 
 type SourceConflictDraft = Omit<SourceConflict, "id" | "runId"> & { sourcePaths: string[] };
+type SourceRecordDraft = Omit<SourceRecord, "id" | "runId">;
+
+const versionOrStatusTokens = new Set(["old", "final", "draft", "copy", "raw", "export", "exports"]);
+const dataFileTypes = new Set(["csv", "tsv", "xls", "xlsx", "xlsm"]);
 
 export async function buildSourcePacket(inputPaths: string[]) {
   const filePaths = await expandInputPaths(inputPaths);
@@ -48,9 +52,9 @@ function inferIntendedUse(name: string) {
   return "Source material requiring human classification.";
 }
 
-function inferSourceConflicts(sources: Omit<SourceRecord, "id" | "runId">[]): SourceConflictDraft[] {
+function inferSourceConflicts(sources: SourceRecordDraft[]): SourceConflictDraft[] {
   const conflicts: SourceConflictDraft[] = [];
-  const byStem = new Map<string, Omit<SourceRecord, "id" | "runId">[]>();
+  const byStem = new Map<string, SourceRecordDraft[]>();
   for (const source of sources) {
     const stem = source.name
       .toLowerCase()
@@ -74,5 +78,63 @@ function inferSourceConflicts(sources: Omit<SourceRecord, "id" | "runId">[]): So
     }
   }
 
+  const existingConflictKeys = new Set(conflicts.map((conflict) => conflictKey(conflict.sourcePaths)));
+  const byMetric = new Map<string, SourceRecordDraft[]>();
+  for (const source of sources) {
+    const key = sameMetricKey(source);
+    if (!key) continue;
+    byMetric.set(key, [...(byMetric.get(key) ?? []), source]);
+  }
+
+  for (const group of byMetric.values()) {
+    const dates = new Set(group.map((source) => source.sourceDate).filter(Boolean));
+    const sourcePaths = group.map((source) => source.path);
+    if (group.length < 2 || dates.size < 2 || !hasRelatedFileTypes(group) || existingConflictKeys.has(conflictKey(sourcePaths))) {
+      continue;
+    }
+    conflicts.push({
+      sourceIds: [],
+      sourcePaths,
+      description: `Potential same-metric dated conflict across: ${group.map((source) => source.name).join(", ")}`,
+      severity: "warning",
+      status: "open"
+    });
+  }
+
   return conflicts;
+}
+
+function sameMetricKey(source: SourceRecordDraft) {
+  if (!dataFileTypes.has(source.fileType)) return undefined;
+  if (!source.sourceDate) return undefined;
+  const stem = stripSourceDate(
+    source.name.toLowerCase().replace(/\.(xlsx|xlsm|csv|tsv|pptx|docx|pdf|md|txt)$/i, ""),
+    source.sourceDate
+  );
+  const tokens = stem
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token && !versionOrStatusTokens.has(token) && !/^v\d+$/.test(token) && /[a-z]/.test(token));
+  if (tokens.length < 2) return undefined;
+  return tokens.join("-");
+}
+
+function stripSourceDate(value: string, sourceDate: string) {
+  const [year, month, day] = sourceDate.split("-");
+  const monthNumber = String(Number(month));
+  const dayNumber = String(Number(day));
+  const patterns = [
+    `${year}[-_/]?${month}${day}`,
+    `${year}[-_/]${month}[-_/]${day}`,
+    `0?${monthNumber}[-_/]0?${dayNumber}[-_/]${year}`
+  ];
+  return patterns.reduce((current, pattern) => current.replace(new RegExp(`(^|[^a-z0-9])${pattern}([^a-z0-9]|$)`, "g"), "$1$2"), value);
+}
+
+function hasRelatedFileTypes(group: SourceRecordDraft[]) {
+  const fileTypes = [...new Set(group.map((source) => source.fileType))];
+  return fileTypes.every((fileType) => dataFileTypes.has(fileType));
+}
+
+function conflictKey(sourcePaths: string[]) {
+  return [...sourcePaths].sort().join("\0");
 }

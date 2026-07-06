@@ -12,7 +12,12 @@ import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
 import { MemoryEvidenceMapStore } from "../src/db/memory-store.ts";
 import { LEGAL_REVIEW_APPROVAL_TOKEN } from "../src/legal/review-decisions.ts";
 import { createEvidenceMapMcpServer } from "../src/mcp/server.ts";
-import { GENERAL_REVIEW_APPROVAL_TOKEN } from "../src/review/general-decisions.ts";
+import {
+  applyGeneralClaimReviewDecisions,
+  GENERAL_REVIEW_APPROVAL_TOKEN,
+  type GeneralReviewDecisionRecord
+} from "../src/review/general-decisions.ts";
+import type { ClaimRecord } from "../src/types.ts";
 
 const fixtureDirs: string[] = [];
 const execFileAsync = promisify(execFile);
@@ -89,6 +94,8 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_get_verification_report"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_create_general_claim"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_edit_general_claim"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_delete_general_claim"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_merge_general_claims"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_attach_claim_source_support"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_resolve_calculation_risk"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_resolve_source_conflict"));
@@ -199,6 +206,33 @@ test("MCP tools accept legal workflow profile", async () => {
   const run = runResult.structuredContent as { runId?: string; profile?: string };
   assert.ok(run.runId);
   assert.equal(run.profile, "legal");
+
+  const rejectedGeneralDelete = await client.callTool({
+    name: "evidencemap_delete_general_claim",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      claimId: "claim_fixture",
+      reason: "General claim deletion must not apply to legal runs.",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal(rejectedGeneralDelete.isError, true);
+  assert.match(String((rejectedGeneralDelete.structuredContent as { error?: string }).error), /general-profile run/);
+
+  const rejectedGeneralMerge = await client.callTool({
+    name: "evidencemap_merge_general_claims",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      targetClaimId: "claim_fixture_target",
+      mergedClaimIds: ["claim_fixture_merged"],
+      reason: "General claim merge must not apply to legal runs.",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal(rejectedGeneralMerge.isError, true);
+  assert.match(String((rejectedGeneralMerge.structuredContent as { error?: string }).error), /general-profile run/);
 
   const verification = await client.callTool({
     name: "evidencemap_get_verification_report",
@@ -326,6 +360,314 @@ test("MCP general claim source decision writes an audit trail and verifies idemp
   };
   assert.equal(rerunDecisionSet.decisions.length, 1);
   assert.equal(rerunDecisionSet.auditEvents.length, 1);
+
+  await client.close();
+  await server.close();
+});
+
+test("MCP general delete claim decision removes effective claim findings idempotently", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-general-delete-"));
+  fixtureDirs.push(baseDir);
+  const inputDir = join(baseDir, "input", "general-delete");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-raw-export.csv"), "metric,value\nrevenue,100\n");
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const { server } = createEvidenceMapMcpServer(new JsonFileEvidenceMapStore(storePath));
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const runResult = await client.callTool({
+    name: "evidencemap_run_workflow",
+    arguments: {
+      baseDir,
+      name: "general-delete",
+      artifactKind: "document",
+      inputPaths: ["input/general-delete"]
+    }
+  });
+  const run = runResult.structuredContent as { runId?: string; slug?: string; artifacts?: { verifyDir?: string } };
+  assert.ok(run.runId);
+  assert.ok(run.slug);
+  assert.ok(run.artifacts?.verifyDir);
+
+  const initialFindings = JSON.parse(await readFile(join(run.artifacts.verifyDir, "verification-findings.json"), "utf8")) as Array<{
+    issue?: string;
+  }>;
+  assert.ok(initialFindings.some((finding) => finding.issue === "Claim has no source attribution."));
+  assert.ok(initialFindings.some((finding) => finding.issue === "Claim is marked unsupported."));
+  const storeData = JSON.parse(await readFile(storePath, "utf8")) as {
+    claims: Array<{ id: string; runId: string }>;
+  };
+  const claim = storeData.claims.find((item) => item.runId === run.runId);
+  assert.ok(claim);
+
+  const rejected = await client.callTool({
+    name: "evidencemap_delete_general_claim",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      claimId: claim.id,
+      reason: "The seeded placeholder claim is not part of the reviewed deliverable.",
+      approvalToken: "not-approved"
+    }
+  });
+  assert.equal(rejected.isError, true);
+
+  const deleted = await client.callTool({
+    name: "evidencemap_delete_general_claim",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      claimId: claim.id,
+      reason: "The seeded placeholder claim is not part of the reviewed deliverable.",
+      reviewer: "fixture-reviewer",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  const deletion = deleted.structuredContent as {
+    changed?: boolean;
+    readiness?: string;
+    status?: string;
+    decisionCount?: number;
+    auditEventCount?: number;
+    findingCount?: number;
+  };
+  assert.equal(deletion.changed, true);
+  assert.equal(deletion.readiness, "ready");
+  assert.equal(deletion.status, "export_ready");
+  assert.equal(deletion.decisionCount, 1);
+  assert.equal(deletion.auditEventCount, 1);
+  assert.equal(deletion.findingCount, 0);
+
+  const repeatedDelete = await client.callTool({
+    name: "evidencemap_delete_general_claim",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      claimId: claim.id,
+      reason: "The seeded placeholder claim is not part of the reviewed deliverable.",
+      reviewer: "fixture-reviewer",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal((repeatedDelete.structuredContent as { changed?: boolean; decisionCount?: number; auditEventCount?: number }).changed, false);
+  assert.equal((repeatedDelete.structuredContent as { changed?: boolean; decisionCount?: number; auditEventCount?: number }).decisionCount, 1);
+  assert.equal((repeatedDelete.structuredContent as { changed?: boolean; decisionCount?: number; auditEventCount?: number }).auditEventCount, 1);
+
+  const reviewedFindings = JSON.parse(await readFile(join(run.artifacts.verifyDir, "verification-findings.json"), "utf8")) as Array<{
+    issue?: string;
+  }>;
+  assert.equal(reviewedFindings.length, 0);
+  const reviewDecisionSet = JSON.parse(await readFile(join(run.artifacts.verifyDir, "general-review-decisions.json"), "utf8")) as {
+    decisions: Array<{ action?: string; reason?: string }>;
+    auditEvents: Array<{ action?: string; before?: { id?: string }; after?: { deleted?: boolean; reason?: string } }>;
+  };
+  assert.equal(reviewDecisionSet.decisions.length, 1);
+  assert.equal(reviewDecisionSet.auditEvents.length, 1);
+  assert.equal(reviewDecisionSet.decisions[0]?.action, "delete_claim");
+  assert.equal(reviewDecisionSet.decisions[0]?.reason, "The seeded placeholder claim is not part of the reviewed deliverable.");
+  assert.equal(reviewDecisionSet.auditEvents[0]?.action, "delete_claim");
+  assert.equal(reviewDecisionSet.auditEvents[0]?.before?.id, claim.id);
+  assert.equal(reviewDecisionSet.auditEvents[0]?.after?.deleted, true);
+  assert.equal(reviewDecisionSet.auditEvents[0]?.after?.reason, "The seeded placeholder claim is not part of the reviewed deliverable.");
+  const reviewDecisionMarkdown = await readFile(join(run.artifacts.verifyDir, "general-review-decisions.md"), "utf8");
+  assert.match(reviewDecisionMarkdown, /delete_claim/);
+
+  const persistedStoreData = JSON.parse(await readFile(storePath, "utf8")) as {
+    claims: Array<{ id: string; runId: string }>;
+  };
+  assert.ok(persistedStoreData.claims.some((item) => item.runId === run.runId && item.id === claim.id));
+
+  const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
+  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${run.slug}`]);
+  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${run.slug}`]);
+
+  const rerunDecisionSet = JSON.parse(await readFile(join(run.artifacts.verifyDir, "general-review-decisions.json"), "utf8")) as {
+    decisions: unknown[];
+    auditEvents: unknown[];
+  };
+  assert.equal(rerunDecisionSet.decisions.length, 1);
+  assert.equal(rerunDecisionSet.auditEvents.length, 1);
+
+  await client.close();
+  await server.close();
+});
+
+test("MCP general merge claim decision overlays target and merged-away claims idempotently", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-mcp-general-merge-"));
+  fixtureDirs.push(baseDir);
+  const inputDir = join(baseDir, "input", "general-merge");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-raw-export.csv"), "metric,value\nrevenue,100\n");
+  await writeFile(join(inputDir, "2026-05-01-supporting-export.csv"), "metric,value\nbookings,120\n");
+  const storePath = join(baseDir, "deliverables", "evidence-map-store.json");
+  const { server } = createEvidenceMapMcpServer(new JsonFileEvidenceMapStore(storePath));
+  const client = new Client({ name: "evidence-map-test-client", version: "0.1.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+
+  const runResult = await client.callTool({
+    name: "evidencemap_run_workflow",
+    arguments: {
+      baseDir,
+      name: "general-merge",
+      artifactKind: "document",
+      inputPaths: ["input/general-merge"]
+    }
+  });
+  const run = runResult.structuredContent as { runId?: string; slug?: string; artifacts?: { verifyDir?: string } };
+  assert.ok(run.runId);
+  assert.ok(run.slug);
+  assert.ok(run.artifacts?.verifyDir);
+
+  const storeData = JSON.parse(await readFile(storePath, "utf8")) as {
+    claims: Array<{ id: string; runId: string; sourceIds: string[]; assumptions: string[]; reviewStatus: string }>;
+    sources: Array<{ id: string; runId: string; name: string }>;
+  };
+  const seededClaim = storeData.claims.find((item) => item.runId === run.runId);
+  const rawSource = storeData.sources.find((item) => item.runId === run.runId && item.name === "2026-05-01-raw-export.csv");
+  const supportingSource = storeData.sources.find((item) => item.runId === run.runId && item.name === "2026-05-01-supporting-export.csv");
+  assert.ok(seededClaim);
+  assert.ok(rawSource);
+  assert.ok(supportingSource);
+
+  const rejected = await client.callTool({
+    name: "evidencemap_merge_general_claims",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      targetClaimId: seededClaim.id,
+      mergedClaimIds: ["claim_fixture_missing"],
+      reason: "Merge fixture should require approval before claim lookup.",
+      approvalToken: "not-approved"
+    }
+  });
+  assert.equal(rejected.isError, true);
+
+  const createdClaim = await client.callTool({
+    name: "evidencemap_create_general_claim",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      artifactLocation: "section-map:Revenue",
+      claim: "Revenue and bookings are supported by the supplied exports.",
+      sourceIds: [supportingSource.id, rawSource.id],
+      assumptions: ["zeta assumption", "alpha assumption"],
+      transformation: "Derived from both fixture sources.",
+      reviewStatus: "verified",
+      reviewer: "fixture-reviewer",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  const createdClaimId = (createdClaim.structuredContent as { decision?: { claimId?: string } }).decision?.claimId;
+  assert.ok(createdClaimId);
+
+  const merged = await client.callTool({
+    name: "evidencemap_merge_general_claims",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      targetClaimId: seededClaim.id,
+      mergedClaimIds: [createdClaimId],
+      claim: "Revenue and bookings are supported by the supplied exports.",
+      reviewStatus: "verified",
+      reason: "Merge the reviewed explicit claim into the seeded artifact claim.",
+      reviewer: "fixture-reviewer",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  const mergeResult = merged.structuredContent as {
+    changed?: boolean;
+    readiness?: string;
+    status?: string;
+    decisionCount?: number;
+    auditEventCount?: number;
+    findingCount?: number;
+  };
+  assert.equal(mergeResult.changed, true);
+  assert.equal(mergeResult.readiness, "ready");
+  assert.equal(mergeResult.status, "export_ready");
+  assert.equal(mergeResult.decisionCount, 2);
+  assert.equal(mergeResult.auditEventCount, 2);
+  assert.equal(mergeResult.findingCount, 0);
+
+  const repeatedMerge = await client.callTool({
+    name: "evidencemap_merge_general_claims",
+    arguments: {
+      baseDir,
+      runId: run.runId,
+      targetClaimId: seededClaim.id,
+      mergedClaimIds: [createdClaimId],
+      claim: "Revenue and bookings are supported by the supplied exports.",
+      reviewStatus: "verified",
+      reason: "Merge the reviewed explicit claim into the seeded artifact claim.",
+      reviewer: "fixture-reviewer",
+      approvalToken: GENERAL_REVIEW_APPROVAL_TOKEN
+    }
+  });
+  assert.equal((repeatedMerge.structuredContent as { changed?: boolean; decisionCount?: number; auditEventCount?: number }).changed, false);
+  assert.equal((repeatedMerge.structuredContent as { changed?: boolean; decisionCount?: number; auditEventCount?: number }).decisionCount, 2);
+  assert.equal((repeatedMerge.structuredContent as { changed?: boolean; decisionCount?: number; auditEventCount?: number }).auditEventCount, 2);
+
+  const reviewedFindings = JSON.parse(await readFile(join(run.artifacts.verifyDir, "verification-findings.json"), "utf8")) as Array<{
+    issue?: string;
+  }>;
+  assert.equal(reviewedFindings.length, 0);
+  const reviewDecisionSet = JSON.parse(await readFile(join(run.artifacts.verifyDir, "general-review-decisions.json"), "utf8")) as {
+    decisions: Array<{ action?: string }>;
+    auditEvents: Array<{
+      action?: string;
+      before?: { target?: { id?: string }; mergedClaims?: Array<{ id?: string }> };
+      after?: { target?: { id?: string; sourceIds?: string[]; assumptions?: string[]; transformation?: string; reviewStatus?: string }; removedClaimIds?: string[] };
+    }>;
+  };
+  assert.deepEqual(
+    reviewDecisionSet.decisions.map((decision) => decision.action),
+    ["create_claim", "merge_claims"]
+  );
+  assert.equal(reviewDecisionSet.auditEvents.length, 2);
+  const mergeAudit = reviewDecisionSet.auditEvents.find((event) => event.action === "merge_claims");
+  assert.ok(mergeAudit);
+  assert.equal(mergeAudit.before?.target?.id, seededClaim.id);
+  assert.deepEqual(mergeAudit.before?.mergedClaims?.map((claim) => claim.id), [createdClaimId]);
+  assert.equal(mergeAudit.after?.target?.id, seededClaim.id);
+  assert.deepEqual(mergeAudit.after?.removedClaimIds, [createdClaimId]);
+  assert.deepEqual(mergeAudit.after?.target?.sourceIds, [rawSource.id, supportingSource.id].sort());
+  assert.deepEqual(mergeAudit.after?.target?.assumptions, mergeAudit.after?.target?.assumptions ? [...mergeAudit.after.target.assumptions].sort() : []);
+  assert.ok(mergeAudit.after?.target?.assumptions?.includes("alpha assumption"));
+  assert.ok(mergeAudit.after?.target?.assumptions?.includes("zeta assumption"));
+  assert.equal(mergeAudit.after?.target?.transformation, "Derived from both fixture sources.");
+  assert.equal(mergeAudit.after?.target?.reviewStatus, "verified");
+
+  const latestStoreData = JSON.parse(await readFile(storePath, "utf8")) as {
+    claims: ClaimRecord[];
+  };
+  assert.ok(latestStoreData.claims.some((item) => item.runId === run.runId && item.id === seededClaim.id));
+  assert.ok(!latestStoreData.claims.some((item) => item.runId === run.runId && item.id === createdClaimId));
+  const effectiveClaims = applyGeneralClaimReviewDecisions({
+    claims: latestStoreData.claims.filter((item) => item.runId === run.runId),
+    decisions: reviewDecisionSet.decisions as GeneralReviewDecisionRecord[]
+  });
+  assert.equal(effectiveClaims.length, 1);
+  assert.equal(effectiveClaims[0]?.id, seededClaim.id);
+  assert.deepEqual(effectiveClaims[0]?.sourceIds, [rawSource.id, supportingSource.id].sort());
+  assert.equal(effectiveClaims[0]?.reviewStatus, "verified");
+
+  const scriptPath = fileURLToPath(new URL("../scripts/verify.ts", import.meta.url));
+  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${run.slug}`]);
+  await execFileAsync(process.execPath, ["--experimental-strip-types", scriptPath, "--base-dir", baseDir, "--run", `deliverables/${run.slug}`]);
+
+  const rerunDecisionSet = JSON.parse(await readFile(join(run.artifacts.verifyDir, "general-review-decisions.json"), "utf8")) as {
+    decisions: unknown[];
+    auditEvents: unknown[];
+  };
+  assert.equal(rerunDecisionSet.decisions.length, 2);
+  assert.equal(rerunDecisionSet.auditEvents.length, 2);
 
   await client.close();
   await server.close();
