@@ -50,6 +50,12 @@ npm --prefix .system run run -- --name "capstone-report" --kind document --input
 
 Open `deliverables/capstone-report-*/03_verification/` to see the review findings and trust report.
 
+When the input folder mixes the deliverable with reference material, declare the deliverable with `--draft`. Claims then seed only from the declared draft file(s), and every other input becomes evidence-only reference material. Without `--draft`, every text-bearing file seeds claims, so a large reference document can flood the review queue. Unknown draft names fail the run, and a declared draft that yields no extractable claims (for example, a scanned PDF) becomes a blocking finding.
+
+```bash
+npm --prefix .system run run -- --name "quarterly-review" --kind document --input input/quarterly-review --draft q2-review-draft.md
+```
+
 To generate a verified local Markdown claim receipt, add `--generate`:
 
 ```bash

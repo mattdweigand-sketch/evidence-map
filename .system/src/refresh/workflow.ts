@@ -46,6 +46,7 @@ export async function runEvidenceMapRefresh(
     artifactKind: ArtifactKind;
     profile?: WorkflowProfile;
     inputPaths: string[];
+    draftFiles?: string[];
     generate?: boolean;
   }
 ) {
@@ -58,6 +59,7 @@ export async function runEvidenceMapRefresh(
     artifactKind: input.artifactKind,
     profile: input.profile ?? priorRun.profile,
     inputPaths: input.inputPaths,
+    draftFiles: input.draftFiles ?? priorRun.draftFiles,
     generate: input.generate
   });
   const receipt = await writeRefreshReceipt({

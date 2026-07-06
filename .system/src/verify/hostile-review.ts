@@ -137,6 +137,19 @@ export async function buildHostileReviewFindings(
     findings.push(mustFix("source-conflict", conflict.description, "Open conflicts can silently blend stale and current material.", "Resolve or explicitly carry the conflict into the artifact."));
   }
 
+  for (const draftName of run?.draftFiles ?? []) {
+    if (!claims.some((claim) => claim.artifactLocation.includes(`:${draftName}:`))) {
+      findings.push(
+        mustFix(
+          `source:${draftName}`,
+          "Declared draft produced no extractable claims.",
+          "The file was declared as the draft under review, but no claim candidates could be extracted from its inspected text.",
+          "Convert the draft to an inspectable text format (Markdown, DOCX, or text-based PDF with paragraph structure), or add claims through review tools."
+        )
+      );
+    }
+  }
+
   for (const claim of claims) {
     if (claim.sourceIds.length === 0) {
       findings.push(mustFix(claim.artifactLocation, "Claim has no source attribution.", claim.claim, "Attach source IDs or mark the claim as unsupported."));

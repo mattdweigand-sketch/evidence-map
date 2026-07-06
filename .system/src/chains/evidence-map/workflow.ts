@@ -19,6 +19,7 @@ export async function runEvidenceMapWorkflow(
     artifactKind: ArtifactKind;
     profile?: WorkflowProfile;
     inputPaths: string[];
+    draftFiles?: string[];
     generate?: boolean;
   }
 ) {
@@ -27,11 +28,13 @@ export async function runEvidenceMapWorkflow(
   if (input.generate && profile !== "general") {
     throw new Error("Generation mode is currently available only for the general workflow profile.");
   }
+  const draftFiles = input.draftFiles ?? [];
   const run = await store.createRun({
     name: input.name,
     artifactKind: input.artifactKind,
     profile,
-    inputPaths: resolvedInputPaths
+    inputPaths: resolvedInputPaths,
+    draftFiles
   });
 
   try {
@@ -49,8 +52,15 @@ export async function runEvidenceMapWorkflow(
         sourceIds: sourcePaths.map((path) => sourceIdByPath.get(path)).filter((id): id is string => Boolean(id))
       }))
     );
+    const inspectionNames = new Set(inspections.map((inspection) => inspection.name));
+    const unknownDrafts = draftFiles.filter((name) => !inspectionNames.has(name));
+    if (unknownDrafts.length > 0) {
+      throw new Error(
+        `Unknown draft file(s): ${unknownDrafts.join(", ")}. Draft names must match an inspected input file: ${[...inspectionNames].join(", ")}`
+      );
+    }
     const spec = await store.createArtifactSpec(buildArtifactSpec({ runId: run.id, artifactKind: input.artifactKind, name: input.name }));
-    const claims = await store.createClaims(run.id, seedClaims({ runId: run.id, artifactKind: input.artifactKind, inspections }));
+    const claims = await store.createClaims(run.id, seedClaims({ runId: run.id, artifactKind: input.artifactKind, inspections, draftFiles }));
     const calculations = await store.createCalculations(run.id, seedCalculations({ artifactKind: input.artifactKind }));
     const preparedGeneratedOutput = input.generate
       ? await prepareGeneratedOutput({

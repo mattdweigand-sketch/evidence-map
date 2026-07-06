@@ -33,6 +33,7 @@ export function seedClaims(input: {
   runId: string;
   artifactKind: ArtifactKind;
   inspections?: FileInspectionRecord[];
+  draftFiles?: string[];
 }): Omit<ClaimRecord, "id" | "runId">[] {
   if (input.artifactKind === "workbook") return [];
   const extractedClaims = seedInspectionClaims(input);
@@ -59,12 +60,15 @@ interface PptxSlideSummary {
 function seedInspectionClaims(input: {
   artifactKind: ArtifactKind;
   inspections?: FileInspectionRecord[];
+  draftFiles?: string[];
 }): Omit<ClaimRecord, "id" | "runId">[] {
   const claims: Omit<ClaimRecord, "id" | "runId">[] = [];
   const seenClaims = new Set<string>();
+  const draftNames = new Set(input.draftFiles ?? []);
 
   for (const inspection of input.inspections ?? []) {
     if (inspection.status !== "inspected") continue;
+    if (draftNames.size > 0 && !draftNames.has(inspection.name)) continue;
 
     if ((input.artifactKind === "deck" || input.artifactKind === "mixed") && inspection.parser === "pptx-deep-v1") {
       for (const slide of getPptxSlides(inspection.structuredSummary)) {

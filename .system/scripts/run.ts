@@ -11,6 +11,13 @@ const kind = parseKind(String(args.kind ?? "mixed"));
 const profile = parseProfile(String(args.profile ?? "general"));
 const input = typeof args.input === "string" ? args.input : undefined;
 const generate = args.generate === true || args.generate === "true";
+const draftFiles =
+  typeof args.draft === "string"
+    ? args.draft
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    : [];
 
 if (!input) {
   printUsage();
@@ -24,6 +31,7 @@ const result = await runEvidenceMapWorkflow(new JsonFileEvidenceMapStore(join(ba
   artifactKind: kind,
   profile,
   inputPaths: [input],
+  draftFiles,
   generate
 });
 
@@ -65,7 +73,7 @@ function parseProfile(value: string): WorkflowProfile {
 
 function printUsage(error?: string) {
   if (error) console.error(error);
-  console.error("Usage: npm --prefix .system run run -- --name capstone-report --kind report --profile general --input input/examples/capstone-report [--generate]");
+  console.error("Usage: npm --prefix .system run run -- --name capstone-report --kind report --profile general --input input/examples/capstone-report [--draft file1.md,file2.md] [--generate]");
   console.error(`Valid kinds: ${artifactKinds.join(", ")}`);
   console.error(`Valid profiles: ${workflowProfiles.join(", ")}`);
 }

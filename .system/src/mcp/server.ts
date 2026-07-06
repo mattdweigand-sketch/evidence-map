@@ -116,17 +116,18 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
     "evidencemap_run_workflow",
     {
       title: "Run Evidence Map Workflow",
-      description: "Run source prep, artifact spec, hostile verification, trust evaluation, local review artifacts, and optionally generated Markdown output.",
+      description: "Run source prep, artifact spec, hostile verification, trust evaluation, local review artifacts, and optionally generated Markdown output. Pass draftFiles to seed claims only from the declared draft file(s) and treat every other input as evidence-only reference material.",
       inputSchema: {
         name: z.string(),
         artifactKind: artifactKindSchema,
         profile: workflowProfileSchema.default("general"),
         generate: z.boolean().default(false),
         inputPaths: z.array(z.string()).min(1),
+        draftFiles: z.array(z.string()).optional(),
         baseDir: z.string().default(defaultBaseDir)
       }
     },
-    async ({ name, artifactKind, profile, generate, inputPaths, baseDir }) => {
+    async ({ name, artifactKind, profile, generate, inputPaths, draftFiles, baseDir }) => {
       try {
         const resolvedInputPaths = await resolveWorkspaceInputPaths(baseDir, inputPaths);
         if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
@@ -136,6 +137,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
           artifactKind,
           profile,
           inputPaths: resolvedInputPaths.paths,
+          draftFiles,
           generate
         });
 
@@ -177,7 +179,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
     "evidencemap_refresh_workflow",
     {
       title: "Refresh Evidence Map Workflow",
-      description: "Create a new run from a prior run, snapshot prior review-trail artifacts, and run the workflow over supplied current inputs.",
+      description: "Create a new run from a prior run, snapshot prior review-trail artifacts, and run the workflow over supplied current inputs. Draft-file declarations carry over from the prior run unless draftFiles is supplied.",
       inputSchema: {
         priorRunId: z.string(),
         name: z.string(),
@@ -185,10 +187,11 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
         profile: workflowProfileSchema.default("general"),
         generate: z.boolean().default(false),
         inputPaths: z.array(z.string()).min(1),
+        draftFiles: z.array(z.string()).optional(),
         baseDir: z.string().default(defaultBaseDir)
       }
     },
-    async ({ priorRunId, name, artifactKind, profile, generate, inputPaths, baseDir }) => {
+    async ({ priorRunId, name, artifactKind, profile, generate, inputPaths, draftFiles, baseDir }) => {
       try {
         const resolvedInputPaths = await resolveWorkspaceInputPaths(baseDir, inputPaths);
         if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
@@ -199,6 +202,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
           artifactKind,
           profile,
           inputPaths: resolvedInputPaths.paths,
+          draftFiles,
           generate
         });
         return jsonToolResult({

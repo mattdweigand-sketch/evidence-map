@@ -40,6 +40,7 @@ export interface EvidenceMapRun {
   profile: WorkflowProfile;
   status: RunStatus;
   inputPaths: string[];
+  draftFiles?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -241,4 +242,5 @@ export interface StartRunInput {
   artifactKind: ArtifactKind;
   profile?: WorkflowProfile;
   inputPaths: string[];
+  draftFiles?: string[];
 }

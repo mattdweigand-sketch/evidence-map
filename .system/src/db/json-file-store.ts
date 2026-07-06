@@ -61,6 +61,7 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
         profile: input.profile ?? "general",
         status: "running",
         inputPaths: input.inputPaths,
+        ...(input.draftFiles?.length ? { draftFiles: input.draftFiles } : {}),
         createdAt: now,
         updatedAt: now
       };

@@ -129,6 +129,75 @@ test("deck workflow seeds unsupported claims from PPTX slide and notes text", as
   );
 });
 
+test("declared draft files limit claim seeding to the draft", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-draft-"));
+  const inputDir = join(baseDir, "input", "draft-scope");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-06-01-response-draft.md"), "Revenue was $12 million as of 2026-05-31.\n\nHeadcount grew to 84 people in May 2026.\n");
+  await writeFile(join(inputDir, "2026-05-15-reference-report.md"), "The reference report shows revenue reached $12 million by late May.\n\nBackground staffing tables list 84 employees.\n");
+
+  const store = new MemoryEvidenceMapStore();
+  const result = await runEvidenceMapWorkflow(store, {
+    baseDir,
+    name: "draft-scope",
+    artifactKind: "document",
+    inputPaths: ["input/draft-scope"],
+    draftFiles: ["2026-06-01-response-draft.md"]
+  });
+  const claims = await store.listClaims(result.run.id);
+
+  assert.equal(result.run.draftFiles?.length, 1);
+  assert.ok(claims.length > 0);
+  assert.ok(claims.every((claim) => claim.artifactLocation.includes(":2026-06-01-response-draft.md:")));
+  assert.ok(result.evidenceLinkSuggestions?.some((suggestion) => suggestion.sourceName === "2026-05-15-reference-report.md"));
+});
+
+test("unknown draft file names fail the run", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-draft-unknown-"));
+  const inputDir = join(baseDir, "input", "draft-unknown");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-06-01-response-draft.md"), "Revenue was $12 million as of 2026-05-31.\n");
+
+  const store = new MemoryEvidenceMapStore();
+  await assert.rejects(
+    runEvidenceMapWorkflow(store, {
+      baseDir,
+      name: "draft-unknown",
+      artifactKind: "document",
+      inputPaths: ["input/draft-unknown"],
+      draftFiles: ["missing-draft.md"]
+    }),
+    /Unknown draft file\(s\): missing-draft.md/
+  );
+});
+
+test("declared draft with no extractable claims is a blocking finding", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-draft-empty-"));
+  const inputDir = join(baseDir, "input", "draft-empty");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-06-01-scanned-draft.md"), "ok\n");
+  await writeFile(join(inputDir, "2026-05-15-reference-report.md"), "The reference report shows revenue reached $12 million by late May.\n");
+
+  const store = new MemoryEvidenceMapStore();
+  const result = await runEvidenceMapWorkflow(store, {
+    baseDir,
+    name: "draft-empty",
+    artifactKind: "document",
+    inputPaths: ["input/draft-empty"],
+    draftFiles: ["2026-06-01-scanned-draft.md"]
+  });
+
+  assert.equal(result.trustReport.readiness, "blocked");
+  assert.ok(
+    result.findings.some(
+      (finding) =>
+        finding.issue === "Declared draft produced no extractable claims." &&
+        finding.location === "source:2026-06-01-scanned-draft.md" &&
+        finding.severity === "must_fix"
+    )
+  );
+});
+
 test("clean end-to-end generation writes final Markdown and ready manifest", async () => {
   const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-generate-clean-"));
   const inputDir = join(baseDir, "input", "clean-report");
