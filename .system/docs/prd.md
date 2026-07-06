@@ -44,8 +44,8 @@ The first version creates the control layer:
 - Claim and calculation map.
 - Hostile-review findings.
 - Readiness report.
-- Gated export folder.
+- Gated export folder scoped to the named local artifact.
 - Evidence-link suggestions and calculation repair packets.
-- Optional local Markdown output generated from verified claims, plus deterministic formatted and edited Markdown derivatives.
+- Optional local Markdown claim receipt generated from verified claims, plus deterministic formatted and edited Markdown derivatives.
 
-It does not render final Office files. Draft artifacts can be created elsewhere and routed through the evidence layer for review. When generation mode is enabled, the general profile emits local Markdown only, with source evidence, generated claims, an evidence map, deterministic formatted and edited derivatives after readiness, and a refusal if any selected claim cannot be verified.
+It does not render final Office files or certify original input files for external shipping. Draft artifacts can be created elsewhere and routed through the evidence layer for review. When generation mode is enabled, the general profile emits local Markdown only, with source evidence, generated claims, an evidence map, deterministic formatted and edited derivatives after readiness, and a refusal if any selected claim cannot be verified. The review packet is the primary product; generated Markdown is a traceable receipt, not prose-quality report generation.

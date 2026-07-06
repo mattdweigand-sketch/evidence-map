@@ -151,6 +151,7 @@ test("clean end-to-end generation writes final Markdown and ready manifest", asy
   assert.match(finalMarkdown, /active users was 42 as of 2026-05-01/);
   assert.match(finalMarkdown, /sources: src_/);
   assert.match(finalMarkdown, /evidence: evidence_/);
+  assert.match(finalMarkdown, /Readiness applies to this generated Markdown receipt and the review packet/);
   const formattedMarkdown = await readFile(join(result.artifacts.exportDir, "formatted-output.md"), "utf8");
   assert.match(formattedMarkdown, /deterministic formatted derivative/);
   assert.match(formattedMarkdown, /active users was 42 as of 2026-05-01/);
@@ -383,9 +384,19 @@ test("capstone messy-folder generation writes final Markdown and excludes old or
   assert.match(formattedMarkdown, /enrollment-figures-final\.csv/);
   assert.match(formattedMarkdown, /enrollment-figures-old\.csv: Superseded or archived source excluded/);
   assert.match(formattedMarkdown, /enrollment-analysis\.xlsx: Workbook has unresolved calculation risks/);
+  assert.match(formattedMarkdown, /30 records in 01_source-packet\/source-evidence\.json/);
   const sourceEvidence = await readFile(join(result.artifacts.sourceDir, "source-evidence.md"), "utf8");
   assert.match(sourceEvidence, /enrollment-figures-old\.csv/);
   assert.match(sourceEvidence, /Workbook has unresolved calculation risks/);
+  assert.match(finalMarkdown, /30 records in 01_source-packet\/source-evidence\.json/);
+  assert.doesNotMatch(finalMarkdown, /evidence_[a-f0-9]{20}, evidence_[a-f0-9]{20}, evidence_[a-f0-9]{20}, evidence_[a-f0-9]{20}/);
+  const generatedClaimsMarkdown = await readFile(join(result.artifacts.verifyDir, "generated-claims.md"), "utf8");
+  assert.match(generatedClaimsMarkdown, /30 records in 01_source-packet\/source-evidence\.json/);
+  const generatedClaimsJson = JSON.parse(await readFile(join(result.artifacts.verifyDir, "generated-claims.json"), "utf8")) as Array<{
+    claim: string;
+    evidenceIds: string[];
+  }>;
+  assert.ok(generatedClaimsJson.some((claim) => claim.claim.includes("included 30 rows") && claim.evidenceIds.length === 30));
 });
 
 test("generation refuses unresolved current-source conflicts", async () => {

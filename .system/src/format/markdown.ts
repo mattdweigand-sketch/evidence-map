@@ -1,6 +1,7 @@
 import type { SourceExclusion } from "../evidence/select.ts";
 import type { EvidenceMapRun, GeneratedClaimRecord, GeneratedOutputRecord, SourceEvidenceRecord, TrustReport } from "../types.ts";
 import { buildVerifiedOutputDocument, type VerifiedOutputDocument } from "./document-model.ts";
+import { formatEvidenceIdsForDisplay, SOURCE_EVIDENCE_DETAIL_PATH } from "../generate/markdown.ts";
 
 export type FormattedOutputStyle = "reference";
 
@@ -89,6 +90,7 @@ export function buildFormattedOutput(input: {
     guardrails: [
       "The formatted output is a deterministic derivative of the verified generated Markdown output.",
       "Formatting does not create claims, select evidence, alter source dates, or change readiness.",
+      "Readiness applies to the generated Markdown receipt and review packet, not to original input files or native Office artifacts.",
       "The canonical trust target remains 04_export/final-output.md plus the generated claims, evidence map, and trust report."
     ],
     formattedAt: new Date().toISOString()
@@ -134,16 +136,14 @@ ${excludedRows.join("\n")}
 }
 
 function renderReferenceClaim(claim: VerifiedOutputClaimForRender) {
-  const evidenceRefs = claim.evidenceRefs.length
-    ? claim.evidenceRefs.map((item) => `- \`${item.id}\` from ${item.sourceName} at ${item.anchor}${item.sourceDate ? ` (${item.sourceDate})` : ""}`)
-    : ["- No evidence refs."];
+  const evidenceRefs = renderEvidenceRefs(claim);
   return `### Claim
 
-${claim.text} [generated claim: ${claim.generatedClaimId}; sources: ${claim.sourceIds.join(", ")}; evidence: ${claim.evidenceIds.join(", ")}; dates: ${claim.sourceDates.join(", ")}]
+${claim.text} [generated claim: ${claim.generatedClaimId}; sources: ${claim.sourceIds.join(", ")}; evidence: ${formatEvidenceIdsForDisplay(claim.evidenceIds)}; dates: ${claim.sourceDates.join(", ")}]
 
 Evidence anchors:
 
-${evidenceRefs.join("\n")}`;
+${evidenceRefs}`;
 }
 
 function renderFormattingReceipt(receipt: FormattingReceipt) {
@@ -175,7 +175,7 @@ Formatted at: ${receipt.formattedAt}
 
 - Generated claims: ${receipt.verifiedClaimIds.join(", ") || "none"}
 - Sources: ${receipt.sourceIds.join(", ") || "none"}
-- Evidence: ${receipt.evidenceIds.join(", ") || "none"}
+- Evidence: ${formatEvidenceIdsForDisplay(receipt.evidenceIds)}
 - Source dates: ${receipt.sourceDates.join(", ") || "none"}
 
 ## Invariant Checks
@@ -202,7 +202,7 @@ function assertFormattingInvariants(input: {
     requirePresence(failures, input.markdown, claim.generatedClaimId, `generated claim ${claim.generatedClaimId}`);
     requirePresence(failures, input.markdown, claim.text, `claim text ${claim.generatedClaimId}`);
     requireAllPresent(failures, input.markdown, claim.sourceIds, `source IDs for ${claim.generatedClaimId}`);
-    requireAllPresent(failures, input.markdown, claim.evidenceIds, `evidence IDs for ${claim.generatedClaimId}`);
+    requireEvidenceReference(failures, input.markdown, claim.evidenceIds, `evidence IDs for ${claim.generatedClaimId}`);
     requireAllPresent(failures, input.markdown, claim.sourceDates, `source dates for ${claim.generatedClaimId}`);
     if (hasNumericToken(claim.text) && claim.sourceDates.length === 0) {
       failures.push(`numeric claim lacks source dates: ${claim.generatedClaimId}`);
@@ -225,7 +225,7 @@ function assertFormattingInvariants(input: {
 
   checks.push({ name: "all verified generated claim IDs are present", status: "passed" });
   checks.push({ name: "all verified claim text is present", status: "passed" });
-  checks.push({ name: "all source IDs, evidence IDs, and source dates are present", status: "passed" });
+  checks.push({ name: "all source IDs, evidence references, and source dates are present", status: "passed" });
   checks.push({ name: "unverified generated claims are absent", status: "passed" });
   checks.push({ name: "excluded sources and reasons are present", status: "passed" });
   checks.push({ name: "no unmodeled numeric tokens were introduced", status: "passed" });
@@ -236,6 +236,14 @@ type VerifiedOutputClaimForRender = VerifiedOutputDocument["verifiedClaims"][num
 
 function requireAllPresent(failures: string[], markdown: string, values: string[], label: string) {
   for (const value of values) requirePresence(failures, markdown, value, label);
+}
+
+function requireEvidenceReference(failures: string[], markdown: string, evidenceIds: string[], label: string) {
+  if (evidenceIds.length <= 1) {
+    requireAllPresent(failures, markdown, evidenceIds, label);
+    return;
+  }
+  requirePresence(failures, markdown, `${evidenceIds.length} records in ${SOURCE_EVIDENCE_DETAIL_PATH}`, label);
 }
 
 function requirePresence(failures: string[], markdown: string, value: string, label: string) {
@@ -282,4 +290,20 @@ function allowedNumericTokens(document: VerifiedOutputDocument) {
 
 function unique(values: string[]) {
   return [...new Set(values)];
+}
+
+function renderEvidenceRefs(claim: VerifiedOutputClaimForRender) {
+  if (claim.evidenceRefs.length === 0) return "- No evidence refs.";
+  if (claim.evidenceRefs.length <= 5) {
+    return claim.evidenceRefs
+      .map((item) => `- \`${item.id}\` from ${item.sourceName} at ${item.anchor}${item.sourceDate ? ` (${item.sourceDate})` : ""}`)
+      .join("\n");
+  }
+  const first = claim.evidenceRefs[0];
+  const last = claim.evidenceRefs[claim.evidenceRefs.length - 1];
+  return [
+    `- ${claim.evidenceRefs.length} evidence records in \`${SOURCE_EVIDENCE_DETAIL_PATH}\``,
+    `- First: \`${first.id}\` from ${first.sourceName} at ${first.anchor}${first.sourceDate ? ` (${first.sourceDate})` : ""}`,
+    `- Last: \`${last.id}\` from ${last.sourceName} at ${last.anchor}${last.sourceDate ? ` (${last.sourceDate})` : ""}`
+  ].join("\n");
 }

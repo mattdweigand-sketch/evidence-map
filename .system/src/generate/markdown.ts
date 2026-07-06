@@ -8,6 +8,9 @@ import type {
 } from "../types.ts";
 import type { SourceExclusion } from "../evidence/select.ts";
 
+export const SOURCE_EVIDENCE_DETAIL_PATH = "01_source-packet/source-evidence.json";
+export const GENERATED_CLAIMS_DETAIL_PATH = "03_verification/generated-claims.json";
+
 export interface GeneratedOutputReceipt {
   runId: string;
   profile: "general";
@@ -37,11 +40,11 @@ export function renderFinalMarkdown(input: {
   const evidenceById = new Map(input.sourceEvidence.map((item) => [item.id, item]));
   const summaryRows = verifiedClaims.map((claim) => {
     const dateText = claim.sourceDates.length > 0 ? claim.sourceDates.join(", ") : "n/a";
-    return `- ${claim.claim} [sources: ${claim.sourceIds.join(", ")}; evidence: ${claim.evidenceIds.join(", ")}; dates: ${dateText}]`;
+    return `- ${claim.claim} [sources: ${claim.sourceIds.join(", ")}; evidence: ${formatEvidenceIdsForDisplay(claim.evidenceIds)}; dates: ${dateText}]`;
   });
   const evidenceRows = verifiedClaims.map((claim) => {
     const evidence = claim.evidenceIds.map((id) => evidenceById.get(id)).filter((item): item is SourceEvidenceRecord => Boolean(item));
-    return `| ${escapeTable(claim.claim)} | ${escapeTable(claim.sourceIds.join(", "))} | ${escapeTable(evidence.map((item) => `${item.sourceName}:${item.anchor}`).join(", "))} | ${escapeTable(claim.evidenceIds.join(", "))} | ${escapeTable(claim.sourceDates.join(", ") || "n/a")} |`;
+    return `| ${escapeTable(claim.claim)} | ${escapeTable(claim.sourceIds.join(", "))} | ${escapeTable(formatEvidenceRefsForDisplay(evidence, claim.evidenceIds.length))} | ${escapeTable(formatEvidenceIdsForDisplay(claim.evidenceIds))} | ${escapeTable(claim.sourceDates.join(", ") || "n/a")} |`;
   });
   const excludedRows = input.sourceExclusions.length
     ? input.sourceExclusions.map((item) => `| ${escapeTable(item.sourceName)} | ${escapeTable(item.reason)} |`)
@@ -49,7 +52,13 @@ export function renderFinalMarkdown(input: {
 
   return `# ${input.run.name}
 
-Generated local Markdown output. No external sending, filing, submission, or publication was performed.
+Generated local Markdown claim receipt. No external sending, filing, submission, or publication was performed.
+
+## Readiness Scope
+
+- Readiness applies to this generated Markdown receipt and the review packet for this run.
+- Readiness does not certify original input files, native Office files, or user-supplied artifacts for external shipping.
+- Excluded or risky sources remain visible below and in \`${SOURCE_EVIDENCE_DETAIL_PATH}\`.
 
 ## Summary
 
@@ -57,7 +66,7 @@ ${summaryRows.join("\n") || "- No verified generated claims."}
 
 ## Evidence Table
 
-| Claim | Sources | Evidence anchors | Evidence IDs | Source dates |
+| Claim | Sources | Evidence summary | Evidence detail | Source dates |
 |---|---|---|---|---|
 ${evidenceRows.join("\n") || "| none |  |  |  |  |"}
 
@@ -104,8 +113,9 @@ export function buildGeneratedOutputReceipt(input: {
     generatedAt: input.generatedOutput.generatedAt,
     guardrails: [
       "Only local Markdown was generated.",
+      "Readiness applies to the generated Markdown receipt and review packet, not to original input files or native Office artifacts.",
       "No external model calls, native Office rendering, OCR, sending, filing, submission, or publication were performed.",
-      "Every final claim has source IDs and evidence IDs.",
+      "Every final claim has source IDs and evidence IDs in the generated-claims and source-evidence records.",
       "Every numeric final claim has a source date."
     ]
   };
@@ -163,12 +173,12 @@ export function renderGeneratedClaimsMarkdown(claims: GeneratedClaimRecord[]) {
   const rows = claims.length
     ? claims.map(
         (claim) =>
-          `| ${claim.id} | ${claim.reviewStatus} | ${escapeTable(claim.claim)} | ${claim.sourceIds.join(", ")} | ${claim.evidenceIds.join(", ")} | ${claim.sourceDates.join(", ")} |`
+          `| ${claim.id} | ${claim.reviewStatus} | ${escapeTable(claim.claim)} | ${claim.sourceIds.join(", ")} | ${escapeTable(formatEvidenceIdsForDisplay(claim.evidenceIds))} | ${claim.sourceDates.join(", ")} |`
       )
     : ["| none |  |  |  |  |  |"];
   return `# Generated Claims
 
-| ID | Review status | Claim | Sources | Evidence IDs | Source dates |
+| ID | Review status | Claim | Sources | Evidence | Source dates |
 |---|---|---|---|---|---|
 ${rows.join("\n")}
 `;
@@ -246,4 +256,28 @@ function assertFinalClaims(claims: GeneratedClaimRecord[], sourceEvidence: Sourc
 
 function escapeTable(value: string) {
   return value.replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+}
+
+export function formatEvidenceIdsForDisplay(evidenceIds: string[]) {
+  if (evidenceIds.length === 0) return "none";
+  if (evidenceIds.length === 1) return evidenceIds[0] ?? "none";
+  return `${evidenceIds.length} records in ${SOURCE_EVIDENCE_DETAIL_PATH} (first: ${evidenceIds[0]}; last: ${evidenceIds[evidenceIds.length - 1]})`;
+}
+
+function formatEvidenceRefsForDisplay(evidence: SourceEvidenceRecord[], expectedCount: number) {
+  if (evidence.length === 0) {
+    return expectedCount > 0 ? `${expectedCount} records in ${SOURCE_EVIDENCE_DETAIL_PATH}` : "none";
+  }
+  if (evidence.length === 1) {
+    const item = evidence[0];
+    return `${item.sourceName}:${item.anchor}`;
+  }
+  const sources = unique(evidence.map((item) => item.sourceName));
+  const first = evidence[0];
+  const last = evidence[evidence.length - 1];
+  return `${evidence.length} records from ${sources.join(", ")}; first ${first.sourceName}:${first.anchor}; last ${last.sourceName}:${last.anchor}`;
+}
+
+function unique<T>(values: T[]) {
+  return [...new Set(values)];
 }

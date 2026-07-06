@@ -16,7 +16,9 @@ Generation records: source evidence snippets, generated claims, evidence maps, e
 
 ## Current Limitation
 
-General-profile v1 runs include a review-decision path for creating/editing/deleting/merging claims, attaching source support with anchors/quotes/rationale, resolving calculation risks, accepting current findings with rationale, and resolving source conflicts. They also write a local export gate receipt: unresolved blockers produce `04_export/general-export-refusal.md`, while ready runs produce `04_export/ready-manifest.json`. General runs seed deterministic unsupported claim candidates from inspected PPTX, Markdown/text, DOCX, and text-based PDF content; write deterministic evidence-link suggestions; and write calculation repair packets. Generation mode adds source evidence snippets, source selection, generated claims, a generated evidence map, local Markdown output when ready, and deterministic formatted and edited Markdown derivatives after readiness. After readiness, MCP can copy approved user-supplied final artifacts locally into `04_export/approved-artifacts/` and write a final artifact receipt. Native Office generation, external model calls, and prose-quality synthesis are still out of scope. Legal-profile runs have a narrower review-decision path and local final export gate, but the gate still refuses unresolved legal blockers or required human review.
+General-profile v1 runs include a review-decision path for creating/editing/deleting/merging claims, attaching source support with anchors/quotes/rationale, resolving calculation risks, accepting current findings with rationale, and resolving source conflicts. They also write a local export gate receipt: unresolved blockers produce `04_export/general-export-refusal.md`, while ready runs produce `04_export/ready-manifest.json`. General runs seed deterministic unsupported claim candidates from inspected PPTX, Markdown/text, DOCX, and text-based PDF content; write deterministic evidence-link suggestions; and write calculation repair packets. Generation mode adds source evidence snippets, source selection, generated claims, a generated evidence map, a local Markdown claim receipt when ready, and deterministic formatted and edited Markdown derivatives after readiness. After readiness, MCP can copy approved user-supplied final artifacts locally into `04_export/approved-artifacts/` and write a final artifact receipt. Native Office generation, external model calls, and prose-quality synthesis are still out of scope. Legal-profile runs have a narrower review-decision path and local final export gate, but the gate still refuses unresolved legal blockers or required human review.
+
+Readiness is scoped to the artifact named by the run's export artifacts. In generation mode, `ready` means the generated Markdown receipt and review packet passed their gates. It does not certify original input files, native Office files, PDFs, or other user-supplied files for external shipping. Excluded source problems stay visible as review packet findings and source-evidence exclusions so a human can decide whether the original artifact needs repair.
 
 ## Readiness Rules
 
@@ -39,15 +41,16 @@ Current implemented review rules:
 
 Generation-mode rules:
 
-- Selected evidence is strict: selected inspection failures, selected undated numeric evidence, unresolved selected-source conflicts, unsupported generated claims, and workbook calculation risks block final Markdown.
+- Selected evidence is strict: selected inspection failures, selected undated numeric evidence, unresolved selected-source conflicts, unsupported generated claims, and selected workbook calculation risks block the generated Markdown receipt.
 - Excluded unused sources stay visible in source evidence, evidence-map, receipt, and final output tables but do not automatically block export.
 - Old/final conflicts can be resolved deterministically by selecting the final/current evidence and excluding the old/superseded evidence.
 - Two current sources with conflicting values for the same metric block export until resolved.
-- No final Markdown is written unless the trust report is `ready`.
-- Every final generated claim must include source IDs and evidence IDs.
+- No final Markdown claim receipt is written unless the trust report is `ready`.
+- Every final generated claim must include source IDs and evidence IDs in structured records.
 - Every numeric final generated claim must include a source date.
+- Markdown views summarize dense evidence lists with counts and pointers to `01_source-packet/source-evidence.json`; full IDs remain in JSON records.
 - `04_export/formatted-output.md` is a deterministic derivative of `04_export/final-output.md`; formatting checks must preserve generated claim IDs, source IDs, evidence IDs, source dates, and excluded-source reasons.
 - `04_export/edited-output.md` is also a deterministic derivative of `04_export/final-output.md`; it does not create claims, change source selection, or change readiness.
 - Evidence-link suggestions and calculation repair packets are advisory records. They do not verify claims, resolve risks, or bypass review gates.
 
-Chart traceability is enforced only after those records exist. General PowerPoint inspection extracts slide text, notes text, and chart references; DOCX inspection extracts paragraphs, headings, and tables; text-based PDF inspection exposes page paragraphs, section candidates, citation candidates, and table-like rows. The legal profile adds citeable DOCX and text-based PDF passage extraction for supplied legal sources. An artifact is ready only when blocking issues are zero and required review findings are cleared or explicitly accepted through the relevant review path.
+Chart traceability is enforced only after those records exist. General PowerPoint inspection extracts slide text, notes text, and chart references; DOCX inspection extracts paragraphs, headings, and tables; text-based PDF inspection exposes page paragraphs, section candidates, citation candidates, and table-like rows. The legal profile adds citeable DOCX and text-based PDF passage extraction for supplied legal sources. An artifact is ready only for its declared export scope when blocking issues are zero and required review findings for that scope are cleared or explicitly accepted through the relevant review path.

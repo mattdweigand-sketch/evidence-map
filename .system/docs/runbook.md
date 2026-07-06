@@ -66,17 +66,17 @@ Use the supporting review artifacts:
 
 ## 5. Generated Markdown Output
 
-For general report/document workflows, generation mode can create a local Markdown output after source prep and structure:
+For general report/document workflows, generation mode can create a local Markdown claim receipt after source prep and structure:
 
 - Build source evidence snippets from inspected rows, paragraphs, slides, notes, and workbook summaries.
 - Select current, raw-data, and transcript evidence; exclude stale, failed, risky, and undated numeric evidence with visible reasons.
 - Generate deterministic claims only from selected evidence.
-- Write `04_export/final-output.md` only when the trust report is ready.
+- Write `04_export/final-output.md` only when the trust report is ready for the generated Markdown scope.
 - Write `04_export/formatted-output.md` only as a deterministic derivative of the ready final Markdown output.
 - Write `04_export/edited-output.md` only as a deterministic edited Markdown derivative of the ready final Markdown output.
 - Otherwise write `04_export/general-export-refusal.md` with exact blockers.
 
-Generation mode does not create `.docx`, `.pptx`, or `.xlsx` files and does not send, file, submit, publish, or call external models.
+Generation mode does not create `.docx`, `.pptx`, or `.xlsx` files and does not send, file, submit, publish, or call external models. `ready` does not certify original input files for external shipping; it only applies to the generated Markdown receipt and the review packet for the selected evidence.
 
 ## 6. Refresh
 

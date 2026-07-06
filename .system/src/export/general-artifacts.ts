@@ -78,6 +78,7 @@ export async function applyGeneralFinalArtifacts(input: {
     guardrails: [
       "Only user-supplied local files were copied.",
       "No model calls, external sending, filing, submission, or publication were performed.",
+      "Ready status came from the review packet/generation scope for this run, not from native artifact rendering.",
       "This receipt records local handoff only; it does not certify semantic correctness."
     ]
   };

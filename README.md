@@ -6,9 +6,11 @@ Evidence Map makes work deliverables inspectable before they get shipped.
 
 You give it a folder of source files. It inventories the sources, pulls out usable evidence, flags risky claims and numbers, and writes a review packet under `deliverables/`.
 
-If the sources are clean enough, a general report run can write a local Markdown output with receipts that show which source and evidence record supports each claim. If the sources are not clean enough, the run refuses to write the final output and lists the blockers.
+If the selected evidence is clean enough, a general report run can write a local Markdown claim receipt with source and evidence pointers for each generated claim. If the selected evidence is not clean enough, the run refuses that generated Markdown receipt and lists the blockers.
 
 Evidence Map is not a native deck, workbook, or Office-file generator. Draft artifacts can come from PowerPoint, Excel, ChatGPT, Claude, an RFP tool, or a human author. Evidence Map builds the control layer around that work before anyone trusts or ships it.
+
+`ready` is scoped. In generation mode, it means the generated Markdown receipt and review packet passed their gates. It does not certify the original `.xlsx`, `.pptx`, `.docx`, PDF, or other input files for external shipping. Risky or excluded sources stay visible in the packet so a reviewer can decide whether those original artifacts need repair.
 
 ## Basic loop
 
@@ -16,7 +18,7 @@ Evidence Map is not a native deck, workbook, or Office-file generator. Draft art
 2. Run the workflow.
 3. Open the new folder under `deliverables/<run-name>-<id>/`.
 4. Start with `03_verification/trust-report.json` and `03_verification/review-queue.md`.
-5. Use `04_export/` only when the trust gate says the run is ready.
+5. Use `04_export/` only for the artifact named by the ready manifest.
 
 ## What you get
 
@@ -25,7 +27,7 @@ Evidence Map is not a native deck, workbook, or Office-file generator. Draft art
 | `01_source-packet/` | What files came in, how they were inspected, and what conflicts were inferred. | `source-packet.md` |
 | `02_artifact-spec/` | The expected structure and checks for the requested artifact kind. | `artifact-spec.md` |
 | `03_verification/` | Findings, readiness, review queue, evidence suggestions, generated claims, and evidence map. | `trust-report.json`, `review-queue.md` |
-| `04_export/` | A ready manifest and Markdown output when ready, or a refusal with exact blockers. | `README.md`, `final-output.md`, `general-export-refusal.md` |
+| `04_export/` | A ready manifest and Markdown claim receipt when ready, or a refusal with exact blockers. | `README.md`, `final-output.md`, `general-export-refusal.md` |
 
 ## Who this is for
 
@@ -48,13 +50,13 @@ npm --prefix .system run run -- --name "capstone-report" --kind document --input
 
 Open `deliverables/capstone-report-*/03_verification/` to see the review findings and trust report.
 
-To generate a verified local Markdown output, add `--generate`:
+To generate a verified local Markdown claim receipt, add `--generate`:
 
 ```bash
 npm --prefix .system run run -- --name "capstone-report" --kind report --input input/examples/capstone-report --generate
 ```
 
-When ready, the run writes `04_export/final-output.md`, `04_export/formatted-output.md`, `04_export/edited-output.md`, receipts, and a ready manifest. These Markdown files are built only from verified generated claims. They preserve source IDs, evidence IDs, source dates, and excluded-source reasons. If a selected source conflict, unsupported generated claim, or undated numeric claim remains, no final Markdown file is written. `04_export/general-export-refusal.md` lists the blockers. Native `.docx`, `.pptx`, and `.xlsx` outputs are not generated.
+When ready, the run writes `04_export/final-output.md`, `04_export/formatted-output.md`, `04_export/edited-output.md`, receipts, and a ready manifest. These Markdown files are built only from verified generated claims. They are evidence receipts, not polished prose reports: full source IDs, evidence IDs, source dates, and excluded-source reasons are preserved in JSON, while the Markdown summarizes dense evidence lists with counts and pointers. If a selected source conflict, unsupported generated claim, or undated numeric claim remains, no final Markdown file is written. `04_export/general-export-refusal.md` lists the blockers. Native `.docx`, `.pptx`, and `.xlsx` outputs are not generated.
 
 To refresh a recurring deliverable from a prior run while preserving the prior review trail by receipt:
 
@@ -127,11 +129,11 @@ The same shape works in any MCP client that supports local stdio servers. MCP is
 
 Core tools include `evidencemap_inspect_source_packet`, `evidencemap_run_workflow`, `evidencemap_refresh_workflow`, `evidencemap_status`, `evidencemap_next_action`, `evidencemap_get_verification_report`, and `evidencemap_get_evidence_link_suggestions`. `evidencemap_run_workflow` accepts `generate: true` for local Markdown generation. Run state persists at `deliverables/evidence-map-store.json`. The full surface is documented in `.system/docs/mcp.md`. The CLI remains useful for smoke tests, fixtures, and CI.
 
-General-profile runs carry an artifact-backed review trail and a local export gate. Blocked or review-required runs write a refusal. Ready runs write a ready manifest. In generation mode, ready runs also write final, formatted, and edited Markdown outputs with receipts. Native Office generation and broad prose-quality synthesis remain out of scope.
+General-profile runs carry an artifact-backed review trail and a local export gate. Blocked or review-required runs write a refusal. Ready runs write a ready manifest for the gated artifact named in that manifest. In generation mode, ready runs also write final, formatted, and edited Markdown claim receipts. Native Office generation and broad prose-quality synthesis remain out of scope.
 
 ## What this is not
 
-The premise is that AI can make files that look finished before they are true. A chart can mix actuals and plan data. A workbook can contain hardcoded projections instead of live formulas. A deck can carry claims with no source trail. Evidence Map exposes the claim layer before the artifact is approved, so nothing looks polished before anyone has checked whether the underlying content is true, current, approved, and safe to reuse.
+The premise is that AI can make files that look finished before they are true. A chart can mix actuals and plan data. A workbook can contain hardcoded projections instead of live formulas. A deck can carry claims with no source trail. Evidence Map exposes the claim layer before the artifact is approved. The review packet is the product: final Office rendering, prose-quality synthesis, and external sending happen elsewhere and should not be treated as approved merely because a generated Markdown receipt is ready.
 
 ## Repo layout
 
@@ -147,7 +149,7 @@ Runs live under `deliverables/<run-slug>/`. Slugs include a short run ID suffix 
 - `01_source-packet/`: source inventory, file inspections, conflict log, and source evidence snippets.
 - `02_artifact-spec/`: deck, workbook, document, or mixed artifact specification.
 - `03_verification/`: hostile-review findings, readiness report, evidence-link suggestions, calculation repair packet, generated claims, and evidence map.
-- `04_export/`: readiness gate for approved artifacts, generated Markdown output, deterministic formatted and edited derivatives when ready, or refusal details when blocked.
+- `04_export/`: readiness gate for approved artifacts, generated Markdown claim receipts, deterministic formatted and edited derivatives when ready, or refusal details when blocked.
 
 CSV/TSV/text/Markdown and text-based PDF sources are inspected directly. General PDFs expose page paragraphs, section candidates, citation candidates, and table-like rows when text is extractable. `.xlsx` files get a Workbook Doctor pass: sheet inventory, hidden sheets, headers, formulas, hardcodes, missing checks sheets, and repeated static formulas. PowerPoint files get slide text, notes, and chart-reference inspection. DOCX files get paragraph, heading, and table inspection. The legal profile adds citeable DOCX passage extraction and converts shared PDF text extraction into legal passage anchors.
 

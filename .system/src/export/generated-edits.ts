@@ -1,5 +1,6 @@
 import type { SourceExclusion } from "../evidence/select.ts";
 import type { EvidenceMapRun, GeneratedClaimRecord, GeneratedOutputRecord, SourceEvidenceRecord, TrustReport } from "../types.ts";
+import { formatEvidenceIdsForDisplay, SOURCE_EVIDENCE_DETAIL_PATH } from "../generate/markdown.ts";
 
 export interface GeneratedEditProposal {
   runId: string;
@@ -43,6 +44,7 @@ export function buildGeneratedEditOutput(input: {
     ],
     notes: [
       "This is a deterministic Markdown edit derived from ready generated output.",
+      "Readiness applies to the generated Markdown receipt and review packet, not to original input files or native Office artifacts.",
       "No external model call, native Office rendering, or external sending was performed.",
       "The canonical trust target remains final-output.md plus generated claims, evidence map, and trust report."
     ]
@@ -94,8 +96,7 @@ function renderEditedMarkdown(input: {
   const evidenceById = new Map(input.evidence.map((item) => [item.id, item]));
   const findingRows = input.claims.map((claim, index) => {
     const claimEvidence = claim.evidenceIds.map((id) => evidenceById.get(id)).filter((item): item is SourceEvidenceRecord => Boolean(item));
-    const anchors = claimEvidence.map((item) => `${item.sourceName}:${item.anchor}`);
-    return `${index + 1}. ${claim.claim} [generated claim: ${claim.id}; sources: ${claim.sourceIds.join(", ")}; evidence: ${claim.evidenceIds.join(", ")}; anchors: ${anchors.join(", ")}; dates: ${claim.sourceDates.join(", ") || "n/a"}]`;
+    return `${index + 1}. ${claim.claim} [generated claim: ${claim.id}; sources: ${claim.sourceIds.join(", ")}; evidence: ${formatEvidenceIdsForDisplay(claim.evidenceIds)}; anchors: ${formatAnchorsForDisplay(claimEvidence, claim.evidenceIds.length)}; dates: ${claim.sourceDates.join(", ") || "n/a"}]`;
   });
   const excludedRows = input.sourceExclusions.length
     ? input.sourceExclusions.map((exclusion) => `| ${escapeCell(exclusion.sourceName)} | ${escapeCell(exclusion.reason)} |`).join("\n")
@@ -132,7 +133,7 @@ function assertEditedOutput(input: {
   for (const claim of input.claims) {
     requirePresence(input.markdown, claim.id, `generated claim ${claim.id}`);
     for (const sourceId of claim.sourceIds) requirePresence(input.markdown, sourceId, `source ${sourceId}`);
-    for (const evidenceId of claim.evidenceIds) requirePresence(input.markdown, evidenceId, `evidence ${evidenceId}`);
+    requireEvidenceReference(input.markdown, claim.evidenceIds);
     if (/\b-?\d{1,3}(?:,\d{3})*(?:\.\d+)?%?\b|\b-?\d+(?:\.\d+)?%?\b/.test(claim.claim)) {
       for (const date of claim.sourceDates) requirePresence(input.markdown, date, `source date ${date}`);
       if (claim.sourceDates.length === 0) throw new Error(`Edited numeric claim lacks source dates: ${claim.id}`);
@@ -150,4 +151,20 @@ function requirePresence(markdown: string, value: string, label: string) {
 
 function escapeCell(value: string) {
   return value.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+}
+
+function requireEvidenceReference(markdown: string, evidenceIds: string[]) {
+  if (evidenceIds.length <= 1) {
+    for (const evidenceId of evidenceIds) requirePresence(markdown, evidenceId, `evidence ${evidenceId}`);
+    return;
+  }
+  requirePresence(markdown, `${evidenceIds.length} records in ${SOURCE_EVIDENCE_DETAIL_PATH}`, "evidence summary");
+}
+
+function formatAnchorsForDisplay(evidence: SourceEvidenceRecord[], expectedCount: number) {
+  if (evidence.length === 0) return expectedCount > 0 ? `${expectedCount} records in ${SOURCE_EVIDENCE_DETAIL_PATH}` : "n/a";
+  if (evidence.length === 1) return `${evidence[0].sourceName}:${evidence[0].anchor}`;
+  const first = evidence[0];
+  const last = evidence[evidence.length - 1];
+  return `${evidence.length} records; first ${first.sourceName}:${first.anchor}; last ${last.sourceName}:${last.anchor}`;
 }
