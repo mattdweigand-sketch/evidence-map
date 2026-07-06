@@ -1,0 +1,3221 @@
+<DOCUMENT>
+<TYPE>10-K
+<SEQUENCE>1
+<FILENAME>be7368933-10k.txt
+<DESCRIPTION>ANNUAL REPORT
+<TEXT>
+================================================================================
+
+                       SECURITIES AND EXCHANGE COMMISSION
+                             Washington, D.C. 20549
+                                    FORM 10-K
+
+      [X]   Annual report pursuant to Section 13 or 15(d) of the Securities
+            Exchange Act of 1934 for the fiscal year ended November 30, 2006.
+
+                                       or
+
+      [_]   Transition report pursuant to Section 13 or 15(d) of the Securities
+            Exchange Act of 1934 for the transition period from _____________ to
+            _____________
+
+                         Commission file number: 1-8989
+
+                         THE BEAR STEARNS COMPANIES INC.
+             (Exact Name of Registrant as Specified in its Charter)
+
+
+            Delaware                                     13-3286161
+(State or Other Jurisdiction of             (I.R.S. Employer Identification No.)
+Incorporation or Organization)
+
+                  383 Madison Avenue, New York, New York 10179
+                                 (212) 272-2000
+
+    (Address, Including Zip Code, and Telephone Number, Including Area Code,
+                  of Registrant's Principal Executive Offices)
+
+           Securities registered pursuant to Section 12(b) of the Act:
+
+<TABLE>
+<CAPTION>
+                   Title of Each Class                                        Name of Each Exchange on Which Registered
+--------------------------------------------------------------------     ---------------------------------------------------
+<S>                                                                           <C>
+Common Stock, par value $1.00 per share                                                New York Stock Exchange
+
+Depositary Shares, each representing a one-fourth interest in a                        New York Stock Exchange
+      share of 6.15% Cumulative Preferred Stock, Series E
+
+Depositary Shares, each representing a one-fourth interest in a                        New York Stock Exchange
+      share of 5.72% Cumulative Preferred Stock, Series F
+
+Depositary Shares, each representing a one-fourth interest in a                        New York Stock Exchange
+      share of 5.49% Cumulative Preferred Stock, Series G
+
+7.8% Trust Issued Preferred Securities, of  Bear Stearns Capital                       New York Stock Exchange
+      Trust III (and registrant's guarantee thereof)
+
+Euro Floating Rate Global Notes Due July 27, 2012                                      New York Stock Exchange
+
+Principal Protected Sector Selector Notes Due 2008                                     American Stock Exchange
+
+Principal Protected Notes Linked to the S&P 500 Index Due 2008                         American Stock Exchange
+
+Principal Protected Notes Linked to the Price Performance of the                       American Stock Exchange
+      Nasdaq-100 Index Due 2009
+
+Principal Protected Notes Linked to the S&P 500 Index Due 2009                         American Stock Exchange
+
+Principal Protected Notes Linked to the Dow Jones Industrial                           American Stock Exchange
+      Average Due 2011
+
+Medium-Term Notes, Linked to a Basket of Three International                           American Stock Exchange
+      Equity Indices Due August 2, 2010
+</TABLE>
+
+           Securities registered pursuant to Section 12(g) of the Act:
+
+                                      None
+
+                                (Title of Class)
+
+      Indicate by check mark if the registrant is a well-known seasoned issuer,
+as defined in Rule 405 of the Securities Act. Yes [|X|] No [__]
+
+      Indicate by check mark if the registrant is not required to file reports
+pursuant to Section 13 or Section 15(d) of the Exchange Act. Yes [__] No [|X|]
+
+      Indicate by check mark whether the registrant: (1) has filed all reports
+required to be filed by Section 13 or 15(d) of the Securities Exchange Act of
+1934 during the preceding 12 months (or for such shorter period that the
+registrant was required to file such reports), and (2) has been subject to such
+filing requirements for the past 90 days. Yes [|X|] No [__]
+
+      Indicate by check mark if disclosure of delinquent filers pursuant to Item
+405 of Regulation S-K is not contained herein, and will not be contained, to the
+best of registrant's knowledge, in definitive proxy or information statements
+incorporated by reference in Part III of this Form 10-K or any amendment to this
+Form 10-K. [|X|]
+
+      Indicate by check mark whether the registrant is a large accelerated
+filer, an accelerated filer, or a non-accelerated filer. See definition of
+"accelerated filer and large accelerated filer" in Rule 12b-2 of the Exchange
+Act. Large accelerated filer [|X|] Accelerated filer [__] Non-accelerated filer
+[__]
+
+      Indicate by check mark whether the registrant is a shell company (as
+defined in Rule12b-2 of the Exchange Act). Yes [__] No [|X|]
+
+      At May 31, 2006, the aggregate market value of the voting and non-voting
+common equity held by non-affiliates of the registrant was approximately
+$14,998,622,013. For purposes of this information, the outstanding shares of
+common stock owned by directors and executive officers of the registrant were
+deemed to be shares of common stock held by affiliates.
+
+      On February 5, 2007, the registrant had 119,771,275 outstanding shares of
+common stock, par value $1.00 per share, which is the registrant's only class of
+common stock.
+
+                      DOCUMENTS INCORPORATED BY REFERENCE:
+
+      Parts II and IV of this Form 10-K incorporate information by reference
+from certain portions of the registrant's 2006 Annual Report to Stockholders.
+The information required to be furnished pursuant to Part III of this Form 10-K
+will be set forth in, and incorporated by reference from, the registrant's
+definitive proxy statement for the annual meeting of stockholders to be held
+April 18, 2007, which definitive proxy statement will be filed by the registrant
+with the Securities and Exchange Commission not later than 120 days after the
+end of the fiscal year ended November 30, 2006.
+
+================================================================================
+
+<PAGE>
+
+                         THE BEAR STEARNS COMPANIES INC.
+
+       ANNUAL REPORT ON FORM 10-K FOR FISCAL YEAR ENDED NOVEMBER 30, 2006
+
+
+                                                                           Page
+Form 10-K Item Number:                                                     No.
+
+PART I
+Item 1.     Business.................................................
+            General Development of the Business......................       3
+            Financial Information about Industry Segments............       3
+            Narrative Description of Business........................       4
+            Competition..............................................      15
+            Regulatory and Compliance Factors Affecting the Company and
+               the Securities Industry...............................      16
+Item 1A.    Risk Factors.............................................      19
+Item 1B.    Unresolved Staff Comments................................      23
+Item 2.     Properties...............................................      23
+Item 3.     Legal Proceedings........................................      24
+Item 4.     Submission of Matters to a Vote of Security Holders......      30
+            Executive Officers of the Company........................      31
+
+PART II
+Item 5.     Market for Registrant's Common Equity, Related
+               Stockholder Matters and Issuer Purchases of Equity          32
+               Securities............................................
+Item 6.     Selected Financial Data..................................      33
+Item 7.     Management's Discussion and Analysis of Financial Condition
+               and Results of Operation..............................      33
+Item 7A.    Quantitative and Qualitative Disclosures About Market Risk     33
+Item 8.     Financial Statements and Supplementary Data..............      33
+Item 9.     Changes in and Disagreements with Accountants on Accounting
+               and Financial Disclosure..............................      33
+Item 9A.    Controls and Procedures..................................      33
+Item 9B.    Other Information........................................      34
+
+PART III
+Item 10.    Directors and Executive Officers of the Registrant.......      34
+Item 11.    Executive Compensation...................................      34
+Item 12.    Security Ownership of Certain Beneficial Owners and
+               Management and Related Stockholder Matters............      34
+Item 13.    Certain Relationships and Related Transactions,
+               and Director Independence.............................      34
+Item 14.    Principal Accountant Fees and Services...................      35
+
+PART IV
+Item 15.    Exhibits and Financial Statement Schedules...............      35
+
+            Signatures...............................................      38
+
+            Index to Financial Statements and Financial Schedules....      F-1
+
+
+                                      -2-
+<PAGE>
+
+PART I
+
+Item 1. Business.
+
+      (a)   General Development of the Business
+
+      The Bear Stearns Companies Inc. (the "Company") was incorporated under the
+laws of the State of Delaware on August 21, 1985. The Company is a holding
+company that through its broker-dealer and international bank subsidiaries,
+principally Bear, Stearns & Co. Inc. ("Bear Stearns"), Bear, Stearns Securities
+Corp. ("BSSC"), Bear, Stearns International Limited ("BSIL") and Bear Stearns
+Bank plc ("BSB") is a leading investment banking, securities and derivatives
+trading, clearance and brokerage firm serving corporations, governments,
+institutional and individual investors worldwide. BSSC, a subsidiary of Bear
+Stearns, provides professional and correspondent clearing services, in addition
+to clearing and settling customer transactions and certain proprietary
+transactions of the Company. The Company succeeded on October 29, 1985 to the
+business of Bear, Stearns & Co., a New York limited partnership (the
+"Partnership"). In addition to conducting a substantial portion of its operating
+activities through certain of its regulated subsidiaries noted above, (Bear
+Stearns, BSSC, BSIL and BSB), the Company also conducts activities through the
+following wholly owned subsidiaries: Bear Stearns Global Lending Limited;
+Custodial Trust Company; Bear Stearns Financial Products Inc.; Bear Stearns
+Capital Markets Inc.; Bear Stearns Credit Products Inc.; Bear Stearns Forex
+Inc.; EMC Mortgage Corporation; Bear Stearns Commercial Mortgage, Inc. and
+through its majority owned subsidiary Bear Hunter Holdings LLC. As used in this
+report, the "Company" refers (unless the context requires otherwise) to The Bear
+Stearns Companies Inc., its subsidiaries and the prior business activities of
+the Partnership.
+
+      The Company's website is http://www.bearstearns.com. The Company makes
+available free of charge, through the investor relations section on its website,
+its annual reports on Form 10-K, quarterly reports on Form 10-Q, current reports
+on Form 8-K, Forms 3, 4 and 5 filed on behalf of directors and executive
+officers and any amendments to such reports filed pursuant to Section 13(a) or
+15(d) of the Securities Exchange Act of 1934, as amended (the "Exchange Act").
+These reports are available as soon as reasonably practicable after such
+material is electronically filed with, or furnished to, the Securities and
+Exchange Commission (the "SEC"). Also posted on the Company's website, and
+available in print upon request of any stockholder to the Investor Relations
+Department, are charters for the Company's Audit Committee, Compensation
+Committee, Corporate Governance Committee, Nominating Committee and Qualified
+Legal Compliance Committee. Copies of the Corporate Governance Guidelines and
+the Code of Business Conduct and Ethics (the "Code") governing our directors,
+officers and employees are also posted on the Company's website within the
+"Corporate Governance" section under the heading "About Bear Stearns" and are
+available in print upon request of any stockholder to the Investor Relations
+Department.
+
+      Within the time period required by the SEC and the New York Stock
+Exchange, Inc. (the "NYSE") the Company will post on its website any
+modifications to the Code and any waivers applicable to Senior Executives, as
+defined in the Code.
+
+      The Investor Relations Department can be contacted at The Bear Stearns
+Companies Inc., 383 Madison Avenue, New York, New York 10179, Attn.: Investor
+Relations, telephone: (212) 272-2000.
+
+      (b)   Financial Information about Industry Segments
+
+      The Company is primarily engaged in business as a securities broker and
+dealer operating in three principal segments: Capital Markets, Global Clearing
+Services and Wealth Management. These segments are analyzed separately due to
+the distinct nature of the products they provide and the clients they serve.
+Certain Capital Markets products are distributed by the Wealth Management and
+Global Clearing Services distribution networks, with the related revenues of
+such intersegment services allocated to the respective segments.
+
+
+                                      -3-
+<PAGE>
+
+      Capital Markets is comprised of the institutional equities, fixed income
+and investment banking areas. The Capital Markets segment operates as a single
+integrated unit that provides the sales, trading and origination effort for
+various fixed income, equity and advisory products and services. Each of the
+three businesses works in tandem to deliver these services to institutional and
+corporate clients. Institutional equities consists of sales, trading and
+research, in areas such as domestic and international equities, block trading,
+convertible bonds, over-the-counter ("OTC") equities, equity derivatives, risk
+and convertible arbitrage and, through a consolidated joint venture, specialist
+and market-making activities on the NYSE, American Stock Exchange ("AMEX") and
+International Securities Exchange ("ISE"). Fixed income includes sales, trading,
+origination and research provided to institutional clients across a variety of
+products such as mortgage- and asset-backed securities, corporate and government
+bonds, municipal bonds, high yield products, foreign exchange, interest rate and
+credit derivatives. Investment banking provides services in capital raising,
+strategic advice, mergers and acquisitions and merchant banking. Capital raising
+encompasses the Company's underwriting of equity, investment-grade, municipal
+and high yield debt products.
+
+      Global Clearing Services provides execution, clearing, margin lending and
+securities lending to clearing clients worldwide. Prime brokerage clients
+include hedge funds and clients of money managers, short sellers, arbitrageurs
+and other professional investors. Correspondent broker-dealer clients engage in
+retail, institutional and money management activities and their customers are
+carried by BSSC on a fully disclosed basis. For registered investment advisor
+client accounts, the advisor provides investment management expertise and the
+Company provides financing, execution, clearing and custody services. At
+November 30, 2006, the Company held approximately $291.2 billion of equity in
+Global Clearing Services client accounts.
+
+      Wealth Management is comprised of the Private Client Services ("PCS") and
+asset management areas. PCS provides high-net-worth individuals with an
+institutional level of investment service, including access to the Company's
+resources and professionals. At November 30, 2006, PCS had approximately 500
+account executives in its principal office, six regional offices, six satellite
+offices and two international offices. Asset management manages equity, fixed
+income and alternative assets for corporate pension plans, public systems,
+endowments, foundations, multi-employer plans, insurance companies,
+corporations, families and high-net-worth individuals in the United States
+("US") and abroad. The asset management area had $52.5 billion in assets under
+management at November 30, 2006, compared to $41.9 billion in assets under
+management at November 30, 2005.
+
+      Financial information regarding the Company's business segments and
+foreign operations as of November 30, 2006, November 30, 2005, and November 30,
+2004 and for the fiscal years ended November 30, 2006, November 30, 2005 and
+November 30, 2004 is set forth under "Item 8. Financial Statements and
+Supplementary Data," in Note 19 of Notes to Consolidated Financial Statements,
+entitled "Segment and Geographic Area Data," and is incorporated herein by
+reference.
+
+      (c)   Narrative Description of Business
+
+      The business of the Company includes: market-making and trading in US
+government, government agency, corporate debt and equity, mortgage-related,
+asset-backed, municipal securities and high yield products; trading in options,
+futures, foreign currencies, interest rate swaps and other derivative products;
+securities, options and futures brokerage; providing securities clearance
+services; managing equity and fixed income assets for institutional and
+individual clients; financing customer activities; securities lending;
+securities and futures arbitrage; involvement in specialist and market-making
+activities on the NYSE, AMEX and ISE; underwriting and distributing securities;
+arranging for the private placement of securities; assisting in mergers,
+acquisitions, restructurings and leveraged transactions; making principal
+investments in leveraged acquisitions; engaging in commercial and residential
+mortgage loan origination and securitization activities; investment management
+and advisory services; fiduciary, custody, agency and securities research
+services.
+
+
+                                      -4-
+<PAGE>
+
+      The Company's business is conducted from its principal offices in New York
+City; from domestic regional offices in Atlanta, Boston, Chicago, Dallas,
+Denver, Houston, Los Angeles, San Francisco, San Juan and Scottsdale; from
+representative offices in Beijing, Hong Kong, Sao Paulo and Shanghai; and
+through international offices in Dublin, Hong Kong, London, Lugano, Milan,
+Singapore and Tokyo. The Company's international offices provide services and
+engage in investment activities involving foreign clients and international
+transactions. Additionally, certain of these foreign offices provide services to
+US clients.
+
+      Bear Stearns and BSSC are broker-dealers registered with the SEC.
+Additionally, Bear Stearns is registered as an investment adviser with the SEC.
+Bear Stearns and BSSC are also members of the NYSE, all other principal US
+securities and futures exchanges, the National Association of Securities
+Dealers, Inc. ("NASD"), the National Futures Association ("NFA") and the ISE.
+Bear Stearns is a "primary dealer" in US government securities as designated by
+the Federal Reserve Bank of New York ("FRBNY").
+
+      BSIL is a full service broker-dealer based in London. BSIL is incorporated
+in the United Kingdom and is authorized and regulated by the Financial Services
+Authority ("FSA").
+
+      BSB was registered with the Irish Companies Registration Office on
+November 27, 1995 and was granted a banking license on April 10, 1997. BSB
+allows the Company's existing and prospective clients the opportunity of dealing
+with a banking counterparty. BSB is incorporated in Ireland and is regulated by
+the Financial Regulator.
+
+      Bear Stearns Global Lending Limited ("BSGL") is incorporated in the Cayman
+Islands and provides loans to certain Bear Stearns customers.
+
+      Custodial Trust Company ("CTC"), a Federal Deposit Insurance Corporation
+("FDIC") insured New Jersey state chartered bank, offers a range of trust,
+lending and securities-clearance services. CTC provides the Company with banking
+powers including access to the securities and funds-wire services of the Federal
+Reserve System. CTC provides trust, custody, agency and securities lending
+services for institutional accounts; commercial and margin lending; the
+clearance of government securities for institutions and dealers; and the
+processing of mortgage and mortgage-related products, including derivatives and
+collateralized mortgage obligations products. At November 30, 2006, CTC held
+approximately $81 billion of assets for clients, including institutional clients
+such as pension funds, mutual funds, endowment funds and insurance companies.
+CTC is incorporated in the State of New Jersey.
+
+      Bear Stearns Financial Products Inc. ("BSFP") transacts business as a
+triple-A-rated counterparty to eligible clients, offering a wide range of fixed
+income and equity derivative products. Eligible clients are those rated A3 or
+better by Moody's Investors Service, Inc. and A- or better by Standard & Poor's
+Ratings Services or counterparties acceptable to both rating agencies. BSFP
+transfers its market risk associated with derivative transactions to Bear
+Stearns Capital Markets Inc., an affiliate of BSFP and a wholly owned subsidiary
+of the Company. BSFP is incorporated in the State of Delaware.
+
+      Bear Stearns Capital Markets Inc. ("BSCM") is engaged in fixed income
+derivatives transactions and hedges associated therewith. BSCM is incorporated
+in the State of Delaware.
+
+      Bear Stearns Credit Products Inc. ("BSCPI") is engaged in credit
+derivatives transactions and hedges associated therewith. BSCPI is incorporated
+in the State of Delaware.
+
+      Bear Stearns Forex Inc. ("BSFX") is a dealer engaged in foreign currency
+and precious metals transactions and hedges associated therewith. BSFX is
+incorporated in the State of Delaware.
+
+
+                                      -5-
+<PAGE>
+
+      EMC Mortgage Corporation ("EMC") was incorporated in the State of Delaware
+on September 26, 1990, as a wholly owned subsidiary of the Company and maintains
+its principal office at 2780 Lake Vista Drive, Lewisville, Texas. EMC is a
+mortgage banking company approved by the US Department of Housing and Urban
+Development ("HUD"), Federal Home Loan Mortgage Corporation ("FHLMC") and
+Federal National Mortgage Association ("FNMA"). EMC purchases both conforming
+and non-conforming, investment-grade and non-investment grade, conventional
+fixed rate and adjustable rate residential mortgage loans with the right to
+service released or retained and sells such loans to investors. EMC also
+purchases and sells residual certificates and mortgage servicing rights.
+
+      Bear Stearns Commercial Mortgage, Inc. ("BSCMI") is primarily engaged in
+the origination and securitization of commercial mortgage loans for resale in
+the form of pass-through securities ("certificates"). These certificates
+represent fractional and undivided interests in pools of mortgage loans held in
+a trust. BSCMI is incorporated in the State of New York.
+
+      Bear Hunter Holdings LLC ("BHH") is a Delaware limited liability company
+jointly owned by the Company and Hunter Partners LLC. Bear Wagner Specialists
+LLC ("Bear Wagner"), BHH's principal wholly owned subsidiary, is a registered
+broker-dealer primarily engaged in specialist and market-making activities on
+the NYSE, AMEX and ISE.
+
+      As of November 30, 2006, the Company had 13,566 employees.
+
+      The following areas are included in the three business segments mentioned
+above in Item 1(b).
+
+Equities
+
+      General. The Company provides institutional customers with liquidity,
+sales and trading expertise and equity research in products such as domestic and
+international equities, block trading, convertible bonds, OTC equities, equity
+derivatives, risk and convertible arbitrage and through our consolidated joint
+venture, NYSE, AMEX and ISE specialist and market-making activities. The Company
+also makes markets on a principal basis in common and preferred stocks, warrants
+and other securities traded on the Automated Quotation System of the NASD and in
+the OTC market.
+
+      Institutional Equity Sales. The Company is one of the leading providers of
+brokerage services to institutional investors in the US.  Institutional equity
+sales involves the execution of transactions, providing liquidity, trading
+expertise, research and investment advice to domestic and foreign institutional
+customers in US equity and equity-linked securities.
+
+      The Company provides to institutional customers execution capabilities for
+baskets of equity securities using sophisticated trading systems and analytics.
+Although transactions are handled on an agency basis whenever possible, the
+Company may be required to take a long or short position in a security to the
+extent that an offsetting purchaser or seller is not immediately available, or
+to guarantee prices versus a benchmark (i.e. volume weighted average price). The
+Company also provides transaction services for institutional customers who trade
+in futures and futures-related instruments.
+
+      Structured Equity Products. The Company offers to institutional customers,
+and trades for its own account, a variety of exchange-traded and OTC equity
+derivative products. These products are transacted, as principal, with customers
+for hedging, risk management, investment, financing and other purposes. These
+transactions are in the form of swaps, options, and structured notes, as well as
+more complex, structured trades which are customized to meet customers' specific
+needs. Derivatives enable customers to build tailor-made risk/return profiles,
+customize transaction terms, develop packaged solutions to a problem, implement
+trades that otherwise could not be executed and to transact business with
+standardized documentation.
+
+
+                                      -6-
+<PAGE>
+
+      Arbitrage. The Company engages for its own account in both "classic" and
+"risk" arbitrage. The Company's risk arbitrage activities generally focus on
+traditional risk arbitrage, event-driven and capital structure situations where
+equity, debt and derivative securities involved in speculated or announced
+mergers, stock repurchases, spin-offs or major restructurings are analyzed and
+traded by the department.
+
+      In classic arbitrage, the Company seeks to profit from temporary
+discrepancies (i) between the price of a security in two or more markets, (ii)
+between the price of a convertible security and its underlying security, (iii)
+between securities that are, or will be, exchangeable at a future date and (iv)
+between the prices of securities with contracts settling on different dates. The
+Company also examines relative value strategies which focus on pairs of equities
+or different levels of the capital structure of the same firm. In these relative
+value cases, the Company believes compelling reasons exist for the prices of the
+securities to be highly correlated.
+
+      Convertible Securities. The Company engages in the sales and trading of
+equity-linked securities including convertible bonds, convertible preferreds,
+equity-linked notes and warrants. Market coverage includes the US, Europe, Asia
+and Latin America.
+
+      Direct Access. The Company operates a direct access business through Bear
+Stearns by providing execution and operations services to qualified
+institutional investors. Such investors may directly access, execute and service
+orders with brokers on the floor of the NYSE.
+
+      Specialist and Market-Making. The Company engages in specialist and
+market-making activities on the NYSE, AMEX and ISE through participation in a
+majority-owned consolidated joint venture. The joint venture performs specialist
+functions in NYSE-listed and AMEX-listed stocks and performs market-making
+functions for options traded on the ISE. The rules of these exchanges generally
+require specialists to maintain orderly markets in the securities for which they
+are specialists, which may require commitments of a significant amount of
+capital to the Company's specialist businesses. As market-makers, specialists
+are obligated to take positions in their issues counter to the direction of the
+market in order to minimize short-term imbalances in the auction market,
+involving risk of loss during periods of market fluctuation and volatility.
+
+      Equity Research. The Equity Research Department provides in-depth,
+thematic research underpinned by detailed financial models. The department
+offers research on more than 1,000 companies in approximately 100 industries
+(61% of the Standard & Poor's 500 Index and 80% of the market capitalization of
+the Standard & Poor's 500 Index), is widely recognized for high quality macro
+research and includes the #1 Institutional Investor ranked strategy and
+accounting teams. Additionally, the coverage of US stocks is complemented by
+Latin American, European and Asian research teams. The emerging markets research
+team has also expanded coverage of select stocks in Eastern Europe, Middle East
+and Africa, and covers 17 stocks with a market capitalization of $543.6 billion.
+The department provides independent third party research reports and ratings on
+US covered companies as well as foreign securities with liquid American
+Depository Receipts. In 2006 the department launched BearCast(TM), a podcasting
+tool that allows clients to access conference calls and featured audio research
+on their MP3 or iPod(R) players.
+
+      Energy. The Company has equity ownerships in various power-related assets
+and has recently formed Bear Energy L.P., an energy marketing and trading
+division to expand a customer business focused on energy trading.
+
+Fixed Income
+
+      General. The Company makes inter-dealer markets and trades on a principal
+basis in a wide range of instruments including: US and foreign government
+securities; government agency securities; mortgages; mortgage-backed and other
+asset-backed securities; municipal and other tax-exempt securities; corporate
+debt, credit derivatives, interest rate swaps and other derivative products.
+Bear Stearns is one of the largest dealers in the US in such fixed income
+securities. Inventories of fixed income securities are generally carried to
+facilitate sales to customers and other dealers.
+
+
+                                      -7-
+<PAGE>
+
+      US Government Bonds and Agency Obligations. Bear Stearns is designated by
+the Federal Reserve Bank of New York as a primary dealer in US government
+obligations. The Company participates in the auction of, and maintains
+proprietary positions in, US Treasury bills, notes, bonds, and stripped
+principal and coupon securities. The Company also participates as a selling
+group member and/or underwriter in the distribution of various US government
+agency and sponsored corporation securities and maintains proprietary positions
+in such securities. In connection with these activities, the Company enters into
+transactions in options, futures and forward contracts to hedge such positions.
+
+      As a primary dealer, Bear Stearns bids directly on all auctions of US
+government securities. Additionally, Bear Stearns furnishes periodic reports of
+its inventory positions and market transactions in US government securities to
+the FRBNY. Bear Stearns also buys and sells government securities directly with
+the FRBNY as part of the open-market activities of the FRBNY. In addition, the
+Company engages in matched book activities, acting as an intermediary between
+borrowers and lenders of short-term funds, mainly via repurchase agreements and
+reverse repurchase agreements. The objective of this matched book activity is to
+earn a positive spread between interest rates.
+
+      Mortgage-Related Securities and Products. The Company originates
+commercial and residential mortgage loans through its subsidiaries in the US,
+Europe and Asia. The Company is a leading underwriter of and market-maker in,
+residential and commercial mortgages and is active in all areas of secured
+lending, structured finance and securitization products.
+
+      The Company trades and makes markets in the following US agency-backed
+products: Government National Mortgage Association ("GNMA") securities; FHLMC
+participation certificates; FNMA mortgage-backed securities; Small Business
+Administration loans; loans guaranteed by the Farmers Home Loan Administration;
+Federal Housing Authority insured multi-family loans. The Company trades GNMA,
+FNMA and FHLMC "to be announced" securities (i.e., securities having a stated
+coupon and an original term to maturity, although the issuer and/or the specific
+pool of mortgage loans is not known at the time of the transaction). The Company
+buys and sells such securities for its own account in transactions with
+institutional and individual customers, as well as with other dealers.
+
+      The Company, through various subsidiaries, purchases, originates, sells
+and services entire loan portfolios of varying quality. These loan portfolios
+are (i) generated by the Company's mortgage origination platform, Bear Stearns
+Residential Mortgage Corporation ("Bear Res"), and (ii) purchased by EMC from
+financial institutions and other secondary mortgage-market sellers.
+
+      Bear Res is a state-licensed mortgage company that originates single
+family residential loans for a nationwide network of mortgage brokers, mortgage
+bankers and other loan originators.
+
+      EMC, in addition to purchasing loans from Bear Res for securitization,
+purchases loan portfolios from financial institutions and other secondary
+mortgage-market sellers. Prior to bidding on a portfolio of loans for purchase,
+an analysis of the portfolio is undertaken by experienced mortgage-loan
+underwriters. Upon acquisition of a loan portfolio, the loans are classified as
+either investment-grade or non-investment-grade, with emphasis on loan
+collection for the non-investment-grade segment of the portfolio. A collection
+department employs a staff of workout specialists and loan counselors who assist
+delinquent borrowers. If collection efforts are unsuccessful, the foreclosure
+group will commence and monitor the foreclosure process until either the
+borrower makes the loan current, or the property securing the loan is foreclosed
+or otherwise acquired. The portfolio may include real estate that has been
+foreclosed or was in the process of foreclosure at the time of its acquisition.
+The foreclosure group maintains and markets properties through regional real
+estate brokers. Investment-grade mortgage loans are sold to other institutional
+investors in either securitized or non-securitized form. Moreover, special
+purpose vehicles issue Real Estate Mortgage Investment Conduits ("REMIC") and
+non-REMIC collateralized mortgage obligations directly or through trusts that
+are established for this purpose.
+
+
+                                      -8-
+<PAGE>
+
+      The Company also operates a commercial mortgage conduit that originates
+and accumulates commercial mortgage loans for the purpose of securitization.
+After receipt of loan applications, extensive credit underwriting reviews are
+conducted. After completing pricing analysis and successful negotiations, the
+loan will "close" and be included in an ensuing securitization.
+
+      Asset-Backed Securities. The Company acts as underwriter and placement
+agent with respect to investment-grade and non-investment-grade asset-backed
+securities issued by affiliates, as well as unaffiliated third parties. These
+asset-backed securities include: securities backed by consumer automobile
+receivables originated by the captive finance subsidiaries of automobile
+manufacturers, commercial banks and finance companies; credit card receivables
+and home-equity lines of credit or second mortgages. The Company also trades and
+is a market-maker in these asset-backed securities. While there are ready
+markets for the investment-grade asset-backed securities described above,
+non-investment-grade securities and related varieties thereof may lack
+liquidity. The Company purchases pools of unsecured credit card receivables of
+debtors that are in active bankruptcy, primarily in the US and the United
+Kingdom. These purchases are bought at a discount of the claim amounts from
+banks, credit card companies and other financial institutions. The Company's
+intention is to buy and hold these portfolios and pursue claim recoveries
+through third party servicing firms.
+
+      Collateralized Debt Obligations. The Company acts as structurer,
+underwriter and placement agent for Collateralized Debt Obligations ("CDO"). The
+CDOs are backed by a variety of asset classes including leveraged bank loans,
+asset-backed securities, residential and commercial mortgage backed securities,
+other CDOs, and trust preferred securities issued by banks, REITS, insurance and
+finance companies. Assets may be sourced from the Company's trading desk, as
+well as originated directly by the Company for the CDO. CDOs are generally
+managed by third party money managers, including affiliates of the Company. In
+the course of originating CDOs, the Company will provide a warehouse facility
+for the accumulation of assets prior to the closing of the transaction. In
+certain warehouse arrangements, the risk of the assets is retained by the first
+loss protection from third parties or through credit derivative transactions.
+The Company also trades secondary positions of CDOs, including deals for which
+it did not serve as original underwriter. The trading desk will engage in trades
+on all tranches of the capital structure of the CDO, which may include
+below-investment grade debt classes and first-loss equity positions.
+
+      Municipal Securities and Related Products. The Company is a dealer in
+tax-exempt and taxable municipal securities and instruments including: general
+obligation and revenue bonds; notes; and variable-rate obligations issued by
+state and local governments and authorities, as well as not-for-profit
+institutions. The Company is active as a managing underwriter of negotiated and
+competitive new security issuances and, on a select basis, provides financial
+advisory services. The Company makes markets and takes positions in a broad
+spectrum of long-term and short-term municipal securities and derivative
+contracts, mainly to facilitate transactions with institutional and individual
+customers, as well as other dealers. As agent for issuers, the Company earns
+fees by remarketing short-term debt instruments to investors in the variable
+rate demand and auction rate bond market. The Company offers a variety of
+derivative products to issuers to assist in reducing their borrowing costs,
+maximizing investment returns and managing cash flows and balance sheets,
+including but not limited to interest rate swaps, caps, floors, options and
+forward delivery, and debt service reserve and debt service deposit agreements.
+The Company periodically uses municipal and treasury bonds and futures and
+interest rate swaps to hedge its cash-market bond inventory. In addition, the
+Company maintains a hedged portfolio of high quality municipal securities which
+are remarketed as short-term securities in order to generate arbitrage profits.
+
+
+                                      -9-
+<PAGE>
+
+      Fixed Income Derivatives. The Company offers to institutional customers,
+and trades for its own account, a variety of exchange-traded and OTC derivative
+products, including fixed income derivatives. These products are transacted, as
+principal, with customers for hedging (credit, currency, interest rate or
+market), risk management, asset/liability management, investment, financing and
+other purposes. These transactions are in the form of swaps, options, swaptions,
+caps, floors, asset swaps and structured notes, as well as more complex,
+structured trades which are customized to meet customers' specific needs.
+Derivatives enable customers to build tailor-made risk/return profiles,
+customize transaction terms, develop packaged solutions to a problem, implement
+trades that otherwise could not be executed and transact business with
+standardized documentation. The Company also enters into derivative transactions
+for other purposes, including managing the risks to which the Company is exposed
+in its various businesses and funding activities. The Company manages its market
+and counterparty risks arising from derivatives activities in a manner
+consistent with its overall risk management policies. The Company has around the
+clock capabilities with personnel based in New York, Chicago, London, Hong Kong,
+Tokyo, Singapore and Dublin.
+
+      Credit-Related Securities and Products. The Company acts as a dealer and
+participates in the trading of investment-grade and non-investment-grade
+corporate debt securities, commercial loans, sovereign and agency securities as
+well as preferred stocks in New York, London and Tokyo. The Company buys and
+sells these securities for its own account in principal transactions with
+institutional and individual customers, as well as other dealers. The Company
+conducts trading in the full spectrum of dollar and non-dollar debt securities.
+The Company offers hedging and arbitrage services to domestic and foreign
+institutional and individual customers, utilizing financial futures and other
+derivative instruments. The Company also acts as a dealer and participates in
+the trading of credit derivatives for customers and for its own account in New
+York, London and Tokyo. These transactions are in the form of credit default
+swaps and options, total return swaps, credit-linked notes and additional
+structured trades which are customized to meet the specific needs of customers.
+Moreover, the Company offers its domestic and international customers
+quantitative, strategic and research services relating to fixed income
+securities and credit derivatives.
+
+      Foreign Exchange. The Company acts as a dealer in foreign exchange and
+precious metals in New York, London and Hong Kong. The Company conducts trading
+for spot or forward settlement, OTC foreign exchange options and structured
+products, and listed futures and options on futures. The Company trades OTC
+contracts, on a principal basis, with domestic and international clients, as
+well as other dealers. The Company offers research and assists clients to meet
+their specific risk management objectives. Additionally, the Company enters into
+foreign exchange contracts to manage the currency risk or funding requirements
+of its various businesses.
+
+      Fixed Income Analytics and Research. The Company is a leader in the
+distribution, trading and underwriting of corporate, government, high yield,
+emerging markets, municipal debt and mortgage-backed and asset-backed
+securities. Through objective and comprehensive analysis, the Fixed Income
+Analytics and Research department assists the Company's businesses and its
+clients to position themselves strategically in global fixed income markets. The
+department produces a wide range of comprehensive publications, as well as
+leading data and analytics tools, which are available to investors throughout
+the world. The department also creates portfolio and trading ideas for investors
+based on valuations, analytics and market conditions.
+
+
+                                      -10-
+<PAGE>
+
+      Fixed Income Analytics and Research includes economists, industry
+analysts, quantitative analysts and strategists covering the full range of
+financial research disciplines: quantitative, fundamental, economic, strategic,
+credit portfolio, relative value and market-specific analysis. Representative of
+the Company's commitment to offering a broad range of research products, the
+department is comprised of the following units located in New York, London,
+Singapore, Tokyo and Hong Kong:
+
+      (i)   Financial Analytics and Structured Transactions Group ("F.A.S.T.")
+            encompasses the Rates and Structured Products Research groups.
+            F.A.S.T is a center of expertise for the creation and analysis of
+            fixed income and derivative securities worldwide. F.A.S.T. is
+            responsible for designing and implementing valuation models for a
+            broad spectrum of asset classes as well as the computation of risk
+            sensitivity measures. F.A.S.T. employs these principles of financial
+            engineering to create solutions and tools that successfully
+            facilitate the individual business objectives of the Company and its
+            clients. F.A.S.T. is a global resource for financial engineering and
+            securitization capabilities, fixed income portfolio management and
+            analytical systems, investment research, trading technology and
+            general financial expertise. A strategic partner for the Company's
+            global trading desks, risk management areas and sales force,
+            F.A.S.T. also serves the Company's external clients. In addition to
+            formulating and executing customized strategic investment and
+            trading solutions, F.A.S.T. develops the tools and recommendations
+            necessary to quantify relevant risks and value portfolios and
+            securities. F.A.S.T.'s resources are used to create, model and value
+            new types of securities, affording clients the perspectives of both
+            issuer and investor.
+
+      (ii)  High Grade Research offers comprehensive coverage on approximately
+            16 industries and over 450 credit names whose securities are rated
+            as investment-grade by the leading credit rating agencies. Through
+            focus on the credit quality of individual issuers and macroeconomic
+            factors, High Grade Research offers detailed analyses and expertise
+            to investors in investment-grade securities.
+
+      (iii) High Yield Research offers comprehensive coverage on approximately
+            20 industries and over 370 credit names whose securities do not
+            qualify as investment-grade by the leading credit rating agencies.
+            High Yield Research analyzes the risks, technical metrics, and
+            fundamentals that investors need for creating optimal high yield
+            portfolios.
+
+      (iv)  Economic Research develops tools and models for analyzing and
+            forecasting US and global economic growth and inflation trends with
+            particular focus on projecting movements in Federal Reserve Bank
+            policy, bond yields and credit spreads.
+
+      (v)   Emerging Markets Research covers sovereign and corporate issues
+            across Latin America, Central America and the Caribbean, Asia, the
+            Middle East, Eastern Europe, and Africa. Emerging Markets Research
+            focuses on macroeconomic factors, changes in US and global interest
+            rates, investment fundamentals, as well as the political, economic
+            and fiscal environments of issuers, to give investors a unique
+            perspective into emerging markets fixed income securities.
+
+      (vi)  Municipal Research focuses on sectors, trends, and credit-specific
+            analysis of securities issued by states, cities, counties and other
+            governmental entities. Municipal Research provides investors with
+            research on various credits and bond characteristics for the full
+            range of municipal securities. Specific sectors covered by the
+            Municipal Research group include Healthcare, Tobacco, and Special
+            Facility Airline Bonds.
+
+Investment Banking
+
+      The Company is a major global investment banking firm providing a full
+range of capital formation and advisory services to a broad spectrum of clients.
+The Company manages and participates in public offerings and arranges the
+private placement of debt and equity securities directly with institutional
+investors. The Company provides advisory services to clients on a wide range of
+financial matters and assists with mergers, acquisitions, leveraged buyouts,
+divestitures, corporate reorganizations and recapitalizations.
+
+
+                                      -11-
+<PAGE>
+
+      The Company's strategy is to concentrate a major portion of its corporate
+finance business development efforts within those industries in which the
+Company has established a leadership position in providing investment banking
+services. Industry specialty groups include media and entertainment, health
+care, financial institutions, industrial, technology and telecommunications.
+This list is not exclusive but rather reflects the areas in which the Company
+maintains the highest level of knowledge and expertise. The Company also has a
+group that focuses on financial sponsors. These groups are responsible for
+initiating, developing and maintaining client relationships and for executing
+transactions involving these clients.
+
+      In addition to being structured according to distinct industry groups, the
+Company has a number of professionals who specialize in specific types of
+transactions. These include mergers and acquisitions ("M&A"), equity offerings,
+high yield securities, leveraged and syndicated bank loans, leveraged
+acquisitions and other transaction specialties.
+
+      Mergers and Acquisitions. The Company provides strategic advisory services
+on a broad range of financial matters, including mergers and acquisitions,
+restructurings, split-offs and spin-offs, takeover defenses and other strategic
+advice.
+
+      Equity Offerings. The equity capital markets group focuses on providing
+financing for issuers of equity and convertible equity securities in the public
+markets. The group assists in the origination, structuring and execution of
+transactions for a broad range of clients.
+
+      High Yield Securities. The high yield securities group focuses on
+providing financing in the public and private capital markets. The group
+originates, structures and executes high yield transactions across a wide range
+of companies and industries, and manages client relationships with both high
+yield corporate issuers and financial sponsors of leveraged transactions.
+
+      Leveraged Loan Origination and Syndication. This area of the Company
+integrates the origination, structuring, underwriting, distribution and trading
+of loans. Such loans include both funded as well as committed investment-grade
+and non-investment-grade loans.
+
+      Leveraged Acquisitions. The Company makes investments as principal in
+leveraged acquisitions and as a limited partner in leveraged buy-out funds. The
+Company's investments generally take the form of common stock, preferred stock
+or warrants. Equity securities purchased in these transactions are generally
+held for appreciation and are not readily marketable.
+
+      Commercial Real Estate. The Company is engaged in a variety of real estate
+activities on a nationwide basis. It provides comprehensive real estate-related
+investment banking, capital markets and financial advisory services.
+
+      Merchant Banking. Bear Stearns Merchant Banking, the private equity
+affiliate of the Company, invests private equity capital in compelling leveraged
+buyouts, recapitalizations and growth capital opportunities in a broad range of
+industries.
+
+Emerging Markets
+
+      The Company provides financial services in various emerging markets
+worldwide including Latin America, Asia and Eastern Europe. In addition to
+offering a full range of investment banking, capital formation and advisory
+services, the Company provides securities brokerage, equity and fixed income
+trading and sales, and securities research. As part of these activities, the
+Company manages and participates in public offerings and arranges the private
+placement of debt and equity securities with institutional investors.
+
+
+                                      -12-
+<PAGE>
+
+Global Clearing Services
+
+      Global Clearing Services provides securities clearing services, custody,
+financing, securities lending, trade execution and technology solutions to a
+diverse client base comprised principally of hedge funds, broker-dealers and
+registered investment advisors. Global Clearing clients can take advantage of
+Bear Stearns expertise in cash and liquidity management in order to offer
+clients numerous opportunities for improved yields on short-term cash.
+
+      For hedge funds and other professional investors worldwide, Global
+Clearing Services is a leading provider of "prime brokerage services", which
+include securities clearing services, custody, advanced web-based portfolio
+reporting, enhanced leverage and term financing products, securities lending and
+cash management services.
+
+      The Company provides "fully disclosed correspondent clearing services" for
+broker-dealers conducting retail, institutional and money management activities.
+The Company's advanced proprietary technology, combined with comprehensive
+retail products, integrated prime brokerage, operations expertise and
+exceptional service have enabled the Company to be one of the industry leaders
+for many years.
+
+      For registered investment advisors whose services include asset
+management, the Company provides a combination of trade execution, web-based
+portfolio reporting for their investors and comprehensive service and support.
+Global Clearing Services offers investment advisors innovative and
+cost-effective technology and informational retrieval systems. Consultant's EDGE
+is a customizable turn-key, Bear Stearns-sponsored investment advisory program
+that integrates the sophisticated planning, asset allocation and proposal tools
+with a defined group of investments.
+
+      Global Clearing Services principal revenue source is earned by providing
+clearing and execution services, as well as financing and securities lending to
+customers. In addition, the Company derives revenue from customer cash balances
+and money fund investments.
+
+      The financial responsibilities arising from the Company's clearing
+relationships are allocated in accordance with agreements with correspondents.
+To the extent that the correspondent has available resources, the Company is
+protected against claims by customers of the correspondent when the
+correspondent has been allocated responsibility for an event giving rise to a
+claim. However, if the correspondent is unable to meet its obligations,
+dissatisfied customers may attempt to seek recovery from the Company.
+
+      Securities transactions are effected for customers on either a cash or
+margin basis. In a margin transaction, the Company extends credit to a customer
+for a portion of the purchase price of the security. Such credit is
+collateralized by securities in the customer's accounts in accordance with
+regulatory and internal requirements. The Company receives income from interest
+charged on such loans at a rate that is primarily based upon the Federal Funds
+Rate, Bear Stearns Base Lending Rate, or the London Inter-Bank Offered Rate
+(LIBOR).
+
+      The Company borrows securities from banks and other broker-dealers to
+facilitate customer and proprietary short selling activity, and lends securities
+to customers, broker-dealers and other trading entities to cover short sales and
+to complete transactions that require delivery of securities by the settlement
+date.
+
+Futures
+
+      The Company, through BSSC and other subsidiaries, provides, directly or
+through third-party brokers, futures commission merchant services for customers
+and other Bear Stearns affiliates who trade contracts in futures on financial
+instruments and physical commodities, including options on futures. The values
+of exchange-traded futures and options are derived from the values of their
+underlying selected stock indices, individual equity securities, fixed income
+securities, currencies, agricultural and energy products and precious metals.
+
+
+                                      -13-
+<PAGE>
+
+      Domestic futures and options trading are subject to extensive regulation
+by the Commodity Futures Trading Commission ("CFTC"), pursuant to the Commodity
+Exchange Act and the Commodity Futures Trading Commission Act of 1974.
+International futures and options trading activities are subject to regulation
+by the respective regulatory authorities in the locations where futures
+exchanges reside, including the FSA in the United Kingdom.
+
+      Margin requirements (good faith deposits) covering substantially all
+transactions in futures and options contracts are subject to each particular
+exchange's requirements in addition to other regulations. In the US, the
+Company, through BSSC and other subsidiaries, is a clearing member of the
+Chicago Board of Trade, Chicago Mercantile Exchange, New York Mercantile
+Exchange and other principal futures exchanges. In the United Kingdom, the
+Company, through BSIL, is a member of the International Petroleum Exchange
+("IPE"), London Metals Exchange ("LME") Euronext Liffe ("LIFFE"), Eurex AG
+Frankfurt and the European Derivatives Exchange ("EDX"). BSIL also has
+non-clearing memberships with Euronext Paris and Euronext Amsterdam. In Japan,
+memberships are held by the Company through Bear Stearns (Japan), Limited
+("BSJL") with the Tokyo Stock Exchange, Inc. ("TSE"), the Osaka Securities
+Exchange Co., Ltd ("OSE") and the Tokyo International Financial Futures Exchange
+("TIFFE").
+
+PCS
+
+      PCS provides high-net-worth individuals with an institutional level of
+service, including access to the Company's resources and professionals. PCS has
+approximately 500 account executives in its principal office, six regional
+offices, six satellite offices and two international offices. As of November 30,
+2006, PCS had $11.6 billion of assets under management.
+
+Asset Management
+
+      Bear Stearns Asset Management ("BSAM") provides asset management services
+to institutional clients and high-net-worth individuals accessed worldwide
+through both direct and third-party channels. As of November 30, 2006, BSAM had
+$40.9 billion of assets under management. BSAM's assets under management
+typically generate fees as a percentage of asset value. In some BSAM managed
+funds, if agreed upon financial targets are exceeded performance fees are also
+earned.
+
+      BSAM's traditional business, which includes separate and privately managed
+accounts, provides asset management services across all major asset classes:
+money markets; fixed income; currencies; and equities; utilizing a multitude of
+investment styles such as value, growth, core, fixed income, high yield,
+leverage loans, quantitative, as well as long-short investing.
+
+      BSAM's alternative business is a leading provider of absolute return
+investment strategies. BSAM provides investment services to the Company's
+propriety and third party hedge funds, in addition to access to BSAM's open
+architecture platform, HedgeSelect, and risk analytic services provided by Bear
+Measurisk, a subsidiary of the Company.
+
+      In addition to providing products and services for buyers, holders and
+sellers of private equity exposure, BSAM's private equity business specialists
+raise money for third party funds and managing individual venture funds.
+
+Administration and Operations
+
+      Administration and operations personnel are responsible for human
+resources, legal and compliance areas; for processing of securities
+transactions; receipt, identification and delivery of funds and securities;
+internal financial controls; accounting functions; regulatory and financial
+reporting; office services; the custody of customer securities; the
+administration of margin accounts of the Company and correspondent organizations
+as well as other functions. The processing, settlement and accounting for
+transactions for the Company, correspondent organizations and the customers of
+correspondent organizations are handled by employees located in offices in New
+York, New Jersey and, to a lesser extent, the Company's offices worldwide.
+
+
+                                      -14-
+<PAGE>
+
+      The Company executes transactions globally on listed exchanges and in OTC
+markets to facilitate customer and proprietary trading activities. The Company
+settles all of its domestic and international transactions (i.e., delivery of
+securities sold, receipt of securities purchased and transfer of related funds)
+through its own facilities, unaffiliated agent banks, other broker-dealers and
+through memberships in various clearing organizations.
+
+International
+
+      Outside the US, the Company, through its international subsidiaries,
+provides various services including investment banking, securities and
+derivatives trading and brokerage and clearing activities to corporations,
+governments, institutions and individual clients throughout the world. These
+international subsidiaries of the Company have memberships on various foreign
+securities and futures exchanges.
+
+      BSIL is based in London and its principal business includes investment
+banking, institutional equities, fixed income sales, trading and research,
+derivatives, financial futures, foreign exchange, private client services and
+global clearing services. BSIL is a member of a number of European exchanges
+such as Eurex Deutschland ("EUREX"), ICE Futures, LIFFE, Euronext Paris,
+Euronext Amsterdam, LME, Deutsche Borse, Borse Italiana, Virt-X, EDX London,
+NASDAQ Europe, Helsinki Stock Exchange and Stockholmsborsen.
+
+      Bear Stearns International Trading Limited ("BSIT") is also based in
+London and its principal activity is to act as a securities dealer making
+markets in equities. BSIT is a member of the London Stock Exchange ("LSE").
+
+      BSJL, based in Tokyo, serves the diverse needs of corporations, financial
+institutions and government agencies by offering a range of international fixed
+income and equity products as well as listed products. BSJL also offers a range
+of derivative products within Japan with special focus on fixed income, credit
+and equity derivatives. Asset-backed securitization, mergers and acquisitions,
+corporate finance and restructuring services are also available for local and
+cross-border business.
+
+      Bear Stearns Asia Limited ("BSAL"), based in Hong Kong, is the Company's
+primary operating entity in the Asia-Pacific region, excluding Japan. BSAL
+provides clients with international equity sales, trading and research services.
+In addition, BSAL is a major center within the Company's global fixed income,
+foreign exchange and derivatives businesses. BSAL also has investment banking
+capabilities to serve the growing needs of clients in Asia.
+
+      Bear Stearns Singapore Pte. Limited ("BSSP") provides sales, execution and
+research services on fixed income securities to institutional investors in Asia.
+
+      BSB, based in Dublin, allows the Company's existing and prospective
+clients the opportunity of dealing with a banking counterparty. BSB also serves
+as a platform from which the Company directs some of its international banking
+activities, facilitating access to worldwide markets and thereby expanding its
+capacity to increase its client base and product range. BSB engages in capital
+market activities with particular focus on the trading and sales of OTC interest
+rate derivative products. BSB also provides custody and trustee services to the
+growing number of alternative investment funds domiciled in Ireland and in other
+offshore jurisdictions.
+
+      (d)   Competition
+
+      The Company encounters intense competition in all aspects of the
+securities business domestically and internationally, particularly in
+underwriting, trading and advisory services. In such businesses the Company
+competes directly with other securities firms with many having substantially
+greater capital and resources and offering a wider range of financial services
+than the Company. The Company's competitors include other brokers and dealers,
+commercial banks, investment banking firms, investment advisors, mutual funds,
+hedge funds, private equity funds and insurance companies.
+
+
+                                      -15-
+<PAGE>
+
+      The Company believes that the principal factors affecting competition
+involve the caliber and abilities of professional personnel, the relative price
+of the service and products being offered, the ability to assist with financing
+arrangements and the quality of service provided.
+
+      Over time there has been substantial consolidation and convergence as
+institutions involved in a broad range of financial services industries have
+either ceased operations or have been acquired by or merged into other firms.
+This has resulted in competitors gaining increased capital, geographic reach and
+other resources, such as the ability to offer a wider range of products and
+services.
+
+      (e)   Regulatory and Compliance Factors Affecting the Company and the
+            Securities Industry
+
+      Legal: Firms in the financial services industry have been operating in a
+difficult regulatory environment. The industry has experienced increased
+scrutiny from a variety of regulators, including the SEC, NYSE, NASD and state
+attorneys general. Penalties and fines sought by regulatory authorities have
+increased substantially over the last several years.
+
+      Substantial legal liability or significant regulatory action against Bear
+Stearns could have material adverse financial effects or cause significant
+reputational harm to Bear Stearns, which in turn could seriously harm our
+business prospects. We face significant legal risks in our businesses, and the
+volume of claims and amount of damages and penalties claimed in litigation and
+regulatory proceedings against financial institutions have been increasing.
+
+      Bear Stearns, as a participant in the financial services industry, is
+subject to extensive regulation in jurisdictions in which we conduct business.
+Bear Stearns from time to time is the subject of inquiries and investigations by
+regulatory agencies. As a result, among other things, we could be fined,
+prohibited from engaging in some of our business activities or subject to
+limitations or conditions on our business activities. New laws or regulations or
+changes in enforcement of existing laws or regulations applicable to our clients
+may also adversely affect our businesses.
+
+      In addition, the SEC and other federal and state regulators have increased
+their scrutiny of complex, structured finance transactions and have brought
+enforcement actions against a number of financial institutions in connection
+with such transactions. In some of the enforcement actions, clients of the
+financial institutions allegedly engaged in accounting, disclosure or other
+violations of the securities laws, and the financial institutions allegedly
+facilitated these improprieties by entering into transactions with the clients.
+We seek to create innovative solutions to address our clients' needs, and we
+have entered into, and continue to enter into, structured transactions with
+clients. While we have policies and procedures in place that are intended to
+ensure that the structured transactions we enter into are appropriately reviewed
+and comply with applicable laws and regulations, it is possible that certain of
+these transactions could give rise to litigation or enforcement actions. It is
+possible that the heightened regulatory scrutiny of, and litigation in
+connection with, structured finance transactions will make our clients less
+willing to enter into these transactions, and will adversely affect our business
+in this area.
+
+      There have been a number of highly publicized cases involving fraud or
+other misconduct by employees in the financial services industry in recent
+years, and we run the risk that employee misconduct could occur. It is not
+always possible to deter or prevent employee misconduct and the precautions we
+take to prevent and detect this activity may not be effective in all cases.
+
+      On occasion, the Company and its subsidiaries have been subject to
+investigations and proceedings, and sanctions and fines have been imposed for
+infractions of various regulations, none of which, to date, has had a material
+adverse effect on the Company or its business. Settlements of regulatory matters
+may adversely affect business areas that are the subject of such settlements. As
+a general matter, regulatory settlements do not resolve related current and/or
+future civil litigations.
+
+
+                                      -16-
+<PAGE>
+
+      Regulation: The securities industry in the US is subject to extensive
+regulation under both federal and state laws. Moreover, Bear Stearns and BSSC
+are registered as broker-dealers and investment advisers with the SEC. Much of
+the regulation of broker-dealers has been delegated to self-regulatory
+organizations, principally the NASD, the Municipal Securities Rulemaking Board,
+and national securities exchanges such as the NYSE, which has been designated by
+the SEC as the primary regulator of certain of the Company's subsidiaries,
+including Bear Stearns and BSSC. These self-regulatory organizations (i) adopt
+rules, subject to approval by the SEC, that govern the industry and (ii) conduct
+periodic examinations of the operations of the Company's broker-dealer
+subsidiaries. Securities firms are also subject to regulation by state
+securities administrators in those states where they conduct business.
+
+      US broker-dealers are subject to rules and regulations that cover all
+aspects of the securities business including: sales methods; trade practices;
+use and safekeeping of customer funds and securities; capital structures;
+recordkeeping; the preparation of research; the extension of credit and the
+conduct of officers and employees. Much of this regulation is embodied in the
+Securities Exchange Act of 1934 and rules promulgated thereunder, as well as the
+rules of self-regulatory organizations such as the NYSE and NASD. The types of
+regulations to which investment advisers are subject also are extensive and
+include: recordkeeping; fee arrangements; client disclosure; custody of customer
+assets; and the conduct of officers and employees. Much of this regulation is
+embodied in the Investment Advisers Act of 1940 and rules promulgated
+thereunder. The mode of operation and profitability of broker-dealers or
+investment advisers may be directly affected by new legislation, changes in
+rules promulgated by the SEC and self-regulatory organizations and changes in
+the interpretation or enforcement of existing laws and rules. The SEC,
+self-regulatory organizations and state securities commissions may conduct
+administrative proceedings that can result in censures, fines, the issuance of
+cease-and-desist orders and the suspension or expulsion of a broker-dealer or an
+investment adviser, its officers or employees. The principal purpose of
+regulation and discipline of broker-dealers and investment advisers is the
+protection of customers and the securities markets, rather than the protection
+of creditors and stockholders of broker-dealers or investment advisers.
+
+      The Market Reform Act of 1990 (the "Market Reform Act") was adopted to
+strengthen the SEC's regulatory oversight of the national securities markets and
+increase the efficacy and stability of such markets by, among other things: (i)
+providing the SEC with discretion to halt securities trading on any national
+exchange for the protection of investors; (ii) requiring broker-dealers and
+other registrants to regularly provide information to the SEC regarding holding
+companies and other affiliated entities whose activities can impact their
+financial condition; (iii) requiring broker-dealers and other registrants who
+execute large-trade orders to provide information to the SEC regarding such
+transactions; and (iv) allowing the SEC to prosecute market participants who
+violate SEC rules and regulations designed to maintain fair and orderly markets.
+
+      The Insider Trading and Securities Fraud Enforcement Act of 1988 was
+adopted to strengthen the SEC's ability to deter, detect and punish insider
+trading by, among other things: (i) increasing civil penalties that can be
+assessed against controlling persons who purposefully or recklessly fail to take
+adequate measures to prevent insider trading; (ii) allowing the SEC to provide
+cash rewards to individuals who provide evidence of insider trading; (iii)
+affirming the government's ability to obtain criminal sanctions against those
+found guilty of insider trading; and (iv) requiring broker-dealers and
+investment advisers to establish and enforce written procedures reasonably
+designed to prevent the misuse of material, nonpublic information.
+
+      The Government Securities Act of 1986 was adopted to decrease volatility
+and increase investor confidence and liquidity in the government securities
+market by creating a coordinated and comprehensive regulatory structure for the
+market where none had previously existed. In particular, the Government
+Securities Act: (i) requires broker-dealers solely involved in government
+securities transactions to register with the SEC; (ii) allows the Secretary of
+the Treasury to adopt rules regarding the custody, use, transfer and control of
+government securities; and (iii) bestows upon the SEC authority to enforce such
+rules as to broker-dealers and other SEC registrants.
+
+
+                                      -17-
+<PAGE>
+
+      The futures industry in the US is subject to regulation under the
+Commodity Exchange Act, as amended. The CFTC is the federal agency charged with
+the administration of the Commodity Exchange Act and the regulations thereunder.
+Bear Stearns and BSSC are registered with the CFTC as futures commission
+merchants and are subject to regulation as such by the CFTC and various domestic
+boards of trade and other futures exchanges. Bear Stearns' and BSSC's futures
+business is also regulated by the NFA, a not-for-profit membership organization,
+which has been designated a registered futures association by the CFTC.
+
+      As registered broker-dealers and member firms of the NYSE, both Bear
+Stearns and BSSC are subject to the Net Capital Rule (Rule 15c3-1) (the "Net
+Capital Rule") under the Exchange Act, which has been adopted through
+incorporation by reference in NYSE Rule 325. The Net Capital Rule, which
+specifies minimum net capital requirements for registered broker-dealers, is
+designed to measure the general financial integrity and liquidity of
+broker-dealers and requires that at least a minimal portion of a broker-dealer's
+assets be kept in relatively liquid form.
+
+      In June 2004, the SEC adopted rule amendments to "Alternative Net Capital
+Requirements for Broker-Dealers That Are Part of Consolidated Supervised
+Entities" (Rule 34-49830) that allow investment banks to voluntarily submit to
+be regulated by the SEC on a global consolidated basis. These regulations
+(referred to as CSE) were in response to what is known as the "Financial
+Conglomerates Directive" (2002/87/EC) of the European Parliament, which served
+to compel globally active institutions doing business in Europe to be regulated
+on a global consolidated basis. During fiscal 2005, the Company applied to the
+SEC to be regulated under this new CSE regime. The application filed with the
+SEC by Bear Stearns, the Company's principal US broker-dealer, under the net
+capital rule amendments, was approved in November 2005. As a result, effective
+December 1, 2005, Bear Stearns began using alternative methods of computing
+market and derivative-related credit risk, and, as a condition of using these
+methods, the Company consented to consolidated supervision by the SEC. The new
+framework is a notable change in the Company's regulation, as activities which
+were previously transacted outside of SEC regulated entities are now under the
+scope of certain SEC regulations and capital adequacy oversight. In particular,
+the Company now: computes allowable capital and allowances for market, credit
+and operational risk on a consolidated basis in accordance with standards
+prescribed in Appendix G to the Net Capital Rules; and permits the SEC to
+examine the books and records of the Parent Company and any affiliate that does
+not have a principal regulator. The Company has adopted various additional SEC
+reporting, record-keeping and notification requirements. Additionally, the
+Company must comply with the provisions of Rule 15c3-4 of the Exchange Act with
+respect to a group-wide internal risk management control system in the affiliate
+group as if it were an OTC derivative dealer, subject to certain limitations.
+The Company is now deemed a CSE and is in compliance with regulatory capital
+requirements.
+
+      Bear Stearns and BSSC are also subject to the net capital requirements of
+the CFTC and various futures exchanges, which generally require that Bear
+Stearns and BSSC maintain a minimum net capital equal to the greater of the
+alternative net capital requirement provided for under the Exchange Act or 8% of
+the total risk maintenance margin requirements for positions carried in customer
+accounts plus 4% of the total risk maintenance margin requirements for positions
+carried in non-customer accounts, in each case as defined in Rule 1.17 of the
+CFTC.
+
+      Compliance with the Net Capital Rule could limit those operations of Bear
+Stearns and/or BSSC that require significant capital usage, such as
+underwriting, trading and the financing of customer margin account debit
+balances. The Net Capital Rule could also restrict the Company's ability to
+withdraw capital from Bear Stearns or BSSC, which in turn could limit the
+Company's ability to pay dividends, pay interest, repay debt, or redeem or
+purchase shares of its outstanding capital stock. Additional information
+regarding net capital requirements is set forth under "Item 8. Financial
+Statements and Supplementary Data" in Note 16 of Notes to Consolidated Financial
+Statements entitled "Regulatory Requirements".
+
+
+                                      -18-
+<PAGE>
+
+      The activities of the Company's bank and trust company subsidiary, CTC,
+are regulated by the New Jersey Department of Banking and Insurance and the
+FDIC. FDIC regulations require certain disclosures in connection with joint
+advertising or promotional activities conducted by Bear Stearns and CTC. Such
+regulations also restrict certain activities of CTC in connection with the
+securities business of Bear Stearns. The Competitive Equality in Banking Act of
+1987, as amended, limits the use of overdrafts at Federal Reserve Banks on
+behalf of affiliates.
+
+      Bear Energy LP and certain of our other subsidiaries are authorized by the
+Federal Energy Regulatory Commission ("FERC") to sell wholesale physical power
+at market-based rates. As FERC-authorized power marketers, these entities are
+subject to regulation under the Federal Power Act and FERC regulations with
+regard to the rates, terms and conditions under which they sell or transmit
+power in interstate commerce.
+
+      Non-US Regulation: Both BSIL and BSIT are authorized and regulated in the
+United Kingdom by the FSA, pursuant to The Financial Services and Markets Act
+2000. The FSA regulates all aspects of the financial services industry in the
+United Kingdom and its Rules cover (inter alia): senior management
+responsibilities, regulatory capital, sales and trading practices, safekeeping
+of customer funds, record keeping, registration standards for individuals and
+reporting and disclosures to customers.
+
+      BSJL is licensed with and regulated by the Financial Services Agency of
+Japan. BSJL is a limited trade participant to the OSE and has a membership on
+the TSE and TIFFE. Bear Stearns Hong Kong Limited is registered as a Commodities
+Dealer with the Securities and Futures Commission ("SFC") in Hong Kong. BSAL is
+registered as a Securities Dealer with the SFC in Hong Kong and is a participant
+(i.e. member) of the Hong Kong Exchange Limited. BSSP has a Capital Market
+Service license to conduct regulated activities in Dealing in Securities and
+Advising on Corporate Finance.
+
+      BSB was registered with the Irish Companies Registration Office on
+November 27, 1995. BSB was granted a banking license on April 10, 1997 in
+accordance with the Irish Central Bank Act, 1971 and is regulated by the
+Financial Regulator in Ireland.
+
+      Insurance: Bear Stearns and BSSC are members of the Securities Investor
+Protection Corporation ("SIPC"), which provides protection for customer accounts
+held by these entities of up to $500,000 for each customer, subject to a
+limitation of $100,000 for cash balance claims in the event of the liquidation
+of a broker-dealer. In addition, all BSSC security accounts are protected by an
+excess securities bond issued by the Customer Asset Protection Company, up to
+the amount of their total net equity (both cash and securities) in excess of the
+underlying SIPC protection.
+
+Item 1A.    Risk Factors.
+
+      In addition to the other information contained in this Form 10-K and the
+exhibits hereto, the following risk factors should be considered carefully in
+evaluating the Company's business. A discussion of the policies and procedures
+used to identify, assess and manage certain risks is set forth under the caption
+"Risk Management" in the Annual Report, which is incorporated herein by
+reference to Exhibit No. 13 of this report. The Company's business, financial
+condition or results of operations or cash flows could be materially adversely
+affected by any of these risks. Additional risks not presently known to the
+Company or that the Company currently deems immaterial may also adversely affect
+its business, financial condition, or results of operations.
+
+      Our businesses could be adversely affected by market fluctuations. Our
+businesses are materially affected by conditions in the financial markets and
+economic conditions generally, both in the US and elsewhere around the world. In
+the event of a market downturn, our businesses could be adversely affected in
+many ways, including those described below. Our revenues are likely to decline
+in such circumstances and, if we were unable to reduce expenses at the same
+pace, our profit margins would erode. Even in the absence of a market downturn,
+we are exposed to substantial risk of loss due to market volatility.
+
+
+                                      -19-
+<PAGE>
+
+      Market fluctuations and volatility may cause us to incur significant
+losses in our trading and investment activities. We generally maintain large
+trading and investment positions in the fixed income, currency, commodity and
+equity markets. To the extent that we own assets, i.e., have long positions, in
+any of those markets, a downturn in those markets could result in losses from a
+decline in the value of those long positions. Conversely, to the extent that we
+have sold assets we do not own, i.e., have short positions, in any of those
+markets, an upturn in those markets could expose us to potentially unlimited
+losses as we attempt to cover our short positions by acquiring assets in a
+rising market. In addition, we maintain substantial trading positions that can
+be adversely affected by the level of volatility in the financial markets, i.e.,
+the degree to which trading prices fluctuate over a particular period, in a
+particular market, regardless of market levels.
+
+      The Company's businesses may be adversely affected by fluctuations in
+interest rates, foreign exchange rates and equity prices. In connection with the
+Company's dealer and arbitrage activities, including market-making in OTC
+derivative contracts, the Company may be adversely affected by changes in the
+level or volatility of interest rates, mortgage prepayment speeds or the level
+and shape of the yield curve. In addition, when the Company buys or sells a
+foreign currency or a financial instrument denominated in a currency other than
+US dollars, exposure exists from a net open currency position. Until the
+position is covered by selling or buying the equivalent amount of the same
+currency or by entering into a financing arrangement denominated in the same
+currency, the Company is exposed to a risk that the exchange rate may move
+against it. The Company is also exposed to equity price risk through making
+markets in equity securities, distressed debt, equity derivatives as well as
+specialist activities. The Company may be adversely affected by changes in the
+level or volatility of equity prices, which affect the value of equity
+securities or instruments that derive their value from a particular stock, a
+basket of stocks or a stock index.
+
+      Our investment banking revenues may decline in adverse market or economic
+conditions. Unfavorable financial or economic conditions would likely reduce the
+number and size of transactions in which we provide underwriting, mergers and
+acquisitions advisory and other services. Our investment banking revenues, in
+the form of financial advisory and underwriting fees, are directly related to
+the number and size of the transactions in which we participate and would
+therefore be adversely affected by a sustained market downturn. In particular,
+our results of operations would be adversely affected by a significant reduction
+in the number or size of mergers and acquisitions transactions.
+
+      We may generate lower revenues from commissions and asset management fees
+in a market downturn. A market downturn could lead to a decline in the volume of
+transactions that we execute for our customers and, therefore, to a decline in
+the revenues we receive from commissions and spreads. In addition, because the
+fees that we charge for managing our clients' portfolios are in many cases based
+on the value of those portfolios, a market downturn that reduces the value of
+our clients' portfolios or increases the amount of withdrawals would reduce the
+revenue we receive from our asset management business.
+
+      Our risk management policies and procedures may leave us exposed to
+unidentified or unanticipated risk. The policies and procedures we use to
+identify, assess and manage the risks we assume in conducting our businesses are
+set forth under the caption "Risk Management" in the Annual Report, which is
+incorporated herein by reference to Exhibit No. 13 of this report. We have
+devoted significant resources to develop our risk management policies and
+procedures and expect to continue to do so in the future. Nonetheless, our
+policies and procedures to identify, assess and manage risks may not be fully
+effective. Some of our methods of managing risk are based upon our use of
+observed historical market behavior. As a result, these methods may not predict
+future risk exposures, which could be significantly greater than the historical
+measures indicate. Other risk management methods depend upon evaluation of
+information regarding markets, clients or other matters that is publicly
+available or otherwise accessible by the Company. This information may not in
+all cases be accurate, complete, up-to-date or properly evaluated. Management of
+operational, legal and regulatory risk requires, among other things, policies
+and procedures to record properly and verify a large number of transactions and
+events, and these policies and procedures may not be fully effective.
+
+
+                                      -20-
+<PAGE>
+
+      Liquidity risk could impair our ability to fund operations and jeopardize
+our financial condition. Liquidity, i.e., ready access to funds, is essential to
+our businesses. Our sources of liquidity are set forth under the caption
+"Management's Discussion and Analysis of Financial Condition and Results of
+Operations - Liquidity and Capital Resources" in the Annual Report, which is
+incorporated herein by reference to Exhibit No. 13 of this report. An inability
+to raise money in the long-term or short-term debt markets, or to engage in
+repurchase agreements or securities lending, could have a substantial negative
+effect on our liquidity. Our access to debt in amounts adequate to finance our
+activities could be impaired by factors that affect the Company in particular or
+the financial services industry in general. For example, lenders could develop a
+negative perception of our long-term or short-term financial prospects if we
+incurred large trading losses, if the level of our business activity decreased
+due to a market downturn or if regulatory authorities took significant action
+against us. Our ability to borrow in the debt markets also could be impaired by
+factors that are not specific to the Company, such as a severe disruption of the
+financial markets or negative views about the prospects for the investment
+banking, securities or financial services industries generally.
+
+      A reduction in our credit ratings could adversely affect our liquidity and
+competitive position and increase our borrowing costs. The Company's access to
+external sources of financing, as well as the cost of that financing, is
+dependent on various factors and could be adversely affected by a deterioration
+of the Company's long-and short-term debt ratings, which are influenced by a
+number of factors. These include, but are not limited to: material changes in
+operating margins; earnings trends and volatility; the prudence of funding and
+liquidity management practices; financial leverage on an absolute basis or
+relative to peers; the composition of the balance sheet and/or capital
+structure; geographic and business diversification; and the Company's market
+share and competitive position in the business segments in which it operates.
+Material deterioration in any one or a combination of these factors could result
+in a downgrade of the Company's credit ratings, thus increasing the cost of
+and/or limiting the availability of unsecured financing. Additionally, a
+reduction in the Company's credit ratings could also trigger incremental
+collateral requirements, predominantly in the OTC derivatives market.
+
+      As a holding company, The Bear Stearns Companies Inc. is dependent on its
+subsidiaries for funds. The Bear Stearns Companies Inc. is a holding company
+and, therefore, depends on dividends, distributions and other payments from its
+subsidiaries to fund dividend payments and to fund all payments on its
+obligations, including debt obligations. Many of its subsidiaries are subject to
+laws that authorize regulatory bodies to block or reduce the flow of funds from
+those subsidiaries to The Bear Stearns Companies Inc. Regulatory action of that
+kind could impede access to funds that The Bear Stearns Companies Inc. needs to
+make payments on obligations, including debt obligations, or dividend payments.
+See "Item 1. Business - Regulatory and Compliance Factors Affecting the Company
+and the Securities Industry".
+
+      We are exposed to risks resulting from non-performance by counterparties,
+customers, borrowers or debt security issuers. The Company is exposed to credit
+risk in its role as trading counterparty to dealers and customers, as direct
+lender, as holder of securities and as member of exchanges and clearing
+organizations. We are exposed to the risk that third parties that owe us money,
+securities or other assets will not perform their obligations. These parties may
+default on their obligations to us due to bankruptcy, lack of liquidity,
+operational failure or other reasons. The policies and procedures we use to
+manage credit risk are set forth under the caption "Risk Management - Credit
+Risk" in the Annual Report, which is incorporated herein by reference to Exhibit
+No. 13 of this report. There can be no assurances that these policies and
+procedures will effectively mitigate our exposure to credit risk.
+
+      Operational risks may disrupt our businesses, result in regulatory action
+against us or limit our growth. Operational risk is the potential for loss
+arising from inadequate or failed internal processes, people or systems, or from
+external events. This includes, but is not limited to, limitations in the
+Company's financial systems and controls, deficiencies in legal documentation,
+non-compliance with the execution of legal, regulatory and fiduciary
+responsibilities, deficiencies in technology and the risk of loss attributable
+to operational problems. Our businesses are highly dependent on our ability to
+process, on a daily basis, a large number of transactions across numerous and
+diverse markets in many currencies, and the transactions we process have become
+increasingly complex. Consequently, we rely heavily on our financial, accounting
+and other data processing systems. If any of these systems do not operate
+properly or are disabled, we could suffer financial loss, a disruption of our
+businesses, liability to clients, regulatory intervention or reputational
+damage.
+
+
+                                      -21-
+<PAGE>
+
+      Litigation, governmental investigations and/or other legal proceedings
+could adversely affect the company's business. We and certain of our
+subsidiaries are involved in litigation, government investigations; and other
+legal proceedings that arise from time to time in the ordinary course of our
+business. Litigation is inherently unpredictable, and excessive verdicts do
+occur. Although we believe we have substantial defenses in these matters, we
+could in the future incur judgments or enter into settlements of claims that
+could have a material adverse effect on our results of operations in any
+particular period. See "Item 3. Legal Proceedings." for a discussion of certain
+of the legal matters in which we are currently involved.
+
+      Extensive regulation of our businesses limits our activities and may
+subject us to significant penalties. The financial services industry is subject
+to extensive regulation. The Company is subject to regulation by governmental
+and self-regulatory organizations in the US and in several other jurisdictions
+in which it operates around the world. These regulations often serve to limit
+our activities, including through net capital, customer protection and market
+conduct requirements. We face the risk of significant intervention by regulatory
+authorities, including extended investigation and surveillance activity,
+adoption of costly or restrictive new regulations and judicial or administrative
+proceedings that may result in substantial penalties. Non-compliance with legal
+and regulatory requirements could have a material adverse financial effect or
+cause significant reputational harm to the Company, which in turn could
+seriously harm our business prospects. See "Item 1. Business - Regulatory and
+Compliance Factors Affecting the Company and the Securities Industry" for a
+further discussion of the regulatory environment in which we conduct our
+businesses.
+
+      The financial services industry is intensely competitive. The Company
+encounters intense competition in all aspects of the securities business,
+particularly underwriting, trading and advisory services and competes directly
+with other securities firms - both domestic and foreign - many having
+substantially greater capital and resources and offering a wider range of
+financial services than does the Company. The Company competes on the basis of a
+number of factors, including transaction execution, our products and services,
+innovation, reputation and price. We may be adversely affected if our current or
+potential customers and clients decide to use the financial services of our
+competitors instead of us.
+
+      Alternative trading systems may adversely affect our business and may
+increase competition. Securities and futures transactions are now being
+conducted through the internet and other alternative, non-traditional trading
+systems, and it appears that the trend toward alternative trading systems will
+continue and probably accelerate. Some of these alternative trading systems
+compete with our trading businesses, including our specialist businesses, and we
+may experience continued competitive pressures in these and other areas. A
+dramatic increase in computer-based or other electronic trading may adversely
+affect our commission and trading revenues.
+
+      Changes in business, political and/or economic conditions could have an
+adverse effect on the Company. Our future results could be adversely affected by
+changes in business, political and economic conditions, including the cost and
+availability of insurance, due to the threat of future terrorist activity in the
+US and other parts of the world and related US military action overseas.
+
+      Employee misconduct is difficult to detect and prevent and may have an
+adverse effect on our business. In recent years, there have been a number of
+highly publicized cases involving fraud or other misconduct by employees in the
+financial services industry, and we run the risk that employee misconduct could
+occur. It is not always possible to deter or prevent employee misconduct and the
+precautions we take to prevent and detect this activity may not be effective in
+all cases.
+
+      The inability to hire and retain qualified employees may adversely affect
+our businesses. Our performance is largely dependent on the talents and efforts
+of highly skilled individuals. There is intense competition in the financial
+services industry for qualified employees. In addition, we face increasing
+competition with businesses outside the financial services industry, such as
+hedge funds, private equity funds and venture capital funds, for the most highly
+skilled individuals. Our business could be adversely affected if we are unable
+to attract new employees and retain and motivate our existing employees.
+
+
+                                      -22-
+<PAGE>
+
+Item 1B.    Unresolved Staff Comments.
+
+      None
+
+                                    * * * * *
+
+      Certain statements contained in this discussion including (without
+limitation) certain matters discussed under "Legal Proceedings" in Part I, Item
+3 of this report, "Management's Discussion and Analysis of Financial Condition
+and Results of Operations" incorporated by reference in Part II, Item 7 of this
+report, and "Quantitative and Qualitative Disclosures about Market Risk"
+incorporated by reference in Part II, Item 7A of this report are
+"forward-looking statements" within the meaning of the Private Securities
+Litigation Reform Act of 1995. Such forward-looking statements concerning
+management's expectations, strategic objectives, business prospects, anticipated
+economic performance and financial condition and other similar matters are
+subject to risks and uncertainties, including those described in the prior
+paragraph, which could cause actual results to differ materially from those
+discussed in the forward-looking statements. Forward-looking statements speak
+only as of the date of the document in which they are made. The Company
+disclaims any obligation or undertaking to provide any updates or revisions to
+any forward-looking statement to reflect any change in the Company's
+expectations or any change in events, conditions or circumstances on which the
+forward-looking statement is based.
+
+Item 2. Properties.
+
+      The Company's executive offices and principal administrative offices
+occupy approximately 1.1 million square feet at 383 Madison Avenue, New York,
+New York under an operating lease arrangement.
+
+      The lease arrangement expires on August 13, 2010. At the end of the lease,
+the Company may request a lease renewal. In the event the lease renewal cannot
+be negotiated, the Company has the right to purchase the building for the amount
+of the then outstanding indebtedness of the lessor or to arrange for the sale of
+the property with the proceeds of the sale being used to satisfy the lessor's
+debt obligation.
+
+      The Company leases approximately 308,000 square feet of office space at
+One MetroTech Center North, Brooklyn, New York, through 2024 for its securities
+processing, accounting and clearance operations. The Company also leases
+approximately 3,000, 13,000, 59,000, 61,000, 141,000 and 148,000 square feet of
+space at six locations in New York City expiring in 2010, 2007, 2009, 2011, 2020
+and 2020, respectively. The Company's offices in Atlanta, Bellevue, Boca Raton,
+Boston, Chicago, Clayton, Cleveland, Columbus, Dallas, Denver, El Paso, Houston,
+Irving, King of Prussia, Lewisville, Los Angeles, Memphis, Morristown, Palm
+Beach, Princeton, Providence, Sacramento, San Francisco, San Juan, Scottsdale
+and Tampa occupy an aggregate of approximately 1,044,000 square feet under
+leases expiring on various dates through the year 2019. The Company's twelve
+international offices occupy a total of approximately 232,000 square feet under
+leases expiring on various dates through the year 2016.
+
+      The Company owns approximately 65 acres of land in Whippany, New Jersey,
+including four buildings comprising an aggregate of approximately 673,000 square
+feet. The Company is currently using the facilities on the property to house its
+data processing facility and other operations, disaster recovery, compliance,
+personnel and accounting functions. Approximately 141,000 square feet in one of
+the buildings is being leased to an unaffiliated third party under a 15-year
+operating lease expiring in 2019.
+
+
+                                      -23-
+<PAGE>
+
+Item 3. Legal Proceedings.
+
+      In the normal course of business, the Company and its subsidiaries are
+named as defendants in various legal actions, including arbitrations, class
+actions and other litigation. Such actions include those arising out of the
+Company's or a subsidiary's activities as a broker and dealer, as an
+underwriter, as an investment banker, as an employer or arising out of alleged
+employee misconduct. Certain of the legal actions include claims for substantial
+compensatory and/or punitive damages or claims for indeterminate amounts of
+damages. The Company is also involved in other reviews, investigations and
+proceedings by governmental and self-regulatory agencies regarding the Company's
+business, certain of which may result in adverse judgments, settlements, fines,
+penalties, injunctions or other relief.
+
+      Because litigation is inherently unpredictable, particularly in cases
+where claimants seek substantial or indeterminate damages or where
+investigations and proceedings are in the early stages, the Company cannot
+predict with certainty the loss or range of loss related to such matters, how
+such matters will be resolved, when they will be ultimately resolved, or what
+the eventual settlement, fine, penalty or other relief might be. Consequently,
+the Company cannot estimate losses or ranges of losses for matters where there
+is only a reasonable possibility that a loss may have been incurred. Although
+the ultimate outcome of these matters cannot be ascertained at this time, it is
+the opinion of management, after consultation with counsel, that the resolution
+of the following matters will not have a material adverse effect on the
+financial condition of the Company, taken as a whole; such resolution may,
+however, have a material effect on the operating results and cash flows in any
+future period, depending on the level of income for such period.
+
+      The Company has provided reserves for such matters in accordance with
+Statement of Financial Accounting Standards No. 5, "Accounting for
+Contingencies". The ultimate resolution may differ materially from the amounts
+reserved.
+
+      In re McKesson HBOC, Inc. Securities Litigation: This matter arises out of
+a merger between McKesson Corporation ("McKesson") and HBO & Company ("HBOC")
+resulting in an entity called McKesson HBOC, Inc. ("McKesson HBOC").
+
+      Beginning on June 29, 1999, 53 purported class actions were commenced in
+the US District Court for the Northern District of California. These actions
+were subsequently consolidated, and the plaintiffs proceeded to file a series of
+amended complaints. On February 15, 2002, plaintiffs filed a third amended
+consolidated complaint, which alleges that Bear Stearns violated Sections 10(b)
+and 14(a) of the Exchange Act in connection with allegedly false and misleading
+disclosures contained in a joint proxy statement/prospectus that was issued with
+respect to the McKesson/HBOC merger.
+
+      Plaintiffs purport to represent a class consisting of all persons who
+either (i) acquired publicly traded securities of HBOC between January 20, 1997
+and January 12, 1999, or (ii) acquired publicly traded securities of McKesson or
+McKesson HBOC between October 18, 1998 and April 27, 1999, and who held McKesson
+securities on November 27, 1998 and January 22, 1999. Named defendants include
+McKesson HBOC, certain present and former directors and/or officers of McKesson
+HBOC, McKesson and/or HBOC, Bear Stearns and Arthur Andersen LLP. Compensatory
+damages in an unspecified amount are sought.
+
+      On January 6, 2003, the court granted Bear Stearns' motion to dismiss the
+Section 10(b) claim asserted in the third amended complaint, and denied Bear
+Stearns' motion to dismiss the Section 14(a) claim. On March 7, 2003, Bear
+Stearns filed an answer to the third amended complaint denying all allegations
+of wrongdoing and asserting affirmative defenses to the claims in the complaint.
+On January 12, 2005, McKesson HBOC announced that it had reached a settlement
+with the plaintiff class, which settlement required court approval. Bear
+Stearns' engagement letter with McKesson in connection with the merger of
+McKesson and HBOC provides that McKesson cannot settle any litigation without
+Bear Stearns' written consent unless McKesson obtains an unconditional written
+release for Bear Stearns and, under certain circumstances, is required to
+provide indemnification to Bear Stearns.
+
+
+                                      -24-
+<PAGE>
+
+      By Order dated May 23, 2005, the Court denied preliminary approval of the
+proposed settlement between McKesson HBOC and the plaintiff class. On July 12,
+2005, the plaintiff and McKesson HBOC submitted a revised proposed settlement,
+purporting to address the issues identified by the Court in its order denying
+preliminary approval, to which Bear Stearns objected. The revised proposed
+settlement provides, among other things, that Bear Stearns' rights under its
+engagement letter are preserved for future resolution. McKesson HBOC's claims in
+connection with the letter are also preserved.
+
+      On February 24, 2006, the Court granted final approval of the revised
+proposed settlement. Bear Stearns has appealed the final approval order to the
+US Circuit Court of Appeals for the Ninth Circuit, seeking to reverse the final
+approval of the settlement on the ground that consummation of the settlement may
+deprive Bear Stearns of certain rights and remedies provided for in its
+engagement letter.
+
+      On December 8, 2005 Bear Stearns commenced a separate action in New York
+State Supreme Court, New York County, Bear Stearns v. McKesson Corp., asserting
+breach of contracts and other claims against McKesson based on the engagement
+letter and seeking, among other things, declaratory relief and damages. On April
+24, 2006, McKesson moved to dismiss certain causes of action asserted in the
+complaint. On October 25, 2006, the Court issued an opinion denying McKesson's
+motion to dismiss in part and allowing Bear Stearns to proceed with certain of
+its claims.
+
+      Helen Gredd, Chapter 11 Trustee for Manhattan Investment Fund Ltd. v.
+Bear, Stearns Securities Corp.: On April 24, 2001, an action was commenced
+against BSSC in the US Bankruptcy Court for the Southern District of New York by
+the Chapter 11 Trustee for Manhattan Investment Fund Limited ("MIFL"). BSSC
+provided prime brokerage services to MIFL prior to its bankruptcy. BSSC is the
+sole defendant in this action. The complaint alleges, among other things, that
+certain transfers of cash and securities to BSSC in connection with short sales
+of securities by MIFL in 1999 were "fraudulent transfers" made in violation of
+Sections 548 and 550 of the US Bankruptcy Code and are recoverable by the
+Trustee. The Trustee also alleges that any claim that may be asserted by BSSC
+against MIFL should be equitably subordinated to the claims of other creditors
+pursuant to Sections 105 and 510 of the Bankruptcy Code. The Trustee seeks to
+recover in excess of $1.9 billion in connection with the allegedly fraudulent
+transfers to BSSC.
+
+      On March 21, 2002, the District Court dismissed the trustee's claims
+seeking to recover allegedly fraudulent transfers in amounts exceeding $1.9
+billion. The District Court also remanded to the Bankruptcy Court the Trustee's
+remaining claims, which seek to recover allegedly fraudulent transfers in the
+amount of $141.4 million plus pre-judgment interest and to equitably subordinate
+any claim that may be asserted by BSSC against MIFL to the claims of other
+creditors.
+
+      On October 17, 2002, BSSC filed an answer to the complaint in which it
+denied all allegations of wrongdoing and asserted affirmative defenses.
+
+      By Order and Decision dated January 9, 2007, the Bankruptcy Court ruled on
+the parties cross motions for summary judgment. The Court denied BSSC's motion
+for summary judgment seeking dismissal of the Trustee's complaint in its
+entirety and granted the Trustee's motion for summary judgment on the fraudulent
+transfer claims against BSSC. BSSC believes it has substantial defenses to the
+Trustee's claims and intends to appeal the Bankruptcy Court's decision.
+
+      Sterling Foster & Co., Inc.: The following matters arise out of Bear
+Stearns' role as clearing broker for Sterling Foster & Co., Inc. ("Sterling
+Foster").
+
+
+                                      -25-
+<PAGE>
+
+      (i) Levitt, et al. v. Bear Stearns, et al.: On February 16, 1999, a
+purported class action was commenced in the US District Court for the Southern
+District of New York on behalf of all persons who purchased ML Direct, Inc.
+common stock or warrants through Sterling Foster & Co., Inc. ("Sterling Foster")
+between September 4, 1996 and December 31, 1996. Named as defendants were Bear
+Stearns and BSSC. The complaint alleged, among other things, that the defendants
+violated Sections 10(b) and 20(a) of the Exchange Act and Rule 10b-5 promulgated
+thereunder and committed common law fraud in connection with providing clearing
+services to Sterling Foster with respect to certain transactions by customers of
+Sterling Foster in ML Direct common stock and warrants. Compensatory damages of
+$50 million and punitive damages of approximately $100 million were sought. This
+case was transferred to the US District Court for the Eastern District of New
+York.
+
+      (ii) Rogers v. Sterling Foster & Co., Inc.: On February 16, 1999, Bear
+Stearns, BSSC and an officer of BSSC were added as defendants in a purported
+class action pending in the US District Court for the Eastern District of New
+York. The action was brought on behalf of a purported class consisting of all
+persons who purchased or otherwise acquired certain securities that were
+underwritten by Sterling Foster. Named as defendants, in addition to the Bear
+Stearns defendants set forth above, were Sterling Foster, seven individuals
+alleged to have had an employment relationship with, or exercised control over,
+Sterling Foster, six companies that issued securities underwritten by Sterling
+Foster, eight individuals who were directors, officers and/or employees of these
+issuers, and Bernstein & Wasserman LLP and two of its partners. The second
+amended complaint alleged, among other things, that the Bear Stearns defendants
+violated Section 10(b) of the Exchange Act and Rule 10b-5 promulgated thereunder
+and Section 349 of the New York General Business Law and committed common law
+fraud in connection with providing clearing services to Sterling Foster.
+Compensatory damages in an unspecified amount were sought.
+
+      These two matters were consolidated as part of the In re Sterling Foster
+Inc. Securities Litigation (MDL Docket No. 1208) before the US District Court
+for the Eastern District of New York. On October 31, 2006, that court approved a
+settlement agreement that dismissed all claims against all settling defendants,
+which included Bear Stearns, BSSC and an officer of BSSC.
+
+      Enron Corp.: The following matters arise out of Bear Stearns' business
+transactions with or relating to Enron Corp. ("Enron").
+
+      (i) Enron Corp., et ano. v. Bear, Stearns International Ltd., et ano.: On
+November 25, 2003, BSIL and BSSC were named as defendants in an adversary
+proceeding commenced by Enron and Enron North America Corp. in the US Bankruptcy
+Court for the Southern District of New York. Plaintiffs seek, inter alia, to
+recover payments, totaling approximately $26 million that were allegedly made to
+BSIL and BSSC during August 2001 in connection with an equity derivative
+contract between BSIL and Enron. According to the complaint, Enron's payments
+constituted (a) fraudulent transfers, under Section 548(a) of the US Bankruptcy
+Code and under applicable state law and (b) an unlawful redemption of Enron
+common stock in violation of Oregon law. Enron seeks judgment (a) avoiding and
+setting aside Enron's August 2001 payments to BSIL and BSSC, (b) directing BSIL
+and BSSC to pay Enron approximately $26 million, plus prejudgment interest, (c)
+declaring that Enron's August 2001 payments violated Oregon law, (d) disallowing
+any claims by BSIL and BSSC in connection with Enron's bankruptcy proceedings
+until they have returned the August 2001 payments to Enron and (e) awarding
+Enron its reasonable attorneys' fees and costs incurred in connection with the
+action.
+
+      By Order dated June 3, 2005, the Bankruptcy Court denied the motion to
+dismiss filed by BSIL and BSSC. On July 5, 2005, defendants filed a motion with
+the US District Court for the Southern District of New York for leave to take an
+interlocutory appeal from the Bankruptcy Court's decision. By Order dated May 2,
+2006, the District Court denied defendants' motion for leave to take an
+interlocutory appeal from the Bankruptcy Court's decision.
+
+      (ii) Enron Corp., et al. v. Bear, Stearns & Co. Inc., et al.: Bear Stearns
+was named as a defendant in two adversary proceedings commenced by Enron in the
+US Bankruptcy Court for the Southern District of New York. The complaints in
+these actions sought equitable subordination and disallowance under the
+Bankruptcy Code of certain debt claims against Enron in the amount of $19
+million that were purchased by Bear Stearns from third parties subsequent to
+Enron's filing for bankruptcy.
+
+
+                                      -26-
+<PAGE>
+
+      These adversary proceedings have each been dismissed pursuant to the
+respective agreements among the parties to these actions. Bear Stearns did not
+make any payments in connection with its dismissal from these proceedings.
+
+      IPO Allocation Securities and Antitrust Litigations
+
+      The Company and Bear Stearns (the "Bear Stearns defendants"), along with
+many other financial services firms, have been named as defendants in many
+putative class actions filed during 2001 and 2002 in the US District Court for
+the Southern District of New York involving the allocation of securities in
+certain initial public offerings ("IPOs"). The complaints in these purported
+class actions generally allege, among other things, that between 1998 and 2000:
+(i) the underwriters of certain "hot" IPOs of technology and internet-related
+companies obtained excessive compensation by allocating shares in these IPOs to
+preferred customers who, in return, purportedly agreed to pay additional
+compensation to the underwriters, and the underwriters failed to disclose this
+additional compensation and/or (ii) the underwriters' customers, in return for a
+favorable allocation of these securities, agreed to purchase additional shares
+in the aftermarket at pre-arranged prices or to pay additional compensation in
+connection with other transactions.
+
+      Beginning on April 19, 2002, the plaintiffs in these litigations filed
+amended complaints by virtue of which the public offerings of each of the 309
+issuers are now the subjects of separate complaints. The Bear Stearns defendants
+are defendants in 95 of these amended complaints. As amended, the complaints
+allege, among other things, that the underwriters, including Bear Stearns,
+violated Section 11 of the Securities Act and Section 10(b) of the Exchange Act
+and Rule 10b-5 promulgated thereunder, based on the wrongdoing alleged in the
+original complaints and by causing their securities analysts to issue
+unwarranted positive reports regarding the issuers. Compensatory damages in
+unspecified amounts are sought.
+
+      By order dated October 13, 2004, the Court granted in part and denied in
+part class certification for each of the six cases selected to be the focus
+cases for these proceedings.
+
+      By opinion and order dated February 15, 2005, the Court preliminarily
+approved the proposed settlement among plaintiffs and a substantial number of
+the non-bankrupt issuer defendants and their officers and directors. The
+settlement generally provided that (1) the insurers of these issuers will
+guarantee an ultimate recover by plaintiffs, in this and related litigations, of
+$1 billion; (2) these issuers will assign to plaintiffs so-called "excess
+compensation" claims against the underwriter defendants, including the Bear
+Stearns defendants, that these issuers allegedly possess; and (3) plaintiffs
+will, upon final approval of the settlement, dismiss all claims against these
+issuers and the individual director and officer defendants. That preliminary
+approval, however, was conditioned upon certain changes being made to the terms
+of the settlement.
+
+      On December 5, 2006, the Second Circuit vacated the lower court's class
+certification of six selected focus cases. The Second Circuit concluded that
+class certification of these cases was improper and remanded the cases to the
+lower court for further proceedings.
+
+      In January 2002, Bear Stearns was named as a defendant, along with nine
+other financial services firms, in an antitrust complaint filed in the same
+court on behalf of a putative class of purchasers who, either in IPOs or the
+aftermarket, purchased technology-related securities during the period March
+1997 to December 2000. Plaintiffs allege that the defendants conspired to
+require that customers, in return for an allocation in the IPOs, (i) pay charges
+in addition to the IPO price, such as non-competitively determined commissions
+on the purchase or sale of other securities and/or (ii) agree to purchase the
+IPO securities in the aftermarket at prices above the IPO price. Plaintiffs
+claim that these alleged practices violated Section 1 of the Sherman Act and
+state antitrust laws and seek compensatory and treble damages. On November 6,
+2003, the Court granted the motion of the defendants (including the Company) to
+dismiss all claims asserted against them by these antitrust plaintiffs. The
+plaintiffs appealed that decision to the Second Circuit Court of Appeals. On
+September 28, 2005, the Second Circuit Court of Appeals vacated the dismissal
+and remanded this matter to the lower court for further proceedings.
+
+
+                                      -27-
+<PAGE>
+
+      On or around December 7, 2006, the US Supreme Court granted defendants'
+petition for certiorari to appeal the decision issued by the Second Circuit
+Court of Appeals.
+
+      The Company denies all allegations of wrongdoing asserted against it in
+these litigations and believes that it has substantial defenses to these claims.
+
+      IPO Underwriting Fee Antitrust Litigation: Bear Stearns, along with
+numerous other financial services firms, is a defendant in several consolidated
+class actions currently pending in the US District Court for the Southern
+District of New York. The first consolidated action, filed on March 15, 2001,
+purports to be brought on behalf of a putative class of purchasers of stock in
+initial public offerings (the "Purchaser Action"). The second consolidated
+action, filed on July 6, 2001, purports to be brought on behalf of a putative
+class of issuers of stock in initial public offerings (the "Issuer Action").
+Each suit alleges that the Company violated federal antitrust laws by fixing
+underwriting fees at 7% for initial public offerings with an aggregate issuance
+value of $20-$80 million for the time period 1994 to the present. The plaintiff
+in each action seeks injunctive relief and treble damages.
+
+      On February 24, 2004, the District Court granted defendants' motion to
+dismiss the complaint in the Purchaser Action in part, dismissing plaintiffs'
+claim for treble damages under Section 4 of the Clayton Act. However, the Court
+denied defendants' motion to dismiss the plaintiffs' claim for injunctive
+relief.
+
+      On September 16, 2004, plaintiffs in the Purchaser Action and the Issuer
+Action moved for class certification. On October 25, 2005, plaintiffs in both
+actions moved for partial summary judgment against defendants on liability.
+
+      By Order dated April 18, 2006, the District Court denied the Issuer
+plaintiffs motion for class certification and postponed a ruling on the class
+certification motion in the Purchaser Action pending resolution of whether, in
+light of the Court's ruling in the Issuer Action, the Purchaser Action
+plaintiffs nonetheless want to proceed with their action.
+
+      Bear Stearns has denied all allegations of wrongdoing asserted against it
+in these litigations and believes that it has substantial defenses to these
+claims.
+
+      Mutual Fund Litigation
+
+      On November 7, 2003, BSSC, the Company and Bear Stearns (the "Bear Stearns
+defendants"), together with 18 other entities and individuals, were named as
+defendants in a purported class action lawsuit, in the US District Court for the
+Southern District of New York by a mutual fund investor on behalf of persons who
+purchased and/or sold ownership units of mutual fund in the Janus or Putnam
+families of mutual funds between November 1, 1998 and July 3, 2003. On January
+26, 2004, plaintiff filed a first amended complaint, again on behalf of persons
+who traded in the Janus or Putnam families of mutual funds, against the same
+Bear Stearns defendants and 16 other entities and individuals, including mutual
+funds and other financial institutions. On October 22, 2003, another purported
+class action was filed on behalf of the general public of the State of
+California against multiple defendants, and subsequently included the Company as
+a defendant, with respect to various mutual funds. Both of these actions allege
+that the defendants violated federal and/or state laws by allowing certain
+investors to market time and/or late trade mutual fund shares and seek various
+forms of relief including damages of an indeterminate amount. On March 19, 2004,
+these actions were transferred to the District of Maryland for coordinated
+and/or consolidated pre-trial proceedings as part of MDL 1586-In re: Mutual
+Funds Investment Litigation.
+
+
+                                      -28-
+<PAGE>
+
+      On or subsequent to September 29, 2004, fifteen new and/or amended class
+action or derivative complaints were filed in MDL-1586 naming as defendants the
+Bear Stearns defendants, various mutual fund companies, certain broker-dealers,
+and others (collectively the "defendants"). Plaintiffs who have brought actions,
+either directly or derivatively, against one or more of the Bear Stearns
+defendants are shareholders in the following families of mutual funds: AIM,
+Invesco, PIMCO/Allianz Dresdner, Excelsior, Alliance, Franklin Templeton, One
+Group, Strong, Columbia, Pilgrim Baxter, Alger, Janus, RS and MFS. Among other
+things, the actions allege that the defendants violated federal and/or state
+laws by allowing certain investors to market time and/or late trade mutual fund
+shares and seek various forms of relief including damages of an indeterminate
+amount.
+
+      The Bear Stearns defendants, along with certain other defendants, filed an
+omnibus motion to dismiss the consolidated class action and derivative claims
+against them. On November 3, 2005, the derivative claims against the Bear
+Stearns defendants were dismissed. As of December 31, 2005, the Bear Stearns
+defendants' motion to dismiss was otherwise granted in part and denied in part
+as to direct investor claims in the following families of mutual funds: Janus,
+AIM/Invesco, RS, One Group, MFS, Columbia, PIMCO/Allianz Dresdner, Alger,
+Excelsior and Strong.
+
+      The Bear Stearns defendants believe that they have substantial defenses to
+the remaining claims.
+
+      Bear Wagner Specialists LLC: Bear Wagner Specialists LLC, a subsidiary of
+the Company, is among numerous defendants named in purported class actions
+brought on behalf of investors beginning in October 2003 in the US District
+Court for the Southern District of New York alleging violations of the federal
+securities laws in connection with NYSE floor specialist activities. The actions
+seek unspecified compensatory damages, restitution, and disgorgement on behalf
+of purchasers and sellers of unspecified securities between October 17, 1998 and
+October 15, 2003. Bear Wagner Specialists LLC and the Company are also among the
+defendants in a purported class action filed in December 2003 in California
+Superior Court, Los Angeles County alleging violation of California law in
+connection with the same conduct. This case was transferred to the US District
+Court for the Southern District of New York. The district court consolidated
+these purported class actions under the caption In re NYSE Specialists
+Securities Litigation, No. 03 Civ. 8264 (RWS). On September 15, 2004, a
+consolidated amended complaint was filed in this action.
+
+      Bear Wagner and the Company deny all allegations of wrongdoing in the
+class action specialist litigations and believe they have substantial defenses
+to the claims.
+
+      In re Prime Hospitality, Inc. Shareholders Litigation: On July 15, 2005,
+plaintiff shareholders of Prime Hospitality Corporation ("Prime") filed a
+consolidated amended class action complaint in the Delaware Chancery Court
+against the directors of Prime, the Blackstone Group ("Blackstone") and certain
+affiliates of Blackstone, and Bear Stearns. As amended, the complaint alleges
+that Bear Stearns acted as financial advisor to Prime in connection with the
+sale of Prime to Blackstone, and that Bear Stearns aided and abetted a breach of
+fiduciary duty by the directors of Prime in connection with that transaction.
+The amended complaint seeks from defendants compensatory damages in an
+unspecified amount, as well as various forms of equitable relief, including, but
+not limited to, rescissory damages, the imposition of a constructive trust and
+an accounting. On October 3, 2005, Bear Stearns filed its answer to the
+consolidated amended class action complaint denying all allegations of
+wrongdoing and asserted affirmative defenses.
+
+      The parties have reached an agreement in principle to settle the action
+against all defendants, including Bear Stearns, subject to confirmatory
+discovery. Under the agreement in principle, Bear Stearns will not make any
+financial contribution to the settlement.
+
+
+                                      -29-
+<PAGE>
+
+      Municipal Bond Offering Matters
+
+      Bear Stearns has been notified by the Chicago office of the SEC of a
+formal investigation into its municipal bond offering practices, which has been
+focused on the municipal underwriting business conducted through the Chicago
+office of Bear Stearns. Bear Stearns has also received subpoenas and requests
+for information relating to its municipal underwriting business and/or public
+fund asset management businesses conducted through the Chicago office of Bear
+Stearns from the US Attorney's Office for the Northern District of Illinois; the
+State of Illinois, Office of Executive Inspector General; the Illinois
+Securities Department; and the Office of the Attorney General of Illinois.
+
+      Bear Stearns is cooperating with each of these investigations or
+inquiries.
+
+      Short Selling Litigation
+
+      The Bear Stearns Companies Inc., along with numerous other financial
+services firms and other unnamed persons, has been named as a defendant in a
+purported class action filed in the US District Court for the Southern District
+of New York by customers who engaged in short-selling transactions in equity
+securities since April 12, 2000. The complaint alleges that the defendants
+agreed among themselves to charge excessive fees in connection with short sales,
+and not to force deliveries of borrowed securities, resulting in intentional
+failures to deliver. The complaint alleges causes of action under the federal
+antitrust laws, and New York law.
+
+      Bear, Stearns Securities Corp., along with numerous other financial
+securities firms and other unnamed persons, has been named as a defendant in two
+separate actions in California state court. The complaints generally allege that
+since late 2004, the defendants have engaged in a market-manipulation scheme in
+their role as prime brokers, involving the alleged intentional failure to
+deliver securities to cover short sales. The complaints further allege that such
+failures to deliver distorted the market for, and artificially depressed the
+share price of, the securities identified in the respective complaints. The
+complaints allege causes of action under California statutory and common law.
+
+      The Bear Stearns Companies Inc. and Bear, Stearns Securities Corp. believe
+they have substantial defenses to the claims brought in these actions.
+
+      Other Investigations/Inquiries
+
+      Bear Stearns has been notified by the Staff of the SEC, Southeast Regional
+Office, that the Staff intends to recommend that the Commission bring a civil
+enforcement action against Bear Stearns in connection with Bear Stearns'
+involvement in the pricing, valuation and analysis related to approximately
+$62.9 million of collateralized debt obligations that were purchased by a client
+of Bear Stearns. Such an action could result in, among other things,
+disgorgement, civil monetary penalties and/or other remedial sanctions.
+
+Item 4. Submission of Matters to a Vote of Security Holders.
+
+      None.
+
+
+                                      -30-
+<PAGE>
+
+Executive Officers of the Company
+
+      The following table sets forth certain information as of January 31, 2007
+concerning executive officers of the Company.
+
+                              Age as of
+                             January 31,
+           Name                 2007               Principal Occupation
+--------------------------- ------------- --------------------------------------
+James E. Cayne...........        72       Chairman of the Board and Chief
+                                          Executive Officer of the Company and
+                                          Bear Stearns and member of the
+                                          Executive Committee of the Company
+                                          (the "Executive Committee")
+
+Jeffrey M. Farber........        42       Senior Vice President-Finance of the
+                                          Company and Controller of the Company
+                                          and Bear Stearns
+
+Alan C. Greenberg........        79       Chairman of the Executive Committee
+
+Michael Minikes..........        63       Treasurer of the Company
+
+Samuel L. Molinaro Jr....        49       Executive Vice President and Chief
+                                          Financial Officer of the Company and
+                                          Bear Stearns and member of the
+                                          Executive Committee
+
+Alan D. Schwartz.........        56       President and Co-Chief Operating
+                                          Officer of the Company and Bear
+                                          Stearns and member of the Executive
+                                          Committee
+
+Michael S. Solender......        42       General Counsel of the Company and
+                                          Bear Stearns
+
+Warren J. Spector........        49       President and Co-Chief Operating
+                                          Officer of the Company and Bear
+                                          Stearns and member of the Executive
+                                          Committee
+
+      Business experience for the past five years is provided in accordance with
+SEC rules.
+
+      Mr. Cayne became Chairman of the Board on June 25, 2001. Mr. Cayne has
+been Chief Executive Officer of the Company and Bear Stearns for more than five
+years and prior to June 25, 2001, was President of the Company and Bear Stearns.
+
+      Mr. Farber became Senior Vice President-Finance of the Company on February
+8, 2007 and has been Controller of the Company and Bear Stearns since January 7,
+2004. Mr. Farber was Assistant Controller of the Company from May 1, 2000 to
+January 7, 2004 and since May 1, 2000 a Senior Managing Director of Bear
+Stearns. Prior to May 2000, Mr. Farber was a partner with Deloitte & Touche LLP.
+
+      Mr. Greenberg has been Chairman of the Executive Committee for more than
+five years and prior to June 25, 2001, was Chairman of the Board of the Company.
+
+      Mr. Minikes has been Treasurer of the Company for more than five years and
+prior to April 10, 2006 was treasurer of Bear Stearns.
+
+      Mr. Molinaro became Executive Vice President of the Company and Bear
+Stearns on December 1, 2001, and has been Chief Financial Officer of the Company
+and Bear Stearns since October 1996.
+
+      Mr. Schwartz became President and Co-Chief Operating Officer of the
+Company and Bear Stearns and a member of the Executive Committee on June 25,
+2001, and was an Executive Vice President of Bear Stearns for more than five
+years.
+
+
+                                      -31-
+<PAGE>
+
+      Mr. Solender became General Counsel of the Company and Bear Stearns on
+January 29, 2004. Since February 11, 2002, Mr. Solender has been a Senior
+Managing Director in the Legal Department of Bear Stearns. Mr. Solender was a
+partner at the law firm of Arnold & Porter LLP from January 1997 to January 2000
+and from November 2001 to February 2002, and was General Counsel of the US
+Consumer Product Safety Commission from January 2000 to November 2001.
+
+      Mr. Spector became President and Co-Chief Operating Officer of the Company
+and Bear Stearns and a member of the Executive Committee on June 25, 2001, and
+was an Executive Vice President of Bear Stearns for more than five years.
+
+      Officers serve at the discretion of the Board of Directors.
+
+PART II
+
+Item 5. Market for Registrant's Common Equity, Related Stockholder Matters and
+        Issuer Purchases of Equity Securities.
+
+      The information relating to the market for registrant's common equity and
+the Performance Graph required to be furnished pursuant to this item is set
+forth under the caption "Price Range of Common Stock and Dividends" in the
+Annual Report, which is incorporated herein by reference to Exhibit No. 13 of
+this report.
+
+      The following table provides information as of November 30, 2006 with
+respect to the shares of common stock repurchased by the Company during the
+fourth quarter of fiscal 2006:
+
+                        Issuer Purchases of Equity Securities
+
+<TABLE>
+<CAPTION>
+                     (a) Total                   (c) Total Number of Shares      (d) Approximate Dollar
+                     Number of    (b) Average       Purchased as Part of        Value of Shares that May
+                      Shares      Price Paid     Publicly Announced Plans or   Yet Be Purchased Under the
+Period               Purchased     per Share            Programs (1)              Plans or Programs (1)
+------------------   ---------   -------------   ---------------------------   ---------------------------
+<S>                  <C>         <C>             <C>                           <C>
+
+9/1/06 - 9/30/06     1,389,800     $  133.82              1,389,800                   $  531,316,619
+
+10/1/06 - 10/31/06     335,400     $  148.48                335,400                   $  481,516,207
+
+11/1/06 - 11/30/06   1,068,328     $  145.63              1,068,328                   $  325,935,985
+                     ---------                         ------------
+
+Total                2,793,528     $  140.10              2,793,528
+                     =========                         ============
+</TABLE>
+
+      (1) On December 12, 2005, the Board of Directors of the Company approved
+an amendment to the Stock Repurchase Program ("Repurchase Program") to replenish
+the previous authorizations to allow the Company to purchase up to $1.5 billion
+of common stock in fiscal 2006 and beyond. During the fiscal year ended November
+30, 2006, the Company purchased under the current and prior authorizations a
+total of 9,440,880 shares at a cost of approximately of $1.2 billion.
+Approximately $279.9 million was available to be purchased under the current
+authorization as of November 30, 2006. On December 13, 2006, the Board of
+Directors of the Company approved an amendment to the Repurchase Program to
+replenish the previous authorization in order to allow the Company to purchase
+up to $2.0 billion of common stock in fiscal 2007 and beyond. The Company
+expects to utilize the repurchase authorization to offset the dilutive impact of
+annual share awards. The Company may, depending upon price and other factors,
+repurchase additional shares in excess of that required for annual share awards.
+
+
+                                      -32-
+<PAGE>
+
+      During the fiscal year ended November 30, 2006, the Company also purchased
+a total of 1,141,334 shares of its common stock at a total cost of $154.0
+million pursuant to a $200 million CAP Plan Earnings Purchase Authorization,
+which was approved by the Compensation Committee of the Board of Directors of
+the Company on November 30, 2005. On December 12, 2006, the Compensation
+Committee of the Company approved an amendment to the CAP Plan Earnings Purchase
+Authorization to replenish the previous authorization in order to allow the
+Company to purchase up to $200 million of common stock in fiscal 2007.
+
+      The repurchase programs have no set expiration or termination date.
+
+Item 6.  Selected Financial Data.
+
+      The information required to be furnished pursuant to this item is set
+forth under the caption "Financial Highlights" in the Annual Report, which is
+incorporated herein by reference to Exhibit No. 13 of this report.
+
+Item 7.  Management's Discussion and Analysis of Financial Condition and Results
+      of Operations.
+
+      The information required to be furnished pursuant to this item is set
+forth under the caption "Management's Discussion and Analysis of Financial
+Condition and Results of Operations" in the Annual Report, which is incorporated
+herein by reference to Exhibit No. 13 of this report.
+
+Item 7A.  Quantitative and Qualitative Disclosures about Market Risk.
+
+      The information required to be furnished pursuant to this item is set
+forth under the caption "Risk Management" in the Annual Report, which is
+incorporated herein by reference to Exhibit No. 13 of this report.
+
+Item 8.  Financial Statements and Supplementary Data.
+
+      The information required to be furnished pursuant to this item is
+contained in the Consolidated Financial Statements together with the Notes to
+Consolidated Financial Statements and the Report of Independent Registered
+Public Accounting Firm, all of which are included in the Annual Report. Such
+information is incorporated herein by reference to Exhibit No. 13 of this
+report.
+
+Item 9.  Changes in and Disagreements with Accountants on Accounting and
+         Financial Disclosure.
+
+      None.
+
+Item 9A.  Controls and Procedures
+
+      Disclosure Controls and Procedures
+
+      As required by Rule 13a-15(b) of the Securities Exchange Act of 1934 (the
+"Exchange Act"), the Company's management, including the Company's Chief
+Executive Officer and Chief Financial Officer, has evaluated the effectiveness
+of its disclosure controls and procedures as of the end of the period covered by
+this annual report. Based on that evaluation, the Chief Executive Officer and
+Chief Financial Officer have concluded that the Company's disclosure controls
+and procedures (as defined in Rule 13a-15(e) under the Exchange Act) were
+effective as of the end of the period covered by this annual report (i) to
+ensure that information required to be disclosed by the Company in the reports
+that it files or submits under the Exchange Act is recorded, processed,
+summarized and reported, within the time periods specified in the SEC's rules
+and forms and (ii) to ensure that information required to be disclosed by the
+Company in the reports that the Company submits under the Exchange Act is
+accumulated and communicated to the Company's management, including the
+Company's principal executive and principal financial officers, or persons
+performing similar functions, as appropriate, to allow timely decisions
+regarding required disclosure.
+
+
+                                      -33-
+<PAGE>
+
+      Management's Report on Internal Control over Financial Reporting and
+Report of Independent Registered Public Accounting Firm
+
+      The information required to be furnished pursuant to this item is set
+forth under the captions "Management's Report on Internal Control over Financial
+Reporting" and "Report of Independent Registered Public Accounting Firm" in the
+Annual Report, which is incorporated herein by reference to Exhibit No. 13 of
+this report.
+
+      Changes in Internal Control over Financial Reporting
+
+      As required by Rule 13a-15(d) under the Exchange Act, the Company's
+management, including the Company's Chief Executive Officer and Chief Financial
+Officer, has evaluated the Company's internal control over financial reporting
+to determine whether any changes occurred during the fourth fiscal quarter
+covered by this annual report that have materially affected, or are reasonably
+likely to materially affect, our internal control over financial reporting.
+Based on that evaluation, there has been no such change during the fourth fiscal
+quarter covered by this annual report.
+
+Item 9B.   Other Information
+
+      None.
+
+PART III
+
+Item 10.  Directors and Executive Officers of the Registrant.
+
+      The information required to be furnished pursuant to this item with
+respect to Directors of the Company will be set forth under the caption
+"Election of Directors" in the registrant's proxy statement (the "Proxy
+Statement") to be furnished to stockholders in connection with the solicitation
+of proxies by the Company's Board of Directors for use at the 2007 Annual
+Meeting of Stockholders to be held on April 18, 2007, and is incorporated herein
+by reference, and the information with respect to Executive Officers is set
+forth, pursuant to General Instruction G of Form 10-K, under Part I of this
+Report.
+
+      The information required to be furnished pursuant to this item with
+respect to compliance with Section 16(a) of the Exchange Act will be set forth
+under the caption "Section 16(a) Beneficial Ownership Reporting Compliance" in
+the Proxy Statement, and is incorporated herein by reference.
+
+Item 11.  Executive Compensation.
+
+      The information required to be furnished pursuant to this item will be set
+forth under the caption "Executive Compensation" in the Proxy Statement, and is
+incorporated herein by reference.
+
+Item 12.  Security Ownership of Certain Beneficial Owners and Management and
+          Related Stockholder Matters.
+
+      The information required to be furnished pursuant to this item will be set
+forth under the captions "Voting Securities," "Security Ownership of Directors
+and Executive Officers" and "Equity Compensation Plan Information" in the Proxy
+Statement, and is incorporated herein by reference.
+
+Item 13.  Certain Relationships and Related Transactions, and Director
+          Independence.
+
+      The information required to be furnished pursuant to this item will be set
+forth under the caption "Certain Relationships and Related Person Transactions"
+in the Proxy Statement, and is incorporated herein by reference.
+
+      The information required to be furnished pursuant to this item will be set
+forth under the captions "Board and Board Committees" and "Corporate Governance"
+in the Proxy Statement, and is incorporated herein by reference.
+
+
+                                      -34-
+<PAGE>
+
+Item 14.  Principal Accountant Fees and Services.
+
+      The information required to be furnished pursuant to this item will be set
+forth under the caption "Fees Paid to Independent Auditors" in the Proxy
+Statement, and is incorporated herein by reference.
+
+PART IV
+
+Item 15.    Exhibits and Financial Statement Schedules.
+
+            (a)   List of Financial Statements, Financial Statement Schedules
+                  and Exhibits:
+
+            Financial Statements:
+
+            The financial statements required to be filed hereunder are listed
+            on page F-1 hereof.
+
+            Financial Statement Schedules:
+
+            The financial statement schedules required to be filed hereunder are
+            listed on page F-1 hereof.
+
+Exhibits:
+
+
+(3)(a)(1)   Restated Certificate of Incorporation of the registrant
+            (incorporated by reference to Exhibit (4)(a)(1) to the registrant's
+            registration statement on Form S-3 (File No. 333-57083)).
+
+(3)(a)(2)   Certificate of Amendment of Restated Certificate of Incorporation of
+            the registrant (incorporated by reference to Exhibit 4(a)(2) to the
+            registrant's registration statement on Form S-8 (File No.
+            333-92357)).
+
+(3)(a)(3)   Certificate of Stock Designation relating to the registrant's 6.15%
+            Cumulative Preferred Stock, Series E (incorporated by reference to
+            Exhibit 1.4 to the registrant's registration statement on Form 8-A
+            filed on January 14, 1998).
+
+(3)(a)(4)   Certificate of Stock Designation relating to the registrant's 5.72%
+            Cumulative Preferred Stock, Series F (incorporated by reference to
+            Exhibit 1.4 to the registrant's registration statement on Form 8-A
+            filed on April 20, 1998).
+
+(3)(a)(5)   Certificate of Stock Designation relating to the registrant's 5.49%
+            Cumulative Preferred Stock, Series G (incorporated by reference to
+            Exhibit 1.4 to the registrant's registration statement on Form 8-A
+            filed on June 18, 1998).
+
+(3)(a)(6)   Certificate of Elimination of the Cumulative Convertible Preferred
+            Stock, Series A; Cumulative Convertible Preferred Stock, Series B;
+            Cumulative Convertible Preferred Stock, Series C; and Cumulative
+            Convertible Preferred Stock, Series D of the registrant
+            (incorporated by reference to Exhibit 4(d)(9) to the registrant's
+            Current Report on Form 8-K filed with the Commission on January 15,
+            2002).
+
+(3)(a)(7)   Certificate of Elimination of the 7.88% Cumulative Convertible
+            Preferred Stock, Series B of the registrant (incorporated by
+            reference to Exhibit 4(d)(10) to the registrant's Current Report on
+            Form 8-K filed with the Commission on January 15, 2002).
+
+(3)(a)(8)   Certificate of Elimination of the 7.60% Cumulative Convertible
+            Preferred Stock, Series C of the registrant (incorporated by
+            reference to Exhibit 4(d)(11) to the registrant's Current Report on
+            Form 8-K filed with the Commission on January 15, 2002).
+
+(3)(a)(9)   Certificate of Elimination of the Adjustable Rate Cumulative
+            Preferred Stock, Series A of the registrant (incorporated by
+            reference to the registrant's Post-Effective Amendment No. 2 to Form
+            S-8 (File No. 33-108976).
+
+(3)(b)      Amended and Restated By-laws of the registrant as amended through
+            January 8, 2002 (incorporated by reference to Exhibit 4(d)(6) to the
+            registrant's Current Report on Form 8-K filed with the Commission on
+            January 15, 2002).
+
+(4)(a)(1)   Indenture, dated as of May 31, 1991, between the registrant and
+            JPMorgan Chase Bank (formerly, The Chase Manhattan Bank), as trustee
+            (incorporated by reference to Exhibit (4)(a) to registrant's
+            registration statement on Form S-3 (File No. 33-40933)).
+
+(4)(a)(2)   Indenture, dated as of November 14, 2006, between the registrant and
+            The Bank of New York as trustee (incorporated by reference to
+            Exhibit (4)(a)(4) to Amendment No. 1 to registrant's registration
+            statement on Form S-3 (File No. 333-136666) filed with the
+            Commission on November 14, 2006).
+
+
+                                      -35-
+<PAGE>
+
+(4)(b)      Supplemental Indenture, dated as of January 29, 1998, between the
+            registrant and JPMorgan Chase Bank (formerly, The Chase Manhattan
+            Bank), as trustee (incorporated by reference to Exhibit 4(a)(2) to
+            the registrant's Current Report on Form 8-K filed with the
+            Commission on February 2, 1998).
+
+(4)(c)(1)   Supplemental Note Issuance Agreement, dated November 18, 2004, among
+            Bear Stearns Global Asset Holdings, Ltd., The Bear Stearns Companies
+            Inc., as Guarantor, JPMorgan Chase Bank, N.A., as Agent, Registrar,
+            Transfer Agent and Exchange Agent, Kredietbank S.A. Luxembourgeoise,
+            as Paying Agent and Bear, Stearns International Limited and Bear,
+            Stearns & Co. Inc., as Dealers (incorporated by reference to Exhibit
+            4(c)(1) to the registrant's Current Report on Form 8-K filed with
+            the Commission on November 23, 2004).
+
+(4)(c)(2)   Supplemental Note Issuance Agreement, dated November 18, 2003, among
+            Bear Stearns Global Asset Holdings, Ltd., The Bear Stearns Companies
+            Inc., as Guarantor, JPMorgan Chase Bank, as Agent, Registrar,
+            Transfer Agent and Exchange Agent, Kredietbank S.A. Luxembourgeoise,
+            as Paying Agent and Bear, Stearns International Limited and Bear,
+            Stearns & Co. Inc., as Dealers (incorporated by reference to Exhibit
+            4(c)(2) to the registrant's Current Report on Form 8-K filed with
+            the Commission on November 23, 2004).
+
+(4)(c)(3)   Amended and Restated Note Issuance Agreement, dated June 28, 2002,
+            among Bear Stearns Global Asset Holdings, Ltd., The Bear Stearns
+            Companies Inc., JPMorgan Chase Bank, as Agent, Registrar, Transfer
+            Agent and Exchange Agent, Kredietbank S.A. Luxembourgeoise, as
+            Paying Agent and Bear, Stearns International Limited and Bear,
+            Stearns & Co. Inc., as Dealers (incorporated by reference to Exhibit
+            4(c)(3) to the registrant's Current Report on Form 8-K filed with
+            the Commission on November 23, 2004).
+
+(4)(c)(4)   Deed of Covenant, dated June 28, 2002, made by Bear Stearns Global
+            Asset Holdings, Ltd. (incorporated by reference to Exhibit 4(c)(4)
+            to the registrant's Current Report on Form 8-K filed with the
+            Commission on November 23, 2004).
+
+(4)(c)(5)   Deed of Guarantee, dated June 29, 2001, made by The Bear Stearns
+            Companies Inc. (incorporated by reference to Exhibit 4(c)(5) to the
+            registrant's Current Report on Form 8-K filed with the Commission on
+            November 23, 2004).
+
+(4)(c)(6)   Except as set forth in (4)(a), (4)(b) and (4)(c)(1) - (4)(c)(5)
+            above, the instruments defining the rights of holders of long-term
+            debt securities of the registrant and its subsidiaries are omitted
+            pursuant to Section (b)(4)(iii) of Item 601 of Regulation S-K.
+            Registrant hereby agrees to furnish copies of these instruments to
+            the SEC upon request.
+
+(4)(d)      Form of Deposit Agreement (incorporated by reference to Exhibit
+            (4)(d) to the registrant's registration statement on Form S-3 (File
+            No. 33-59140)).
+
+(4)(e)      Warrant Agreement, dated July 9, 2003, between the registrant and
+            JPMorgan Chase Bank, as warrant agent (incorporated by reference to
+            Exhibit 4.1(a) to the registrant's registration statement on Form
+            8-A filed on July 17, 2003).
+
+(10)(a)(1)  Capital Accumulation Plan for Senior Managing Directors, as amended
+            and restated as of October 28, 1999 and further amended as of March
+            31, 2004 (incorporated by reference to Exhibit (10)(a)(1) to the
+            registrant's Quarterly Report on Form 10-Q for its fiscal quarter
+            ended May 31, 2004).*
+
+(10)(a)(2)  Capital Accumulation Plan for Senior Managing Directors, as amended
+            and restated November 29, 2000 for Plan Years beginning on or after
+            July 1, 1999 and further amended as of March 31, 2004, February 8,
+            2006 and February 28, 2006 (incorporated by reference to Exhibit B
+            to the registrant's Definitive Proxy Statement for its 2006 Annual
+            Meeting of Stockholders).*
+
+(10)(a)(3)  Performance Compensation Plan, as amended and restated as of
+            February 9, 2005 (incorporated by reference to: (i) Exhibit 10(a)(1)
+            to the registrant's Quarterly Report on Form 10-Q for its fiscal
+            quarter ended February 28, 2003; (ii) Item 9B, Other Information to
+            the registrant's Annual Report on Form 10-K for its fiscal year
+            ended November 30, 2004; and (iii) the registrant's Current Report
+            on Form 8-K filed with the Commission on December 15, 2005).*
+
+(10)(a)(4)  Stock Award Plan, as amended and restated as of March 31, 2004
+            (incorporated by reference to Exhibit 10(a)(3) to the registrant's
+            Quarterly Report on Form 10-Q for its fiscal quarter ended May 31,
+            2004).*
+
+(10)(a)(5)  Non-Employee Directors' Stock Option and Stock Unit Plan, amended
+            and restated as of January 8, 2002 (incorporated by reference to
+            Exhibit 10(a)(1) to the registrant's Quarterly Report on Form 10-Q
+            for its fiscal quarter ended August 31, 2002).*
+
+
+                                      -36-
+<PAGE>
+
+(10)(a)(6)  Restricted Stock Unit Plan, as amended and restated as of March 31,
+            2004 (incorporated by reference to Exhibit 10(a)(4) to the
+            registrant's Quarterly Report on Form 10-Q for its fiscal quarter
+            ended May 31, 2004).*
+
+(10)(a)(7)  The Bear Stearns Companies Inc. AE Investment and Deferred
+            Compensation Plan, effective January 1, 1989 (the "AE Investment and
+            Deferred Compensation Plan") (incorporated by reference to Exhibit
+            10(a)(14) to the registrant's Annual Report on Form 10-K for its
+            fiscal year ended June 30, 1996).*
+
+(10)(a)(8)  Amendment to the AE Investment and Deferred Compensation Plan,
+            adopted April 29, 1996 and effective as of January 1, 1995
+            (incorporated by reference to Exhibit 10(a)(15) to the registrant's
+            Annual Report on Form 10-K for its fiscal year ended June 30,
+            1996).*
+
+(10)(a)(9)  Form of Forward Purchase Agreement, dated as of September 6, 2005,
+            between The Bear Stearns Companies Inc. and a number of CAP Plan
+            participants (incorporated by reference to Exhibit 10.1 to the
+            registrant's Quarterly Report on Form 10-Q for its fiscal quarter
+            ended August 31, 2005).*
+
+(10)(a)(10) Form of Agreement evidencing a grant of CAP Units to Executive
+            Officers under the Capital Accumulation Plan (incorporated by
+            reference to Exhibit 10.1 to the registrant's Current Report on Form
+            8-K filed with the Commission on January 4, 2005).*
+
+(10)(a)(11) Form of Agreement evidencing a grant of Nonqualified Stock Options
+            (subject to vesting) to Executive Officers under the Stock Award
+            Plan (incorporated by reference to Exhibit 10.2 to the registrant's
+            Current Report on Form 8-K filed with the Commission on January 4,
+            2005).*
+
+(10)(a)(12) Form of Agreement evidencing a grant of Nonqualified Stock Options
+            (immediately exercisable) to Executive Officers under the Stock
+            Award Plan (incorporated by reference to Exhibit 10.3 to the
+            registrant's Current Report on Form 8-K filed with the Commission on
+            January 4, 2005).*
+
+(10)(b)(1)  Lease, dated as of November 1, 1991, between Forest City Jay Street
+            Associates and The Bear Stearns Companies Inc. with respect to the
+            premises located at One MetroTech Center North, Brooklyn, New York
+            (incorporated by reference to Exhibit (10)(b)(1) to the registrant's
+            Annual Report on Form 10-K for its fiscal year ended June 30, 1992).
+
+(10)(b)(2)  First Amendment to Lease, dated December 20, 1999, between Forest
+            City Jay Street Associates, L.P. and The Bear Stearns Companies Inc.
+            with respect to the premises located at One MetroTech Center North,
+            Brooklyn, New York (incorporated by reference to Exhibit (10)(b)(2)
+            to the registrant's Annual Report on Form 10-K for its fiscal year
+            ended November 30, 2001).
+
+(10)(b)(3)  Second Amendment to Lease, dated April 23, 2003, between Forest City
+            Jay Street Associates, L.P. and The Bear Stearns Companies Inc. with
+            respect to the premises located at One MetroTech Center North,
+            Brooklyn, New York (incorporated by reference to Exhibit (10)(b)(3)
+            to the registrant's Annual Report on Form 10-K for its fiscal year
+            ended November 30, 2003).
+
+(11)        Statement regarding: computation of per share earnings. (The
+            calculation of per share earnings is in Part II, Item 8, Note 11 to
+            the Consolidated Financial Statements (Earnings Per Share) and is
+            omitted here in accordance with Section (b)(11) of Item 601 of
+            Regulation S-K).
+
+(12)   +    Statement regarding: computation of ratio of earnings to fixed
+            charges and combined fixed charges and preferred stock dividends.
+
+(13)   +    2006 Annual Report to Stockholders (only those portions expressly
+            incorporated by reference herein shall be deemed filed with the
+            Commission).
+
+(14)        Code of Business Conduct and Ethics (incorporated by reference to
+            Exhibit 14 to the registrant's Annual Report on Form 10-K for its
+            fiscal year ended November 30, 2004).
+
+(18)   +    Letter Re: Change in Accounting Principles.
+
+(21)   +    Subsidiaries of the registrant.
+
+(23)   +    Consent of Deloitte & Touche LLP.
+
+(31.1) +    Certification of Chief Executive Officer Pursuant to Rule 13a-14(a)
+            or 15d-14(a) of the Securities Exchange Act of 1934, as Adopted
+            Pursuant to Section 302 of the Sarbanes-Oxley Act of 2002.
+
+(31.2) +    Certification of Chief Financial Officer Pursuant to Rule 13a-14(a)
+            or 15d-14(a) of the Securities Exchange Act of 1934, as Adopted
+            Pursuant to Section 302 of the Sarbanes-Oxley Act of 2002.
+
+(32.1) +    Certification of Chief Executive Officer Pursuant to 18 U.S.C.
+            Section 1350, as Adopted Pursuant to Section 906 of the
+            Sarbanes-Oxley Act of 2002.
+
+(32.2) +    Certification of Chief Financial Officer Pursuant to 18 U.S.C.
+            Section 1350, as Adopted Pursuant to Section 906 of the
+            Sarbanes-Oxley Act of 2002.
+
+*  Executive Compensation Plans and Arrangements
++  Filed herewith.
+
+
+                                      -37-
+<PAGE>
+                                   SIGNATURES
+
+      Pursuant to the requirements of Section 13 or 15(d) of the Securities
+Exchange Act of 1934, the registrant has duly caused this report to be signed on
+its behalf by the undersigned, thereunto duly authorized, on the 13th day of
+February 2007.
+
+                                               THE BEAR STEARNS COMPANIES INC.
+                                                      (Registrant)
+
+                                                By: /s/ SAMUEL L. MOLINARO JR.
+
+                                                    Samuel L. Molinaro Jr.
+                                                 Executive Vice President and
+                                                   Chief Financial Officer
+
+      Pursuant to the requirements of the Securities Exchange Act of 1934, this
+report has been signed below by the following persons on behalf of the
+registrant and in the capacities indicated on the 13th day of February 2007.
+
+                  NAME                                    TITLE
+                  ----                                    -----
+
+         /s/ ALAN C. GREENBERG           Chairman of the Executive Committee
+      -----------------------------      and Director
+           Alan C. Greenberg
+
+           /s/ JAMES E. CAYNE            Chairman of the Board, Chief Executive
+      ----------------------------       Officer (Principal Executive Officer)
+             James E. Cayne              and Director
+
+
+          /s/ HENRY S. BIENEN            Director
+      ----------------------------
+            Henry S. Bienen
+
+          /s/ CARL D. GLICKMAN           Director
+      ----------------------------
+            Carl D. Glickman
+
+         /s/ MICHAEL GOLDSTEIN           Director
+      ----------------------------
+           Michael Goldstein
+
+        /s/ DONALD J. HARRINGTON         Director
+      ----------------------------
+          Donald J. Harrington
+
+          /s/ FRANK T. NICKELL           Director
+      ----------------------------
+            Frank T. Nickell
+
+          /s/ PAUL A. NOVELLY            Director
+      ----------------------------
+            Paul A. Novelly
+
+        /s/ FREDERIC V. SALERNO          Director
+      ----------------------------
+          Frederic V. Salerno
+
+          /s/ ALAN D. SCHWARTZ           President, Co-Chief Operating Officer
+      ----------------------------       and Director
+            Alan D. Schwartz
+
+         /s/ WARREN J. SPECTOR           President, Co-Chief Operating Officer
+      ----------------------------       and Director
+           Warren J. Spector
+
+            /s/ VINCENT TESE             Director
+      ----------------------------
+              Vincent Tese
+
+       /s/ WESLEY S. WILLIAMS JR.        Director
+      ----------------------------
+         Wesley S. Williams Jr.
+
+       /s/ SAMUEL L. MOLINARO JR.        Executive Vice President and Chief
+      ----------------------------       Financial Officer (Principal Financial
+         Samuel L. Molinaro Jr.          Officer)
+
+
+         /s/ JEFFREY M. FARBER           Senior Vice President-Finance and
+      ----------------------------       Controller (Principal Accounting
+           Jeffrey M. Farber             Officer)
+
+
+                                      -38-
+<PAGE>
+
+                         THE BEAR STEARNS COMPANIES INC.
+                          INDEX TO FINANCIAL STATEMENTS
+                        AND FINANCIAL STATEMENT SCHEDULES
+                           ITEMS 15(a)(1) AND 15(a)(2)
+
+                                                                 Page Reference
+
+                                                                  Form   Annual
+Financial Statements                                              10-K   Report*
+
+Management's Report on Internal Control over Financial                     73
+Reporting
+
+Report of Independent Registered Public Accounting Firm                   74-75
+
+The Bear Stearns Companies Inc.
+
+(i)   Consolidated Statements of Income-fiscal years ended
+         November 30, 2006, 2005 and 2004                                  76
+
+(ii)  Consolidated Statements of Financial Condition at
+         November 30, 2006 and 2005                                        77
+
+(iii) Consolidated Statements of Cash Flows-fiscal years ended
+         November 30, 2006, 2005 and 2004                                  78
+
+(iv)  Consolidated Statements of Changes in Stockholders'
+         Equity-fiscal years ended November 30, 2006, 2005 and            79-80
+         2004
+
+(v)   Notes to Consolidated Financial Statements                         81-112
+
+Financial Statement Schedules
+
+      Report of Independent Registered Public Accounting Firm             F-2
+
+I     Condensed Financial Information of Registrant                     F-3-F-7
+
+*     Incorporated by reference from the indicated pages of the 2006 Annual
+      Report to Stockholders.
+
+All other schedules are omitted because they are not applicable or the requested
+information is included in the consolidated financial statements or notes
+thereto.
+
+
+                                       F-1
+<PAGE>
+
+REPORT OF INDEPENDENT REGISTERED PUBLIC ACCOUNTING FIRM
+
+To the Board of Directors and Stockholders of
+
+The Bear Stearns Companies Inc.
+
+We have audited the consolidated financial statements of The Bear Stearns
+Companies Inc. and subsidiaries (the "Company") as of November 30, 2006 and
+2005, and for each of the three years in the period ended November 30, 2006,
+management's assessment of the effectiveness of the Company's internal control
+over financial reporting as of November 30, 2006, and the effectiveness of the
+Company's internal control over financial reporting as of November 30, 2006, and
+have issued our reports thereon dated February 12, 2007; such consolidated
+financial statements and reports are included in your 2006 Annual Report to
+Stockholders and are incorporated herein by reference. Our audits also included
+the financial statement schedule (Schedule I) of the The Bear Stearns Companies
+Inc. (Parent Company Only), listed in Item 15. This consolidated financial
+statement schedule is the responsibility of the Company's management. Our
+responsibility is to express an opinion based on our audits. In our opinion,
+such consolidated financial statement schedule, when considered in relation to
+the basic consolidated financial statements taken as a whole, presents fairly,
+in all material respects, the information set forth therein.
+
+/s/ Deloitte & Touche LLP
+
+New York, New York
+February 12, 2007
+
+
+                                      F-2
+<PAGE>
+
+                                                                      SCHEDULE I
+
+                  CONDENSED FINANCIAL INFORMATION OF REGISTRANT
+                         THE BEAR STEARNS COMPANIES INC.
+                              (PARENT COMPANY ONLY)
+                         CONDENSED STATEMENTS OF INCOME
+                                 (in thousands)
+
+
+Fiscal Years Ended November 30,          2006            2005           2004
+                                      ----------      ----------     ----------
+
+REVENUES
+
+Interest........................      $3,156,830      $1,232,924     $  487,089
+
+Other...........................         194,684         247,816        379,829
+                                      ----------      ----------     ----------
+                                       3,351,514       1,480,740        866,918
+                                      ----------      ----------     ----------
+EXPENSES
+
+Interest........................       3,387,034       1,581,883        648,041
+
+Other...........................         205,574         195,580        149,018
+                                      ----------      ----------     ----------
+                                       3,592,608       1,777,463        797,059
+                                      ----------      ----------     ----------
+
+(Loss) income before benefit from
+   income taxes and equity in           (241,094)       (296,723)        69,859
+   earnings of subsidiaries.....
+
+Benefit from income taxes.......          20,176          96,272          3,226
+                                      ----------      ----------     ----------
+(Loss) income before equity in
+   earnings of subsidiaries.....        (220,918)       (200,451)        73,085
+
+Equity in earnings of subsidiaries,
+net of tax......................       2,274,789       1,662,628      1,271,648
+                                      ----------      ----------     ----------
+Net income......................      $2,053,871      $1,462,177     $1,344,733
+                                      ==========      ==========     ==========
+
+
+See Notes to Condensed Financial Information.
+
+
+                                      F-3
+<PAGE>
+                                                                      SCHEDULE I
+
+                  CONDENSED FINANCIAL INFORMATION OF REGISTRANT
+                         THE BEAR STEARNS COMPANIES INC.
+                              (PARENT COMPANY ONLY)
+                   CONDENSED STATEMENTS OF FINANCIAL CONDITION
+                        (in thousands, except share data)
+
+
+As of November 30,                                     2006             2005
+                                                   -----------      -----------
+ASSETS
+Cash and cash equivalents....................      $ 2,006,871      $ 2,154,047
+Securities purchased under agreements to resell         97,389          174,105
+Receivables from subsidiaries................       67,185,207       44,471,375
+Subordinated loans receivable from subsidiaries      9,962,724       10,185,562
+Investments in subsidiaries, at equity.......        7,975,276        7,253,755
+Assets of variable interest entities.........          575,123          748,506
+Other assets.................................        3,579,524        2,865,713
+                                                   -----------      -----------
+Total Assets.................................      $91,382,114      $67,853,063
+                                                   ===========      ===========
+
+LIABILITIES AND STOCKHOLDERS' EQUITY
+Short-term borrowings........................      $19,467,424      $ 9,569,754
+Payables to subsidiaries.....................        6,572,500        5,006,475
+Liabilities of variable interest entities....          220,118          221,638
+Other liabilities and accrued expenses.......        1,102,678        1,294,125
+                                                   -----------      -----------
+                                                    27,362,720       16,091,992
+                                                   -----------      -----------
+
+Commitments and contingencies (Note 1)
+Long-term borrowings.........................       51,627,510       40,707,139
+Long-term borrowings from subsidiaries.......          262,500          262,500
+
+STOCKHOLDERS' EQUITY
+Preferred stock                                        359,156          372,326
+Common stock, $1.00 par value; 500,000,000
+   shares authorized as of November 30, 2006
+   and 2005; 184,805,847 shares issued as of
+   November 30, 2006 and 2005................          184,806          184,806
+Paid-in capital..............................        4,578,972        4,109,166
+Retained earnings............................        9,384,595        7,492,951
+Employee stock compensation plans............        2,221,997        2,600,186
+Unearned compensation........................         (155,596)        (143,302)
+Treasury stock, at cost:
+   Common stock: 67,396,876 and 70,937,640 shares
+     as of November 30, 2006 and 2005,
+     respectively............................       (4,444,546)      (3,824,701)
+                                                   -----------      -----------
+Total Stockholders' Equity...................       12,129,384       10,791,432
+                                                   -----------      -----------
+Total Liabilities and Stockholders' Equity...      $91,382,114      $67,853,063
+                                                   ===========      ===========
+
+See Notes to Condensed Financial Information.
+
+
+                                      F-4
+<PAGE>
+                                                                      SCHEDULE I
+
+                  CONDENSED FINANCIAL INFORMATION OF REGISTRANT
+                         THE BEAR STEARNS COMPANIES INC.
+                              (PARENT COMPANY ONLY)
+                       CONDENSED STATEMENTS OF CASH FLOWS
+                                 (in thousands)
+
+Fiscal Years Ended November 30,            2006           2005          2004
+                                        ----------     ----------    ----------
+
+CASH FLOWS FROM OPERATING ACTIVITIES
+
+Net income.........................     $2,053,871     $1,462,177    $1,344,733
+Adjustments to reconcile net income
+   to cash provided by operating
+   activities:
+Non-cash items included in net income:
+   Employee stock compensation plans     1,009,519        801,216       763,162
+   Equity in earnings of
+        subsidiaries, net of
+        dividends received.........       (493,296)      (876,099)      816,131
+   Other...........................         10,404          9,923         8,598
+Decreases (increases) in assets:
+   Securities purchased under
+   agreements to resell............         76,716         98,829       (58,949)
+   Other assets....................      1,006,510        (33,891)   (1,909,965)
+Increases (decreases) in liabilities:
+   Payables to subsidiaries........      1,566,025      1,275,627     1,020,824
+   Other liabilities and accrued
+   expenses........................        (49,313)       305,813      (401,936)
+                                        ----------     ----------    ----------
+Cash provided by operating activities    5,180,436      3,043,595     1,582,598
+                                        ----------     ----------    ----------
+
+CASH FLOWS FROM FINANCING ACTIVITIES
+
+Short-term borrowings, net.........      9,897,670      4,524,474      (340,037)
+Proceeds from issuance of long-term
+borrowings.........................     16,502,923     14,111,584    10,809,645
+Decrease in long-term borrowings from
+   subsidiaries....................              -              -      (300,000)
+Issuance of common stock...........        289,402        201,851       235,812
+Cash retained resulting from tax
+   deductibility under
+   share-based payment
+   arrangements....................        363,044        426,055       163,887
+Redemption of preferred stock......        (13,115)       (75,822)      (89,037)
+Payments for:
+   Retirement of long-term borrowings   (7,142,314)    (5,966,503)   (6,223,054)
+   Treasury stock purchases........     (1,374,064)      (869,629)     (780,827)
+Cash dividends paid................       (155,257)      (139,253)     (116,791)
+                                        ----------     ----------    ----------
+Cash provided by financing activities   18,368,289     12,212,757     3,359,598
+                                        ----------     ----------    ----------
+
+CASH FLOWS FROM INVESTING ACTIVITIES
+
+Receivables from subsidiaries......    (23,690,515)   (11,312,343)   (2,057,686)
+Subordinated loans receivable from
+   subsidiaries....................        222,838     (1,469,062)   (2,388,687)
+Investments in subsidiaries, net...       (228,224)      (321,037)     (545,642)
+                                        ----------     ----------    ----------
+Cash used in investing activities..    (23,695,901)   (13,102,442)   (4,992,015)
+                                        ----------     ----------    ----------
+Net (decrease) increase in cash and
+   cash equivalents................       (147,176)     2,153,910       (49,819)
+Cash and cash equivalents, beginning
+of fiscal year.....................      2,154,047            137        49,956
+                                        ----------     ----------    ----------
+Cash and cash equivalents, end of
+fiscal year........................     $2,006,871     $2,154,047    $      137
+                                        ==========     ==========    ==========
+
+See Notes to Condensed Financial Information.
+
+
+                                      F-5
+<PAGE>
+                                                                      SCHEDULE I
+
+                  CONDENSED FINANCIAL INFORMATION OF REGISTRANT
+                         THE BEAR STEARNS COMPANIES INC.
+                              (PARENT COMPANY ONLY)
+                    NOTES TO CONDENSED FINANCIAL INFORMATION
+
+1.    General
+
+      The condensed financial information of the Company (Parent Company Only)
+      should be read in conjunction with the Consolidated Financial Statements
+      of The Bear Stearns Companies Inc. and subsidiaries and the Notes thereto
+      in The Bear Stearns Companies Inc. 2006 Annual Report to Stockholders (the
+      "Annual Report") incorporated by reference in this Form 10-K. Certain
+      prior year amounts have been reclassified to conform to the current year's
+      presentation.
+
+      The condensed unconsolidated financial statements are prepared in
+      conformity with accounting principles generally accepted in the United
+      States of America which require management to make certain estimates and
+      assumptions, including those regarding inventory valuations, stock
+      compensation, certain accrued liabilities and the potential outcome of
+      litigation and tax matters, which may affect the amounts reported in the
+      condensed unconsolidated financial statements and accompanying notes.
+      Actual results could differ materially from these estimates.
+
+      Investments in wholly owned or other subsidiaries are accounted for using
+      the equity method.
+
+      For information on the following, refer to the indicated Notes to the
+      Consolidated Financial Statements within the Annual Report.
+
+      o   Summary of Significant Accounting Policies (Note 1)
+
+      o   Fair Value of Financial Instruments (Note 2)
+
+      o   Variable Interest Entities and Mortgage Loan Special Purpose
+          Entities (Note 6)
+
+      o   Short-Term Borrowings (Note 8)
+
+      o   Long-Term Borrowings (Note 9)
+
+      o   Preferred Stock (Note 10 - refer to section entitled "Preferred
+          Stock Issued by The Bear Stearns Companies Inc.")
+
+      o   Employee Benefit Plan (Note 12)
+
+      o   Stock Compensation Plans (Note 13)
+
+      o   Commitments and Contingencies (Note 17)
+
+      The Company engages in derivatives activities in order to modify the
+      interest rate characteristics of its long and short-term debt. See
+      "Non-Trading Derivatives Activity" section of Note 4, "Derivatives and
+      Hedging Activities", to the Consolidated Financial Statements in the
+      Annual Report.
+
+2.    Statement of Cash Flows
+
+      Income taxes paid, net of refunds (consolidated) totaled approximately
+      $708.9 million, $146.3 million and $524.5 million for the fiscal years
+      ended November 30, 2006, 2005 and 2004, respectively. Cash payments for
+      income taxes, net of refunds, would have been $1.07 billion, $572.4
+      million and $688.4 million for the fiscal years ended November 30, 2006,
+      2005, and 2004, respectively, if increases in the value of equity
+      instruments issued under share-based payment arrangements had not been
+      deductible in determining taxable income. Cash payments for interest
+      approximated interest expense for each of the periods presented.
+
+
+                                      F-6
+<PAGE>
+                                                                      SCHEDULE I
+
+                  CONDENSED FINANCIAL INFORMATION OF REGISTRANT
+                         THE BEAR STEARNS COMPANIES INC.
+                              (PARENT COMPANY ONLY)
+              NOTES TO CONDENSED FINANCIAL INFORMATION (CONTINUED)
+
+3.    Transactions with Subsidiaries
+
+      In the ordinary course of business the Company generates interest income
+      by providing financing to its subsidiaries.
+
+      The Company received from its consolidated subsidiaries dividends of
+      approximately $1,781 million, $787 million and $2,088 million for the
+      fiscal years ended November 30, 2006, 2005 and 2004, respectively. In
+      addition, the Company provides its subsidiaries with the use of fixed
+      assets for which the Company charges a fee.
+
+      The Company has transactions with its subsidiaries determined on an
+      agreed-upon basis. The Company also guarantees certain unsecured lines of
+      credit and certain other obligations of subsidiaries, including
+      obligations associated with foreign exchange forward contracts and
+      interest rate swap transactions. Additionally, the Company guarantees
+      certain obligations related to Guaranteed Preferred Beneficial Interests
+      in Company Subordinated Debt Securities issued by subsidiaries.
+
+      The Company also issues guarantees of counterparty obligations to
+      subsidiaries in connection with certain activities of such subsidiaries.
+
+
+                                      F-7
+</TEXT>
+</DOCUMENT>

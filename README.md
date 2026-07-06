@@ -52,9 +52,13 @@ Open `deliverables/capstone-report-*/03_verification/` to see the review finding
 
 When the input folder mixes the deliverable with reference material, declare the deliverable with `--draft`. Claims then seed only from the declared draft file(s), and every other input becomes evidence-only reference material. Without `--draft`, every text-bearing file seeds claims, so a large reference document can flood the review queue. Unknown draft names fail the run, and a declared draft that yields no extractable claims (for example, a scanned PDF) becomes a blocking finding.
 
+The repo ships a real worked example for this: the due diligence questionnaire completed by Bear Stearns for its High-Grade Structured Credit Strategies Fund (public via the Financial Crisis Inquiry Commission archive), packaged with the SEC's 2008 fraud complaint against the fund's managers and a Bear Stearns 10-K excerpt as corroborating sources. `input/examples/bear-stearns-ddq/sources.md` records provenance for every file.
+
 ```bash
-npm --prefix .system run run -- --name "quarterly-review" --kind document --input input/quarterly-review --draft q2-review-draft.md
+npm --prefix .system run run -- --name "bear-stearns-ddq" --kind document --input input/examples/bear-stearns-ddq --draft 2006-03-31-ddq-response-draft.md
 ```
+
+The DDQ's factual answers become the claim set, and the review queue tracks each one against the evidence sources, including the claim history later contradicted: "The fund has not experienced any drawdowns."
 
 To generate a verified local Markdown claim receipt, add `--generate`:
 
