@@ -103,15 +103,17 @@ test("JSON store reload preserves generated output records", async () => {
     });
 
     const reloaded = new JsonFileEvidenceMapStore(storePath);
-    const [sourceEvidence, generatedClaims, evidenceMap, generatedOutput] = await Promise.all([
+    const [sourceEvidence, generatedClaims, evidenceLinkSuggestions, evidenceMap, generatedOutput] = await Promise.all([
       reloaded.listSourceEvidence(result.run.id),
       reloaded.listGeneratedClaims(result.run.id),
+      reloaded.listEvidenceLinkSuggestions(result.run.id),
       reloaded.getEvidenceMap(result.run.id),
       reloaded.getGeneratedOutput(result.run.id)
     ]);
 
     assert.ok(sourceEvidence.length > 0);
     assert.ok(generatedClaims.length > 0);
+    assert.ok(Array.isArray(evidenceLinkSuggestions));
     assert.equal(evidenceMap?.summary.generatedClaimCount, generatedClaims.length);
     assert.equal(generatedOutput?.status, "export_ready");
     assert.equal(generatedOutput?.pathRelativeToRun, "04_export/final-output.md");

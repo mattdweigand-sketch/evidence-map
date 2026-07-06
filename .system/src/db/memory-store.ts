@@ -3,6 +3,7 @@ import type {
   AssumptionRecord,
   CalculationRecord,
   ClaimRecord,
+  EvidenceLinkSuggestionRecord,
   EvidenceMapRecord,
   FileInspectionRecord,
   GeneratedClaimRecord,
@@ -28,6 +29,7 @@ export class MemoryEvidenceMapStore implements EvidenceMapStore {
   private claims = new Map<string, ClaimRecord[]>();
   private generatedClaims = new Map<string, GeneratedClaimRecord[]>();
   private evidenceMaps = new Map<string, EvidenceMapRecord>();
+  private evidenceLinkSuggestions = new Map<string, EvidenceLinkSuggestionRecord[]>();
   private generatedOutputs = new Map<string, GeneratedOutputRecord>();
   private calculations = new Map<string, CalculationRecord[]>();
   private specs = new Map<string, ArtifactSpec>();
@@ -139,6 +141,16 @@ export class MemoryEvidenceMapStore implements EvidenceMapStore {
 
   async getEvidenceMap(runId: string) {
     return this.evidenceMaps.get(runId);
+  }
+
+  async replaceEvidenceLinkSuggestions(runId: string, suggestions: Omit<EvidenceLinkSuggestionRecord, "runId">[]) {
+    const created = suggestions.map((suggestion) => ({ ...suggestion, runId }));
+    this.evidenceLinkSuggestions.set(runId, created);
+    return created;
+  }
+
+  async listEvidenceLinkSuggestions(runId: string) {
+    return this.evidenceLinkSuggestions.get(runId) ?? [];
   }
 
   async createGeneratedOutput(output: Omit<GeneratedOutputRecord, "id">) {

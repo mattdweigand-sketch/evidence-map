@@ -196,10 +196,16 @@ async function inspectPdf(base: Pick<FileInspectionDraft, "name" | "path" | "fil
         pageCount: extraction.pageCount,
         extractablePageCount: extraction.extractablePageCount,
         paragraphCount: extraction.paragraphCount,
+        sectionCount: extraction.sectionCount,
+        citationCount: extraction.citationCount,
+        tableLikeRowCount: extraction.tableLikeRowCount,
         numberCandidateCount: extraction.numberCandidateCount,
         pages: extraction.pages.map((page) => ({
           pageNumber: page.pageNumber,
-          paragraphs: page.paragraphs.map((paragraph) => paragraph.slice(0, 500))
+          paragraphs: page.paragraphs.map((paragraph) => paragraph.slice(0, 500)),
+          sections: page.sections.map((section) => section.slice(0, 200)),
+          citations: page.citations.map((citation) => citation.slice(0, 200)),
+          tableLikeRows: page.tableLikeRows.map((row) => row.map((cell) => cell.slice(0, 200)))
         }))
       },
       textPreview: previewText(extraction.text),

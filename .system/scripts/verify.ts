@@ -5,6 +5,8 @@ import { getDefaultBaseDir } from "../src/artifacts/paths.ts";
 import { writeRunArtifacts } from "../src/artifacts/write.ts";
 import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
 import { selectSourceEvidence } from "../src/evidence/select.ts";
+import { buildEvidenceLinkSuggestions } from "../src/evidence/suggestions.ts";
+import { buildSourceEvidenceRecords } from "../src/evidence/snippets.ts";
 import { finalizeGeneratedOutput } from "../src/generate/output.ts";
 import { buildLegalRunArtifacts } from "../src/legal/artifacts.ts";
 import { applyLegalConflictReviewDecisions, readLegalReviewDecisionSet } from "../src/legal/review-decisions.ts";
@@ -39,11 +41,13 @@ try {
   const legalReviewDecisionSet = run.profile === "legal" ? await readLegalReviewDecisionSet({ baseDir, run }) : undefined;
   const generalReviewDecisionSet = run.profile === "general" ? await readGeneralReviewDecisionSet({ baseDir, run }) : undefined;
   const sourcePrepReviewDecisionSet = await readSourcePrepReviewDecisionSet({ baseDir, run });
-  const [sources, inspections, conflicts, spec, storedSourceEvidence, generatedClaims, evidenceMap, previousGeneratedOutput] = await Promise.all([
+  const [sources, inspections, conflicts, spec, claims, calculations, storedSourceEvidence, generatedClaims, evidenceMap, previousGeneratedOutput] = await Promise.all([
     store.listSources(run.id),
     store.listFileInspections(run.id),
     store.listSourceConflicts(run.id),
     store.getArtifactSpec(run.id),
+    store.listClaims(run.id),
+    store.listCalculations(run.id),
     store.listSourceEvidence(run.id),
     store.listGeneratedClaims(run.id),
     store.getEvidenceMap(run.id),
@@ -65,12 +69,23 @@ try {
         ? applyGeneralConflictReviewDecisions({ conflicts, decisions: generalReviewDecisionSet.decisions })
       : conflicts;
   const generatedMode = run.profile === "general" && Boolean(previousGeneratedOutput || evidenceMap);
+  const baseSourceEvidence =
+    run.profile === "general" && storedSourceEvidence.length === 0
+      ? await store.replaceSourceEvidence(
+          run.id,
+          buildSourceEvidenceRecords({
+            runId: run.id,
+            sources: effectiveSources,
+            inspections: effectiveInspections
+          })
+        )
+      : storedSourceEvidence;
   const generatedSelection =
     generatedMode
       ? selectSourceEvidence({
           sources: effectiveSources,
           inspections: effectiveInspections,
-          evidence: storedSourceEvidence
+          evidence: baseSourceEvidence
         })
       : undefined;
   const sourceEvidence =
@@ -79,7 +94,18 @@ try {
           run.id,
           generatedSelection.evidence.map(({ runId: _runId, ...item }) => item)
         )
-      : storedSourceEvidence;
+      : baseSourceEvidence;
+  const evidenceLinkSuggestions =
+    run.profile === "general"
+      ? await store.replaceEvidenceLinkSuggestions(
+          run.id,
+          buildEvidenceLinkSuggestions({
+            runId: run.id,
+            claims,
+            evidence: sourceEvidence
+          })
+        )
+      : undefined;
   const refreshedGeneratedSelection = generatedSelection
     ? {
         ...generatedSelection,
@@ -139,9 +165,11 @@ try {
     inspections,
     conflicts: effectiveConflicts,
     spec,
+    calculations,
+    evidenceLinkSuggestions,
     findings,
     trustReport,
-    sourceEvidence: generatedMode ? sourceEvidence : undefined,
+    sourceEvidence: run.profile === "general" ? sourceEvidence : undefined,
     generatedClaims: generatedMode ? generatedClaims : undefined,
     evidenceMap: generatedMode ? evidenceMap : undefined,
     generatedOutput,

@@ -45,6 +45,7 @@ The first version creates the control layer:
 - Hostile-review findings.
 - Readiness report.
 - Gated export folder.
-- Optional local Markdown output generated from verified claims, plus a deterministic formatted Markdown derivative.
+- Evidence-link suggestions and calculation repair packets.
+- Optional local Markdown output generated from verified claims, plus deterministic formatted and edited Markdown derivatives.
 
-It does not render final Office files. Draft artifacts can be created elsewhere and routed through the evidence layer for review. When generation mode is enabled, the general profile emits local Markdown only, with source evidence, generated claims, an evidence map, a deterministic formatted derivative after readiness, and a refusal if any selected claim cannot be verified.
+It does not render final Office files. Draft artifacts can be created elsewhere and routed through the evidence layer for review. When generation mode is enabled, the general profile emits local Markdown only, with source evidence, generated claims, an evidence map, deterministic formatted and edited derivatives after readiness, and a refusal if any selected claim cannot be verified.

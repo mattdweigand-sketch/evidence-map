@@ -64,6 +64,21 @@ test("source packet infers same-metric dated conflicts when statuses match", asy
   assert.ok(packet.conflicts[0]?.sourcePaths.some((path) => path.endsWith("2026-04-30-enrollment-figures.csv")));
 });
 
+test("source packet infers same-metric dated conflicts across common metric aliases", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-alias-conflict-"));
+  const input = join(dir, "input");
+  await mkdir(input);
+  await writeFile(join(input, "2026-03-02-revenue.csv"), "metric,value\nrevenue,100\n");
+  await writeFile(join(input, "2026-04-30-sales.csv"), "metric,value\nsales,110\n");
+
+  const packet = await buildSourcePacket([input]);
+
+  assert.equal(packet.conflicts.length, 1);
+  assert.match(packet.conflicts[0]?.description ?? "", /Potential same-metric dated conflict/);
+  assert.ok(packet.conflicts[0]?.sourcePaths.some((path) => path.endsWith("2026-03-02-revenue.csv")));
+  assert.ok(packet.conflicts[0]?.sourcePaths.some((path) => path.endsWith("2026-04-30-sales.csv")));
+});
+
 test("source packet does not infer conflicts for unrelated dated files", async () => {
   const dir = await mkdtemp(join(tmpdir(), "evidence-map-source-unrelated-dates-"));
   const input = join(dir, "input");
@@ -146,6 +161,9 @@ test("pdf inspection extracts text-based page content", async () => {
   assert.equal(inspection.structuredSummary.pageCount, 1);
   assert.equal(inspection.structuredSummary.extractablePageCount, 1);
   assert.equal(inspection.structuredSummary.paragraphCount, 1);
+  assert.equal(inspection.structuredSummary.sectionCount, 0);
+  assert.equal(inspection.structuredSummary.citationCount, 0);
+  assert.equal(inspection.structuredSummary.tableLikeRowCount, 0);
   assert.equal(inspection.structuredSummary.numberCandidateCount, 1);
   assert.deepEqual(inspection.ownerCandidates, ["Research Team. Revenue was 42."]);
   assert.match(inspection.textPreview ?? "", /Revenue was 42/);

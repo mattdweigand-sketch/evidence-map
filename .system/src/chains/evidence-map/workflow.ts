@@ -1,6 +1,8 @@
 import { resolve } from "node:path";
 import { writeRunArtifacts } from "../../artifacts/write.ts";
 import type { EvidenceMapStore } from "../../db/store.ts";
+import { buildEvidenceLinkSuggestions } from "../../evidence/suggestions.ts";
+import { buildSourceEvidenceRecords } from "../../evidence/snippets.ts";
 import { buildSourcePacket } from "../../ingest/source-packet.ts";
 import { finalizeGeneratedOutput, prepareGeneratedOutput } from "../../generate/output.ts";
 import { buildLegalRunArtifacts } from "../../legal/artifacts.ts";
@@ -48,8 +50,8 @@ export async function runEvidenceMapWorkflow(
       }))
     );
     const spec = await store.createArtifactSpec(buildArtifactSpec({ runId: run.id, artifactKind: input.artifactKind, name: input.name }));
-    await store.createClaims(run.id, seedClaims({ runId: run.id, artifactKind: input.artifactKind, inspections }));
-    await store.createCalculations(run.id, seedCalculations({ artifactKind: input.artifactKind }));
+    const claims = await store.createClaims(run.id, seedClaims({ runId: run.id, artifactKind: input.artifactKind, inspections }));
+    const calculations = await store.createCalculations(run.id, seedCalculations({ artifactKind: input.artifactKind }));
     const preparedGeneratedOutput = input.generate
       ? await prepareGeneratedOutput({
           store,
@@ -59,6 +61,29 @@ export async function runEvidenceMapWorkflow(
           artifactKind: input.artifactKind
         })
       : undefined;
+    const reviewSourceEvidence =
+      run.profile === "general" && !preparedGeneratedOutput
+        ? await store.replaceSourceEvidence(
+            run.id,
+            buildSourceEvidenceRecords({
+              runId: run.id,
+              sources,
+              inspections
+            })
+          )
+        : undefined;
+    const sourceEvidenceForSuggestions = preparedGeneratedOutput?.sourceEvidence ?? reviewSourceEvidence;
+    const evidenceLinkSuggestions =
+      run.profile === "general" && sourceEvidenceForSuggestions
+        ? await store.replaceEvidenceLinkSuggestions(
+            run.id,
+            buildEvidenceLinkSuggestions({
+              runId: run.id,
+              claims,
+              evidence: sourceEvidenceForSuggestions
+            })
+          )
+        : undefined;
     const findings = await runHostileReview(
       store,
       run.id,
@@ -96,9 +121,11 @@ export async function runEvidenceMapWorkflow(
       inspections,
       conflicts,
       spec,
+      calculations,
+      evidenceLinkSuggestions,
       findings,
       trustReport,
-      sourceEvidence: preparedGeneratedOutput?.sourceEvidence,
+      sourceEvidence: preparedGeneratedOutput?.sourceEvidence ?? reviewSourceEvidence,
       generatedClaims: preparedGeneratedOutput?.generatedClaims,
       evidenceMap: preparedGeneratedOutput?.evidenceMap,
       generatedOutput,
@@ -118,9 +145,10 @@ export async function runEvidenceMapWorkflow(
       spec,
       findings,
       trustReport,
-      sourceEvidence: preparedGeneratedOutput?.sourceEvidence,
+      sourceEvidence: preparedGeneratedOutput?.sourceEvidence ?? reviewSourceEvidence,
       generatedClaims: preparedGeneratedOutput?.generatedClaims,
       evidenceMap: preparedGeneratedOutput?.evidenceMap,
+      evidenceLinkSuggestions,
       sourceExclusions: preparedGeneratedOutput?.selection.sourceExclusions,
       generatedOutput,
       artifacts

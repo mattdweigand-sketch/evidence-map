@@ -92,6 +92,8 @@ export interface ReviewQueue {
     sourceInventory: string;
     fileInspections: string;
     sourcePrepDecisions: string;
+    evidenceLinkSuggestions?: string;
+    calculationRepairPacket?: string;
   };
 }
 
@@ -226,7 +228,9 @@ export function buildReviewQueue(input: {
       verificationFindings: "03_verification/verification-findings.json",
       sourceInventory: "01_source-packet/source-inventory.json",
       fileInspections: "01_source-packet/file-inspections.json",
-      sourcePrepDecisions: "03_verification/source-prep-decisions.json"
+      sourcePrepDecisions: "03_verification/source-prep-decisions.json",
+      evidenceLinkSuggestions: input.run.profile === "general" ? "03_verification/evidence-link-suggestions.json" : undefined,
+      calculationRepairPacket: input.run.profile === "general" ? "03_verification/calculation-repair-packet.json" : undefined
     }
   };
 }
@@ -321,6 +325,8 @@ ${itemSections}
 - Trust report: \`${queue.artifactRefs.trustReport}\`
 - Verification findings: \`${queue.artifactRefs.verificationFindings}\`
 - Source prep decisions: \`${queue.artifactRefs.sourcePrepDecisions}\`
+- Evidence link suggestions: ${queue.artifactRefs.evidenceLinkSuggestions ? `\`${queue.artifactRefs.evidenceLinkSuggestions}\`` : "not present"}
+- Calculation repair packet: ${queue.artifactRefs.calculationRepairPacket ? `\`${queue.artifactRefs.calculationRepairPacket}\`` : "not present"}
 - Source inventory: \`${queue.artifactRefs.sourceInventory}\`
 - File inspections: \`${queue.artifactRefs.fileInspections}\`
 `;
@@ -353,6 +359,8 @@ export function renderReviewQueueCliSummary(queue: ReviewQueue) {
     "Artifacts:",
     `- Review queue: ${queue.artifactRefs.reviewQueueMarkdown}`,
     `- Source prep decisions: ${queue.artifactRefs.sourcePrepDecisions}`,
+    ...(queue.artifactRefs.evidenceLinkSuggestions ? [`- Evidence link suggestions: ${queue.artifactRefs.evidenceLinkSuggestions}`] : []),
+    ...(queue.artifactRefs.calculationRepairPacket ? [`- Calculation repair packet: ${queue.artifactRefs.calculationRepairPacket}`] : []),
     `- Full trust report: ${queue.artifactRefs.trustReport}`,
     `- Full findings: ${queue.artifactRefs.verificationFindings}`,
     "",

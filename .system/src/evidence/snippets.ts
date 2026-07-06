@@ -21,6 +21,7 @@ interface TextSummary {
 interface PdfPageSummary {
   pageNumber?: unknown;
   paragraphs?: unknown;
+  tableLikeRows?: unknown;
 }
 
 interface PdfSummary {
@@ -164,8 +165,8 @@ function buildPdfSnippets(input: {
 }) {
   const summary = input.inspection.structuredSummary as PdfSummary;
   const pages = arrayOfPdfPages(summary.pages);
-  return pages.flatMap((page) =>
-    page.paragraphs.flatMap((paragraph, index) => {
+  return pages.flatMap((page) => {
+    const paragraphs = page.paragraphs.flatMap((paragraph, index) => {
       const draft = buildSnippet({
         ...input,
         kind: "paragraph",
@@ -173,8 +174,18 @@ function buildPdfSnippets(input: {
         text: paragraph
       });
       return draft ? [draft] : [];
-    })
-  );
+    });
+    const tableRows = page.tableLikeRows.flatMap((row, index) => {
+      const draft = buildSnippet({
+        ...input,
+        kind: "table_row",
+        anchor: `page:${page.pageNumber}:table-row:${index + 1}`,
+        text: row.map((cell, cellIndex) => `column_${cellIndex + 1}: ${cell}`).join("; ")
+      });
+      return draft ? [draft] : [];
+    });
+    return [...paragraphs, ...tableRows];
+  });
 }
 
 function buildDocxSnippets(input: {
@@ -359,8 +370,9 @@ function arrayOfPdfPages(value: unknown) {
     const record = item as PdfPageSummary;
     const pageNumber = typeof record.pageNumber === "number" ? record.pageNumber : undefined;
     const paragraphs = arrayOfStrings(record.paragraphs);
-    if (pageNumber === undefined || paragraphs.length === 0) return [];
-    return [{ pageNumber, paragraphs }];
+    const tableLikeRows = arrayOfStringRows(record.tableLikeRows);
+    if (pageNumber === undefined || (paragraphs.length === 0 && tableLikeRows.length === 0)) return [];
+    return [{ pageNumber, paragraphs, tableLikeRows }];
   });
 }
 

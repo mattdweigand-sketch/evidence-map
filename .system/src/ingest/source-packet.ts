@@ -10,6 +10,23 @@ type SourceRecordDraft = Omit<SourceRecord, "id" | "runId">;
 
 const versionOrStatusTokens = new Set(["old", "final", "draft", "copy", "raw", "export", "exports"]);
 const dataFileTypes = new Set(["csv", "tsv", "xls", "xlsx", "xlsm"]);
+const metricAliases = new Map([
+  ["sales", "revenue"],
+  ["bookings", "revenue"],
+  ["expense", "cost"],
+  ["expenses", "cost"],
+  ["spend", "cost"],
+  ["spending", "cost"],
+  ["enrollments", "enrollment"],
+  ["enrolled", "enrollment"],
+  ["headcount", "enrollment"],
+  ["withdrawals", "withdrawal"],
+  ["attrition", "withdrawal"],
+  ["churn", "withdrawal"],
+  ["nps", "satisfaction"],
+  ["score", "satisfaction"],
+  ["scores", "satisfaction"]
+]);
 
 export async function buildSourcePacket(inputPaths: string[], options: { baseDir?: string } = {}) {
   const filePaths = await expandInputPaths(inputPaths, options);
@@ -113,9 +130,14 @@ function sameMetricKey(source: SourceRecordDraft) {
   );
   const tokens = stem
     .split(/[^a-z0-9]+/)
-    .filter((token) => token && !versionOrStatusTokens.has(token) && !/^v\d+$/.test(token) && /[a-z]/.test(token));
-  if (tokens.length < 2) return undefined;
+    .filter((token) => token && !versionOrStatusTokens.has(token) && !/^v\d+$/.test(token) && /[a-z]/.test(token))
+    .map(canonicalMetricToken);
+  if (tokens.length < 1) return undefined;
   return tokens.join("-");
+}
+
+function canonicalMetricToken(token: string) {
+  return metricAliases.get(token) ?? token.replace(/s$/, "");
 }
 
 function stripSourceDate(value: string, sourceDate: string) {

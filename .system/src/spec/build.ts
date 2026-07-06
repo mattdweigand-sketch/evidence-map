@@ -35,8 +35,8 @@ export function seedClaims(input: {
   inspections?: FileInspectionRecord[];
 }): Omit<ClaimRecord, "id" | "runId">[] {
   if (input.artifactKind === "workbook") return [];
-  const pptxClaims = seedPptxClaims(input);
-  if (pptxClaims.length > 0) return pptxClaims;
+  const extractedClaims = seedInspectionClaims(input);
+  if (extractedClaims.length > 0) return extractedClaims;
 
   return [
     {
@@ -56,25 +56,57 @@ interface PptxSlideSummary {
   notesText?: string;
 }
 
-function seedPptxClaims(input: {
+function seedInspectionClaims(input: {
   artifactKind: ArtifactKind;
   inspections?: FileInspectionRecord[];
 }): Omit<ClaimRecord, "id" | "runId">[] {
-  if (input.artifactKind !== "deck" && input.artifactKind !== "mixed") return [];
-
   const claims: Omit<ClaimRecord, "id" | "runId">[] = [];
   const seenClaims = new Set<string>();
 
   for (const inspection of input.inspections ?? []) {
-    if (inspection.parser !== "pptx-deep-v1" || inspection.status !== "inspected") continue;
+    if (inspection.status !== "inspected") continue;
 
-    for (const slide of getPptxSlides(inspection.structuredSummary)) {
-      const slideLocation = `deck:${inspection.name}:slide:${slide.slideNumber}`;
-      for (const candidate of claimCandidates(slide.text ?? "", slide.title)) {
-        addPptxClaim(claims, seenClaims, slideLocation, candidate);
+    if ((input.artifactKind === "deck" || input.artifactKind === "mixed") && inspection.parser === "pptx-deep-v1") {
+      for (const slide of getPptxSlides(inspection.structuredSummary)) {
+        const slideLocation = `deck:${inspection.name}:slide:${slide.slideNumber}`;
+        for (const candidate of claimCandidates(slide.text ?? "", slide.title)) {
+          addClaim(claims, seenClaims, slideLocation, candidate);
+        }
+        for (const candidate of claimCandidates(slide.notesText ?? "", slide.title)) {
+          addClaim(claims, seenClaims, `${slideLocation}:notes`, candidate);
+        }
       }
-      for (const candidate of claimCandidates(slide.notesText ?? "", slide.title)) {
-        addPptxClaim(claims, seenClaims, `${slideLocation}:notes`, candidate);
+      continue;
+    }
+
+    if (inspection.parser === "markdown-text-v1" || inspection.parser === "plain-text-v1") {
+      for (const excerpt of getTextExcerpts(inspection.structuredSummary)) {
+        for (const candidate of claimCandidates(excerpt.text)) {
+          addClaim(claims, seenClaims, `document:${inspection.name}:paragraph:${excerpt.paragraphNumber}`, candidate);
+        }
+      }
+      continue;
+    }
+
+    if (inspection.parser === "docx-deep-v1") {
+      for (const excerpt of getTextExcerpts(inspection.structuredSummary)) {
+        for (const candidate of claimCandidates(excerpt.text)) {
+          addClaim(claims, seenClaims, `document:${inspection.name}:paragraph:${excerpt.paragraphNumber}`, candidate);
+        }
+      }
+      for (const row of getDocxTableRows(inspection.structuredSummary)) {
+        for (const candidate of claimCandidates(row.text)) {
+          addClaim(claims, seenClaims, `document:${inspection.name}:table:${row.tableNumber}:row:${row.rowNumber}`, candidate);
+        }
+      }
+      continue;
+    }
+
+    if (inspection.parser === "pdf-text-v1") {
+      for (const paragraph of getPdfParagraphs(inspection.structuredSummary)) {
+        for (const candidate of claimCandidates(paragraph.text)) {
+          addClaim(claims, seenClaims, `document:${inspection.name}:page:${paragraph.pageNumber}:paragraph:${paragraph.paragraphNumber}`, candidate);
+        }
       }
     }
   }
@@ -102,7 +134,7 @@ function getPptxSlides(summary: Record<string, unknown>): PptxSlideSummary[] {
   });
 }
 
-function addPptxClaim(
+function addClaim(
   claims: Omit<ClaimRecord, "id" | "runId">[],
   seenClaims: Set<string>,
   artifactLocation: string,
@@ -117,6 +149,56 @@ function addPptxClaim(
     sourceIds: [],
     assumptions: [],
     reviewStatus: "unsupported"
+  });
+}
+
+interface TextExcerpt {
+  paragraphNumber: number;
+  text: string;
+}
+
+function getTextExcerpts(summary: Record<string, unknown>): TextExcerpt[] {
+  const excerpts = summary.excerpts;
+  if (!Array.isArray(excerpts)) return [];
+  return excerpts.flatMap((excerpt) => {
+    if (!excerpt || typeof excerpt !== "object") return [];
+    const record = excerpt as Record<string, unknown>;
+    const paragraphNumber = typeof record.paragraphNumber === "number" ? record.paragraphNumber : undefined;
+    const text = typeof record.text === "string" ? record.text : undefined;
+    return paragraphNumber !== undefined && text ? [{ paragraphNumber, text }] : [];
+  });
+}
+
+function getDocxTableRows(summary: Record<string, unknown>) {
+  const tables = summary.tables;
+  if (!Array.isArray(tables)) return [];
+  return tables.flatMap((table) => {
+    if (!table || typeof table !== "object") return [];
+    const record = table as Record<string, unknown>;
+    const tableNumber = typeof record.tableNumber === "number" ? record.tableNumber : undefined;
+    const rows = Array.isArray(record.previewRows) ? record.previewRows : [];
+    if (tableNumber === undefined) return [];
+    return rows.flatMap((row, index) => {
+      if (!Array.isArray(row)) return [];
+      const text = row.map((cell) => String(cell ?? "").trim()).filter(Boolean).join("; ");
+      return text ? [{ tableNumber, rowNumber: index + 1, text }] : [];
+    });
+  });
+}
+
+function getPdfParagraphs(summary: Record<string, unknown>) {
+  const pages = summary.pages;
+  if (!Array.isArray(pages)) return [];
+  return pages.flatMap((page) => {
+    if (!page || typeof page !== "object") return [];
+    const record = page as Record<string, unknown>;
+    const pageNumber = typeof record.pageNumber === "number" ? record.pageNumber : undefined;
+    const paragraphs = Array.isArray(record.paragraphs) ? record.paragraphs : [];
+    if (pageNumber === undefined) return [];
+    return paragraphs.flatMap((paragraph, index) => {
+      const text = typeof paragraph === "string" ? paragraph : undefined;
+      return text ? [{ pageNumber, paragraphNumber: index + 1, text }] : [];
+    });
   });
 }
 

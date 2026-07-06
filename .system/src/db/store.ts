@@ -3,6 +3,7 @@ import type {
   AssumptionRecord,
   CalculationRecord,
   ClaimRecord,
+  EvidenceLinkSuggestionRecord,
   EvidenceMapRecord,
   FileInspectionRecord,
   GeneratedClaimRecord,
@@ -46,6 +47,12 @@ export interface EvidenceMapStore {
 
   createEvidenceMap(map: Omit<EvidenceMapRecord, "id">): Promise<EvidenceMapRecord>;
   getEvidenceMap(runId: string): Promise<EvidenceMapRecord | undefined>;
+
+  replaceEvidenceLinkSuggestions(
+    runId: string,
+    suggestions: Omit<EvidenceLinkSuggestionRecord, "runId">[]
+  ): Promise<EvidenceLinkSuggestionRecord[]>;
+  listEvidenceLinkSuggestions(runId: string): Promise<EvidenceLinkSuggestionRecord[]>;
 
   createGeneratedOutput(output: Omit<GeneratedOutputRecord, "id">): Promise<GeneratedOutputRecord>;
   getGeneratedOutput(runId: string): Promise<GeneratedOutputRecord | undefined>;

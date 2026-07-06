@@ -154,6 +154,22 @@ export interface EvidenceMapRecord {
   };
 }
 
+export interface EvidenceLinkSuggestionRecord {
+  id: string;
+  runId: string;
+  claimId: string;
+  claimText: string;
+  evidenceId: string;
+  sourceId: string;
+  sourceName: string;
+  evidenceAnchor: string;
+  confidence: number;
+  basis: string;
+  matchedTerms: string[];
+  matchedNumbers: string[];
+  reviewStatus: "suggested" | "needs_review";
+}
+
 export interface GeneratedOutputRecord {
   id: string;
   runId: string;

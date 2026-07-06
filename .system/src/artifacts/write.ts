@@ -2,6 +2,8 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type {
   ArtifactSpec,
+  CalculationRecord,
+  EvidenceLinkSuggestionRecord,
   EvidenceMapRecord,
   FileInspectionRecord,
   GeneratedClaimRecord,
@@ -14,6 +16,7 @@ import type {
   VerificationFinding
 } from "../types.ts";
 import type { SourceExclusion } from "../evidence/select.ts";
+import { renderEvidenceLinkSuggestionsMarkdown } from "../evidence/suggestions.ts";
 import { buildGeneralFinalExport } from "../export/general.ts";
 import {
   renderEvidenceMapMarkdown,
@@ -28,6 +31,7 @@ import { renderLegalBoundary, renderLegalReuseLibrary, renderLegalSourceHistory 
 import { renderLegalOutputSpec } from "../legal/spec.ts";
 import { renderLegalSourcePacket, type LegalSourcePacket } from "../legal/source-packet.ts";
 import { renderGeneralReviewDecisionSet, type GeneralReviewDecisionSet } from "../review/general-decisions.ts";
+import { buildCalculationRepairPacket, renderCalculationRepairPacket } from "../review/calculation-repair.ts";
 import { buildReviewQueue, renderReviewQueue } from "../review/review-queue.ts";
 import {
   applySourcePrepDecisionsToInspections,
@@ -45,6 +49,8 @@ export async function writeRunArtifacts(input: {
   inspections: FileInspectionRecord[];
   conflicts: SourceConflict[];
   spec: ArtifactSpec;
+  calculations?: CalculationRecord[];
+  evidenceLinkSuggestions?: EvidenceLinkSuggestionRecord[];
   findings: VerificationFinding[];
   trustReport: TrustReport;
   sourceEvidence?: SourceEvidenceRecord[];
@@ -108,6 +114,19 @@ export async function writeRunArtifacts(input: {
   }
 
   await writeJson(join(verifyDir, "verification-findings.json"), input.findings);
+  if (input.evidenceLinkSuggestions) {
+    await writeJson(join(verifyDir, "evidence-link-suggestions.json"), input.evidenceLinkSuggestions);
+    await writeFile(join(verifyDir, "evidence-link-suggestions.md"), renderEvidenceLinkSuggestionsMarkdown(input.evidenceLinkSuggestions));
+  }
+  if (input.run.profile === "general" && input.calculations) {
+    const calculationRepairPacket = buildCalculationRepairPacket({
+      runId: input.run.id,
+      calculations: input.calculations,
+      inspections
+    });
+    await writeJson(join(verifyDir, "calculation-repair-packet.json"), calculationRepairPacket);
+    await writeFile(join(verifyDir, "calculation-repair-packet.md"), renderCalculationRepairPacket(calculationRepairPacket));
+  }
   await writeJson(join(verifyDir, "source-prep-decisions.json"), sourcePrepReviewDecisionSet);
   await writeFile(join(verifyDir, "source-prep-decisions.md"), renderSourcePrepReviewDecisionSet(sourcePrepReviewDecisionSet));
   const reviewQueue = buildReviewQueue({
@@ -210,6 +229,11 @@ export async function writeRunArtifacts(input: {
         await writeJson(join(exportDir, "formatting-receipt.json"), generalExport.formattingReceipt);
         await writeFile(join(exportDir, "formatting-receipt.md"), generalExport.formattingReceiptMarkdown);
       }
+      if (generalExport.generatedEditProposal && generalExport.generatedEditProposalMarkdown && generalExport.editedOutputMarkdown) {
+        await writeJson(join(exportDir, "generated-edit-proposal.json"), generalExport.generatedEditProposal);
+        await writeFile(join(exportDir, "generated-edit-proposal.md"), generalExport.generatedEditProposalMarkdown);
+        await writeFile(join(exportDir, "edited-output.md"), generalExport.editedOutputMarkdown);
+      }
       await rm(join(exportDir, "general-export-refusal.md"), { force: true });
     } else if (generalExport.refusalMarkdown) {
       await writeFile(join(exportDir, "general-export-refusal.md"), generalExport.refusalMarkdown);
@@ -221,6 +245,9 @@ export async function writeRunArtifacts(input: {
       await rm(join(exportDir, "formatted-output.md"), { force: true });
       await rm(join(exportDir, "formatting-receipt.json"), { force: true });
       await rm(join(exportDir, "formatting-receipt.md"), { force: true });
+      await rm(join(exportDir, "generated-edit-proposal.json"), { force: true });
+      await rm(join(exportDir, "generated-edit-proposal.md"), { force: true });
+      await rm(join(exportDir, "edited-output.md"), { force: true });
     }
   }
 

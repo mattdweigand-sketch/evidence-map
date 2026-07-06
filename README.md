@@ -4,7 +4,7 @@
 
 Evidence Map makes work deliverables inspectable before they get shipped.
 
-It is not a native deck, workbook, or Office-file generator. The artifact can come from PowerPoint, Excel, ChatGPT, Claude, an RFP tool, or a human draft. Evidence Map builds the control layer around that artifact: source inventory, conflict log, assumptions, artifact specification, evidence map, hostile verification, and export readiness. For general report/document workflows, it can also generate a local Markdown output from verified claims only.
+It is not a native deck, workbook, or Office-file generator. The artifact can come from PowerPoint, Excel, ChatGPT, Claude, an RFP tool, or a human draft. Evidence Map builds the control layer around that artifact: source inventory, conflict log, assumptions, artifact specification, evidence map, hostile verification, evidence-link suggestions, repair packets, and export readiness. For general report/document workflows, it can also generate local Markdown outputs from verified claims only.
 
 ## Who This Is For
 
@@ -33,7 +33,13 @@ To generate a verified local Markdown output, add `--generate`:
 npm --prefix .system run run -- --name "capstone-report" --kind report --input input/examples/capstone-report --generate
 ```
 
-When ready, the run writes `04_export/final-output.md`, a deterministic derivative at `04_export/formatted-output.md`, receipts, and a ready manifest. The formatted derivative is built only from verified generated claims and must preserve claim IDs, source IDs, evidence IDs, source dates, and excluded-source reasons. If a selected source conflict, unsupported generated claim, or undated numeric claim remains, no final Markdown file is written; `04_export/general-export-refusal.md` lists the blockers. Native `.docx`, `.pptx`, and `.xlsx` outputs are not generated.
+When ready, the run writes `04_export/final-output.md`, a deterministic derivative at `04_export/formatted-output.md`, a deterministic edited Markdown output at `04_export/edited-output.md`, receipts, and a ready manifest. These Markdown derivatives are built only from verified generated claims and must preserve claim IDs, source IDs, evidence IDs, source dates, and excluded-source reasons. If a selected source conflict, unsupported generated claim, or undated numeric claim remains, no final Markdown file is written; `04_export/general-export-refusal.md` lists the blockers. Native `.docx`, `.pptx`, and `.xlsx` outputs are not generated.
+
+To refresh a recurring deliverable from a prior run while preserving the prior review trail by receipt:
+
+```bash
+npm --prefix .system run refresh -- --from-run "<prior-run-id>" --name "capstone-report-refresh" --kind report --input input/examples/capstone-report --generate
+```
 
 ## Legal Profile Quickstart
 
@@ -96,9 +102,9 @@ Claude Code (`.mcp.json` in your project, or `claude mcp add`):
 }
 ```
 
-The same shape works in any MCP client that supports local stdio servers. Core tools exposed: `evidencemap_inspect_source_packet`, `evidencemap_run_workflow`, `evidencemap_status`, `evidencemap_next_action`, and `evidencemap_get_verification_report`. `evidencemap_run_workflow` accepts `generate: true` for local Markdown generation. General-profile review tools can create, edit, delete, or merge claims, attach source support with anchors/quotes/rationale, resolve calculation risks, accept current findings with rationale, resolve source conflicts, and copy approved user-supplied final artifacts locally after the run is ready with an explicit approval token. Legal-profile review tools can attach passage support, update authority/treatment status, accept legal risks, and resolve source conflicts with an explicit approval token. Run state persists at `deliverables/evidence-map-store.json`. The full surface is documented in `.system/docs/mcp.md`. The CLI remains useful for smoke tests, fixtures, and CI.
+The same shape works in any MCP client that supports local stdio servers. Core tools exposed: `evidencemap_inspect_source_packet`, `evidencemap_run_workflow`, `evidencemap_refresh_workflow`, `evidencemap_status`, `evidencemap_next_action`, `evidencemap_get_verification_report`, and `evidencemap_get_evidence_link_suggestions`. `evidencemap_run_workflow` accepts `generate: true` for local Markdown generation. General-profile review tools can create, edit, delete, or merge claims, attach source support with anchors/quotes/rationale, resolve calculation risks, accept current findings with rationale, resolve source conflicts, and copy approved user-supplied final artifacts locally after the run is ready with an explicit approval token. Legal-profile review tools can attach passage support, update authority/treatment status, accept legal risks, and resolve source conflicts with an explicit approval token. Run state persists at `deliverables/evidence-map-store.json`. The full surface is documented in `.system/docs/mcp.md`. The CLI remains useful for smoke tests, fixtures, and CI.
 
-General-profile v1 runs can now carry a narrow artifact-backed review-decision trail and a local export gate: blocked or review-required runs write a refusal, while ready runs write a ready manifest. Deck and mixed runs seed deterministic unsupported claim candidates from inspected PPTX slide and speaker-notes text. In generation mode, general runs build source evidence snippets, select usable sources, generate deterministic Markdown claims, write final Markdown only when trust gates are ready, and then write a deterministic formatted Markdown derivative with an invariant receipt. Once review-only runs are ready, MCP can still copy approved user-supplied final artifacts into `04_export/approved-artifacts/` and write `04_export/general-final-artifact-receipt.json` / `.md`. Native Office generation and broad prose-quality synthesis remain out of scope. Legal-profile runs have a narrower review-decision path and final Markdown gate, but final export still refuses unresolved blockers.
+General-profile v1 runs can now carry an artifact-backed review-decision trail and a local export gate: blocked or review-required runs write a refusal, while ready runs write a ready manifest. General runs seed deterministic unsupported claim candidates from inspected PPTX, Markdown/text, DOCX, and text-based PDF content; write evidence-link suggestions for reviewer action; and write calculation repair packets for mapped workbook/calculation risks. In generation mode, general runs build source evidence snippets, select usable sources, generate deterministic Markdown claims, write final Markdown only when trust gates are ready, and then write deterministic formatted and edited Markdown derivatives with invariant receipts. Once review-only runs are ready, MCP can still copy approved user-supplied final artifacts into `04_export/approved-artifacts/` and write `04_export/general-final-artifact-receipt.json` / `.md`. Native Office generation and broad prose-quality synthesis remain out of scope. Legal-profile runs have a narrower review-decision path and final Markdown gate, but final export still refuses unresolved blockers.
 
 ## What This Is Not
 
@@ -114,12 +120,13 @@ The root is the operator workspace:
 
 Runs live under `deliverables/<run-slug>/`. Slugs include a short run ID suffix so repeated names do not overwrite prior artifacts:
 
-- `01_source-packet/`: source inventory, file inspections, conflict log, and generated source evidence when `--generate` is used.
+- `00_refresh/`: refresh receipt and prior review-trail snapshots when a run is created from a prior run.
+- `01_source-packet/`: source inventory, file inspections, conflict log, and source evidence snippets.
 - `02_artifact-spec/`: deck, workbook, document, or mixed artifact specification.
-- `03_verification/`: hostile-review findings, readiness report, generated claims, and evidence map.
-- `04_export/`: readiness gate for approved artifacts, generated Markdown output and deterministic formatted derivative when ready, or refusal details when blocked.
+- `03_verification/`: hostile-review findings, readiness report, evidence-link suggestions, calculation repair packet, generated claims, and evidence map.
+- `04_export/`: readiness gate for approved artifacts, generated Markdown output, deterministic formatted and edited derivatives when ready, or refusal details when blocked.
 
-CSV/TSV/text/Markdown and text-based PDF sources are inspected directly. `.xlsx` files get a Workbook Doctor pass: sheet inventory, hidden sheets, headers, formulas, hardcodes, missing checks sheets, and repeated static formulas. PowerPoint files get slide text, notes, and chart-reference inspection. DOCX files get paragraph, heading, and table inspection. The legal profile adds citeable DOCX passage extraction and converts shared PDF text extraction into legal passage anchors; native generated-output editing remains roadmap work.
+CSV/TSV/text/Markdown and text-based PDF sources are inspected directly. General PDFs expose page paragraphs, section candidates, citation candidates, and table-like rows when text is extractable. `.xlsx` files get a Workbook Doctor pass: sheet inventory, hidden sheets, headers, formulas, hardcodes, missing checks sheets, and repeated static formulas. PowerPoint files get slide text, notes, and chart-reference inspection. DOCX files get paragraph, heading, and table inspection. The legal profile adds citeable DOCX passage extraction and converts shared PDF text extraction into legal passage anchors.
 
 ## Roadmap, Contributing, License
 

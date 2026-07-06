@@ -58,6 +58,12 @@ Check for:
 
 The model can enumerate issues. A human owns the final gate.
 
+Use the supporting review artifacts:
+
+- `03_verification/evidence-link-suggestions.json` suggests source-to-claim links from deterministic term and number overlap. Suggestions do not verify claims until an audited review decision is recorded.
+- `03_verification/calculation-repair-packet.json` turns calculation and workbook risks into repair checklists and suggested inputs for the approval-gated calculation-risk tool.
+- `03_verification/review-queue.json` groups blockers by next action.
+
 ## 5. Generated Markdown Output
 
 For general report/document workflows, generation mode can create a local Markdown output after source prep and structure:
@@ -67,6 +73,17 @@ For general report/document workflows, generation mode can create a local Markdo
 - Generate deterministic claims only from selected evidence.
 - Write `04_export/final-output.md` only when the trust report is ready.
 - Write `04_export/formatted-output.md` only as a deterministic derivative of the ready final Markdown output.
+- Write `04_export/edited-output.md` only as a deterministic edited Markdown derivative of the ready final Markdown output.
 - Otherwise write `04_export/general-export-refusal.md` with exact blockers.
 
 Generation mode does not create `.docx`, `.pptx`, or `.xlsx` files and does not send, file, submit, publish, or call external models.
+
+## 6. Refresh
+
+For recurring work, start a new run from a prior run instead of overwriting old artifacts:
+
+```bash
+npm --prefix .system run refresh -- --from-run "<prior-run-id>" --name "next-run" --kind report --input input/project --generate
+```
+
+Refresh writes `00_refresh/refresh-receipt.json` and `.md`, snapshots prior review-trail artifacts when present, and links the prior run to the new run. It does not silently apply old approvals to changed evidence.

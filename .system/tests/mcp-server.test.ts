@@ -102,9 +102,11 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   const tools = await client.listTools();
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_inspect_source_packet"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_run_workflow"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_refresh_workflow"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_status"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_next_action"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_get_verification_report"));
+  assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_get_evidence_link_suggestions"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_create_general_claim"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_edit_general_claim"));
   assert.ok(tools.tools.some((tool) => tool.name === "evidencemap_delete_general_claim"));
@@ -152,6 +154,7 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
   });
   assert.equal((status.structuredContent as { counts?: { sources?: number } }).counts?.sources, 2);
   assert.equal((status.structuredContent as { counts?: { inspections?: number } }).counts?.inspections, 2);
+  assert.equal(typeof (status.structuredContent as { counts?: { evidenceLinkSuggestions?: number } }).counts?.evidenceLinkSuggestions, "number");
 
   const nextAction = await client.callTool({
     name: "evidencemap_next_action",
@@ -164,6 +167,25 @@ test("MCP server exposes source prep, workflow, status, next action, and verific
     arguments: { runId: run.runId }
   });
   assert.equal((verification.structuredContent as { trustReport?: { readiness?: string } }).trustReport?.readiness, "blocked");
+
+  const suggestions = await client.callTool({
+    name: "evidencemap_get_evidence_link_suggestions",
+    arguments: { runId: run.runId }
+  });
+  assert.equal(typeof (suggestions.structuredContent as { suggestionCount?: number }).suggestionCount, "number");
+
+  const refresh = await client.callTool({
+    name: "evidencemap_refresh_workflow",
+    arguments: {
+      baseDir,
+      priorRunId: run.runId,
+      name: "sample-project-refresh",
+      artifactKind: "deck",
+      inputPaths: ["input/sample-project"]
+    }
+  });
+  assert.equal((refresh.structuredContent as { priorRunId?: string }).priorRunId, run.runId);
+  assert.equal(typeof (refresh.structuredContent as { carriedArtifactCount?: number }).carriedArtifactCount, "number");
 
   const rejectedApply = await client.callTool({
     name: "evidencemap_apply_general_final_artifacts",

@@ -11,6 +11,7 @@ import { writeRunArtifacts } from "../src/artifacts/write.ts";
 import { runEvidenceMapWorkflow } from "../src/chains/evidence-map/workflow.ts";
 import { JsonFileEvidenceMapStore } from "../src/db/json-file-store.ts";
 import { MemoryEvidenceMapStore } from "../src/db/memory-store.ts";
+import { runEvidenceMapRefresh } from "../src/refresh/workflow.ts";
 import {
   appendMarkOcrRequiredDecision,
   appendSetSourceDateDecision,
@@ -50,6 +51,10 @@ test("workflow creates source packet, spec, verification report, and export gate
   assert.match(exportReadme, /General Export Gate Receipt/);
   assert.match(exportReadme, /Status: refused/);
   assert.match(exportReadme, /Ready manifest: not written/);
+  const sourceEvidence = JSON.parse(await readFile(join(result.artifacts.sourceDir, "source-evidence.json"), "utf8"));
+  assert.ok(Array.isArray(sourceEvidence));
+  const repairPacket = JSON.parse(await readFile(join(result.artifacts.verifyDir, "calculation-repair-packet.json"), "utf8"));
+  assert.equal(repairPacket.profile, "general");
   const refusal = await readFile(join(result.artifacts.exportDir, "general-export-refusal.md"), "utf8");
   assert.match(refusal, /General Export Refusal/);
   assert.match(refusal, /Claim has no source attribution/);
@@ -60,7 +65,33 @@ test("workflow creates source packet, spec, verification report, and export gate
   const reviewQueueMarkdown = await readFile(join(result.artifacts.verifyDir, "review-queue.md"), "utf8");
   assert.match(reviewQueueMarkdown, /Review Queue/);
   assert.match(reviewQueueMarkdown, /Attach source support/);
+  assert.match(reviewQueueMarkdown, /Evidence link suggestions/);
+  assert.match(reviewQueueMarkdown, /Calculation repair packet/);
   await assert.rejects(readFile(join(result.artifacts.exportDir, "ready-manifest.json"), "utf8"));
+});
+
+test("review workflow writes evidence link suggestions and calculation repair packet", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-review-suggestions-"));
+  const inputDir = join(baseDir, "input", "review-suggestions");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-current-metrics.csv"), "metric,value,as_of_date\nrevenue,100,2026-05-01\n");
+  await writeFile(join(inputDir, "summary.md"), "# Summary\n\nRevenue was 100 as of 2026-05-01 and should be reviewed against the current metrics export.\n");
+
+  const result = await runEvidenceMapWorkflow(new MemoryEvidenceMapStore(), {
+    baseDir,
+    name: "review-suggestions",
+    artifactKind: "mixed",
+    inputPaths: ["input/review-suggestions"]
+  });
+
+  const suggestions = JSON.parse(await readFile(join(result.artifacts.verifyDir, "evidence-link-suggestions.json"), "utf8"));
+  assert.ok(suggestions.length > 0);
+  assert.ok(suggestions.some((suggestion: { matchedNumbers?: string[] }) => suggestion.matchedNumbers?.includes("100")));
+  const suggestionsMarkdown = await readFile(join(result.artifacts.verifyDir, "evidence-link-suggestions.md"), "utf8");
+  assert.match(suggestionsMarkdown, /Evidence Link Suggestions/);
+  const repairPacket = JSON.parse(await readFile(join(result.artifacts.verifyDir, "calculation-repair-packet.json"), "utf8"));
+  assert.ok(repairPacket.itemCount > 0);
+  assert.ok(repairPacket.items.some((item: { suggestedDecision?: { tool?: string } }) => item.suggestedDecision?.tool === "evidencemap_resolve_general_calculation_risk"));
 });
 
 test("deck workflow seeds unsupported claims from PPTX slide and notes text", async () => {
@@ -132,6 +163,8 @@ test("clean end-to-end generation writes final Markdown and ready manifest", asy
   assert.equal(manifest.artifacts.generatedOutputReceipt, "04_export/generated-output-receipt.json");
   assert.equal(manifest.artifacts.formattedOutput, "04_export/formatted-output.md");
   assert.equal(manifest.artifacts.formattingReceipt, "04_export/formatting-receipt.json");
+  assert.equal(manifest.artifacts.generatedEditProposal, "04_export/generated-edit-proposal.json");
+  assert.equal(manifest.artifacts.editedOutput, "04_export/edited-output.md");
   await readFile(join(result.artifacts.verifyDir, "generated-claims.json"), "utf8");
   await readFile(join(result.artifacts.verifyDir, "evidence-map.json"), "utf8");
   await readFile(join(result.artifacts.exportDir, "generated-output-receipt.json"), "utf8");
@@ -140,6 +173,42 @@ test("clean end-to-end generation writes final Markdown and ready manifest", asy
   assert.equal(formattingReceipt.canonicalOutput, "04_export/final-output.md");
   assert.equal(formattingReceipt.formattedOutput, "04_export/formatted-output.md");
   assert.ok(formattingReceipt.invariantChecks.every((check: { status: string }) => check.status === "passed"));
+  const editProposal = JSON.parse(await readFile(join(result.artifacts.exportDir, "generated-edit-proposal.json"), "utf8"));
+  assert.equal(editProposal.editedOutput, "04_export/edited-output.md");
+  const editedOutput = await readFile(join(result.artifacts.exportDir, "edited-output.md"), "utf8");
+  assert.match(editedOutput, /generated claim: generated_claim_/);
+  assert.match(editedOutput, /sources: src_/);
+  assert.match(editedOutput, /evidence: evidence_/);
+});
+
+test("refresh workflow writes receipt and snapshots prior review trail", async () => {
+  const baseDir = await mkdtemp(join(tmpdir(), "evidence-map-refresh-"));
+  const inputDir = join(baseDir, "input", "refresh-report");
+  await mkdir(inputDir, { recursive: true });
+  await writeFile(join(inputDir, "2026-05-01-current-metrics.csv"), "metric,value,as_of_date\nactive_users,42,2026-05-01\n");
+  const store = new JsonFileEvidenceMapStore(join(baseDir, "deliverables", "evidence-map-store.json"));
+
+  const firstRun = await runEvidenceMapWorkflow(store, {
+    baseDir,
+    name: "refresh-report",
+    artifactKind: "report",
+    inputPaths: ["input/refresh-report"],
+    generate: true
+  });
+  const refreshed = await runEvidenceMapRefresh(store, {
+    baseDir,
+    priorRunId: firstRun.run.id,
+    name: "refresh-report-next",
+    artifactKind: "report",
+    inputPaths: ["input/refresh-report"],
+    generate: true
+  });
+
+  assert.equal(refreshed.refreshReceipt.priorRunId, firstRun.run.id);
+  assert.equal(refreshed.refreshReceipt.newRunId, refreshed.run.id);
+  assert.ok(refreshed.refreshReceipt.carriedArtifacts.some((artifact) => artifact.priorRunPath.endsWith("trust-report.json")));
+  const receiptMarkdown = await readFile(join(refreshed.artifacts.runDir, "00_refresh", "refresh-receipt.md"), "utf8");
+  assert.match(receiptMarkdown, /Prior approvals were not automatically replayed/);
 });
 
 test("verify command preserves generated output mode and final artifacts", async () => {

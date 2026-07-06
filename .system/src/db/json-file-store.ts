@@ -6,6 +6,7 @@ import type {
   AssumptionRecord,
   CalculationRecord,
   ClaimRecord,
+  EvidenceLinkSuggestionRecord,
   EvidenceMapRecord,
   FileInspectionRecord,
   GeneratedClaimRecord,
@@ -31,6 +32,7 @@ interface StoreData {
   claims: ClaimRecord[];
   generatedClaims: GeneratedClaimRecord[];
   evidenceMaps: EvidenceMapRecord[];
+  evidenceLinkSuggestions: EvidenceLinkSuggestionRecord[];
   generatedOutputs: GeneratedOutputRecord[];
   calculations: CalculationRecord[];
   specs: ArtifactSpec[];
@@ -201,6 +203,26 @@ export class JsonFileEvidenceMapStore implements EvidenceMapStore {
     });
   }
 
+  async replaceEvidenceLinkSuggestions(runId: string, suggestions: Omit<EvidenceLinkSuggestionRecord, "runId">[]) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      const created = suggestions.map((suggestion) => ({ ...suggestion, runId }));
+      data.evidenceLinkSuggestions = [
+        ...data.evidenceLinkSuggestions.filter((suggestion) => suggestion.runId !== runId),
+        ...created
+      ];
+      await this.save(data);
+      return created;
+    });
+  }
+
+  async listEvidenceLinkSuggestions(runId: string) {
+    return this.serialize(async () => {
+      const data = await this.load();
+      return data.evidenceLinkSuggestions.filter((suggestion) => suggestion.runId === runId);
+    });
+  }
+
   async createGeneratedOutput(output: Omit<GeneratedOutputRecord, "id">) {
     return this.serialize(async () => {
       const data = await this.load();
@@ -324,6 +346,7 @@ function withDefaults(data: StoreData): StoreData {
     sourceEvidence: data.sourceEvidence ?? [],
     generatedClaims: data.generatedClaims ?? [],
     evidenceMaps: data.evidenceMaps ?? [],
+    evidenceLinkSuggestions: data.evidenceLinkSuggestions ?? [],
     generatedOutputs: data.generatedOutputs ?? []
   };
 }
@@ -371,6 +394,7 @@ function emptyData(): StoreData {
     claims: [],
     generatedClaims: [],
     evidenceMaps: [],
+    evidenceLinkSuggestions: [],
     generatedOutputs: [],
     calculations: [],
     specs: [],

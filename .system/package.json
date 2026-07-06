@@ -28,6 +28,7 @@
   "type": "module",
   "scripts": {
     "run": "node --experimental-strip-types scripts/run.ts",
+    "refresh": "node --experimental-strip-types scripts/refresh.ts",
     "inspect": "node --experimental-strip-types scripts/inspect.ts",
     "mcp": "node --experimental-strip-types src/mcp/server.ts",
     "verify": "node --experimental-strip-types scripts/verify.ts",

@@ -25,6 +25,7 @@ import {
 } from "../legal/review-decisions.ts";
 import { buildLegalSourcePacketFromDrafts } from "../legal/source-packet.ts";
 import { getDefaultBaseDir } from "../artifacts/paths.ts";
+import { runEvidenceMapRefresh } from "../refresh/workflow.ts";
 import { evaluateTrust } from "../trust/evaluate.ts";
 import { artifactKinds, workflowProfiles, type EvidenceMapRun, type SourceConflict, type WorkflowProfile } from "../types.ts";
 import { PACKAGE_VERSION } from "../version.ts";
@@ -173,6 +174,50 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
   );
 
   server.registerTool(
+    "evidencemap_refresh_workflow",
+    {
+      title: "Refresh Evidence Map Workflow",
+      description: "Create a new run from a prior run, snapshot prior review-trail artifacts, and run the workflow over supplied current inputs.",
+      inputSchema: {
+        priorRunId: z.string(),
+        name: z.string(),
+        artifactKind: artifactKindSchema,
+        profile: workflowProfileSchema.default("general"),
+        generate: z.boolean().default(false),
+        inputPaths: z.array(z.string()).min(1),
+        baseDir: z.string().default(defaultBaseDir)
+      }
+    },
+    async ({ priorRunId, name, artifactKind, profile, generate, inputPaths, baseDir }) => {
+      try {
+        const resolvedInputPaths = await resolveWorkspaceInputPaths(baseDir, inputPaths);
+        if (hasWorkspaceInputPathError(resolvedInputPaths)) return jsonToolError(resolvedInputPaths.error);
+        const result = await runEvidenceMapRefresh(store, {
+          baseDir,
+          priorRunId,
+          name,
+          artifactKind,
+          profile,
+          inputPaths: resolvedInputPaths.paths,
+          generate
+        });
+        return jsonToolResult({
+          priorRunId: result.refreshReceipt.priorRunId,
+          runId: result.run.id,
+          slug: result.run.slug,
+          status: result.run.status,
+          readiness: result.trustReport.readiness,
+          carriedArtifactCount: result.refreshReceipt.carriedArtifacts.length,
+          refreshReceipt: "00_refresh/refresh-receipt.json",
+          artifacts: result.artifacts
+        });
+      } catch (error) {
+        return jsonToolError(error instanceof Error ? error.message : "Refresh workflow failed.");
+      }
+    }
+  );
+
+  server.registerTool(
     "evidencemap_status",
     {
       title: "Get Run Status",
@@ -194,6 +239,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
         calculations,
         sourceEvidence,
         generatedClaims,
+        evidenceLinkSuggestions,
         evidenceMap,
         generatedOutput,
         findings,
@@ -207,6 +253,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
         store.listCalculations(runId),
         store.listSourceEvidence(runId),
         store.listGeneratedClaims(runId),
+        store.listEvidenceLinkSuggestions(runId),
         store.getEvidenceMap(runId),
         store.getGeneratedOutput(runId),
         store.listVerificationFindings(runId),
@@ -224,6 +271,7 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
           calculations: calculations.length,
           sourceEvidence: sourceEvidence.length,
           generatedClaims: generatedClaims.length,
+          evidenceLinkSuggestions: evidenceLinkSuggestions.length,
           findings: findings.length
         },
         evidenceMap,
@@ -265,6 +313,27 @@ export function createEvidenceMapMcpServer(store: EvidenceMapStore = createDefau
       ]);
 
       return jsonToolResult({ runId, findings, trustReport });
+    }
+  );
+
+  server.registerTool(
+    "evidencemap_get_evidence_link_suggestions",
+    {
+      title: "Get Evidence Link Suggestions",
+      description: "Return deterministic source-to-claim link suggestions for a run.",
+      inputSchema: {
+        runId: z.string()
+      }
+    },
+    async ({ runId }) => {
+      const run = await store.getRun(runId);
+      if (!run) throw new Error(`Unknown run: ${runId}`);
+      const suggestions = await store.listEvidenceLinkSuggestions(runId);
+      return jsonToolResult({
+        runId,
+        suggestionCount: suggestions.length,
+        suggestions
+      });
     }
   );
 
