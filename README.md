@@ -111,7 +111,7 @@ Runs live under `deliverables/<run-slug>/`. Slugs include a short run ID suffix 
 - `03_verification/`: hostile-review findings and readiness report.
 - `04_export/`: readiness gate for approved artifacts.
 
-CSV/TSV/text/Markdown sources are inspected directly. `.xlsx` files get a Workbook Doctor pass: sheet inventory, hidden sheets, headers, formulas, hardcodes, missing checks sheets, and repeated static formulas. PowerPoint files remain metadata-only. The legal profile adds DOCX and text-based PDF passage extraction for supplied legal sources; broader general-profile document parsers are still roadmap work.
+CSV/TSV/text/Markdown and text-based PDF sources are inspected directly. `.xlsx` files get a Workbook Doctor pass: sheet inventory, hidden sheets, headers, formulas, hardcodes, missing checks sheets, and repeated static formulas. PowerPoint and DOCX files remain metadata-only in the general profile. The legal profile adds DOCX passage extraction and converts shared PDF text extraction into citeable legal passage anchors; broader general-profile document parsers are still roadmap work.
 
 ## Roadmap, Contributing, License
 

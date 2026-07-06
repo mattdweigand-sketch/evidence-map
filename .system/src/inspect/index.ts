@@ -4,6 +4,7 @@ import { basename, extname } from "node:path";
 import { inferDateCandidates } from "../date-candidates.ts";
 import type { FileInspectionRecord } from "../types.ts";
 import { expandInputPaths } from "../ingest/expand-input-paths.ts";
+import { extractPdfText } from "./pdf.ts";
 import { inspectXlsxWorkbook } from "./xlsx.ts";
 
 type FileInspectionDraft = Omit<FileInspectionRecord, "id" | "runId" | "sourceId">;
@@ -165,21 +166,52 @@ async function inspectOfficePackage(
 async function inspectPdf(base: Pick<FileInspectionDraft, "name" | "path" | "fileType" | "sizeBytes" | "modifiedAt">): Promise<FileInspectionDraft> {
   const header = await readBytes(base.path, 5);
   const isPdf = Buffer.from(header).toString("utf8") === "%PDF-";
+  if (!isPdf) {
+    return {
+      ...base,
+      parser: "pdf-metadata-v1",
+      status: "metadata_only",
+      sourceDateCandidates: inferDateCandidates(base.name),
+      ownerCandidates: [],
+      structuredSummary: {
+        pdfSignature: false
+      },
+      warnings: ["File does not have the expected PDF signature."]
+    };
+  }
 
-  return {
-    ...base,
-    parser: "pdf-metadata-v1",
-    status: "metadata_only",
-    sourceDateCandidates: inferDateCandidates(base.name),
-    ownerCandidates: [],
-    structuredSummary: {
-      pdfSignature: isPdf
-    },
-    warnings: [
-      ...(isPdf ? [] : ["File does not have the expected PDF signature."]),
-      "Deep PDF text and table inspection is not implemented yet."
-    ]
-  };
+  try {
+    const extraction = await extractPdfText(base.path);
+    const hasText = extraction.paragraphCount > 0;
+    return {
+      ...base,
+      parser: "pdf-text-v1",
+      status: hasText ? "inspected" : "metadata_only",
+      sourceDateCandidates: inferDateCandidates(`${base.name}\n${extraction.text}`),
+      ownerCandidates: inferOwnerCandidates(extraction.text),
+      structuredSummary: {
+        pdfSignature: true,
+        pageCount: extraction.pageCount,
+        extractablePageCount: extraction.extractablePageCount,
+        paragraphCount: extraction.paragraphCount,
+        numberCandidateCount: extraction.numberCandidateCount
+      },
+      textPreview: previewText(extraction.text),
+      warnings: hasText ? [] : ["PDF parser did not return extractable text."]
+    };
+  } catch (error) {
+    return {
+      ...base,
+      parser: "pdf-text-v1",
+      status: "failed",
+      sourceDateCandidates: inferDateCandidates(base.name),
+      ownerCandidates: [],
+      structuredSummary: {
+        pdfSignature: true
+      },
+      warnings: [`PDF text extraction failed: ${error instanceof Error ? error.message : "Unknown extraction failure."}`]
+    };
+  }
 }
 
 async function readSmallText(path: string) {

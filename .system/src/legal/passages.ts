@@ -2,8 +2,8 @@ import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import { createHash } from "node:crypto";
 import { inflateRawSync } from "node:zlib";
-import { PDFParse } from "pdf-parse";
 import { slugify } from "../db/ids.ts";
+import { extractPdfText } from "../inspect/pdf.ts";
 import type { FileInspectionRecord, SourceRecord } from "../types.ts";
 import type { LegalPassageRecord } from "./types.ts";
 
@@ -83,16 +83,14 @@ async function extractPdfSourcePassages(input: {
   runId: string;
   source: SourceRecord;
 }): Promise<LegalPassageRecord[]> {
-  let parser: PDFParse | undefined;
   try {
-    parser = new PDFParse({ data: await readFile(input.source.path) });
-    const textResult = await parser.getText({ pageJoiner: "" });
-    const pagePassages = textResult.pages.flatMap((page) =>
+    const extraction = await extractPdfText(input.source.path);
+    const pagePassages = extraction.pages.flatMap((page) =>
       buildPageParagraphPassages({
         runId: input.runId,
         source: input.source,
-        pageNumber: page.num,
-        paragraphs: splitParagraphs(page.text)
+        pageNumber: page.pageNumber,
+        paragraphs: page.paragraphs
       })
     );
     if (pagePassages.length === 0) {
@@ -107,8 +105,6 @@ async function extractPdfSourcePassages(input: {
         notes: `PDF text extraction failed: ${error instanceof Error ? error.message : "Unknown extraction failure."}`
       })
     ];
-  } finally {
-    await parser?.destroy();
   }
 }
 
